@@ -70,7 +70,7 @@
     
     _addressLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     _addressLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
-    _addressLabel.text = @"Hello World";
+    _addressLabel.text = @"";
     _addressLabel.textColor = [UIColor colorWithHex:0x444444];
     _addressLabel.font = [UIFont fontWithName:FONT_BOLD size:12.0f];
     [self.view addSubview:_addressLabel];
@@ -94,8 +94,6 @@
     
     SharedDefaults *sharedDefaults = [SharedDefaults sharedDefaults];
     Address *address = sharedDefaults.address;
-    
-    NSLog(@"DEF: %@ %@", sharedDefaults.address, sharedDefaults.balance);
     
     if (address) {
         BigNumber *balance = sharedDefaults.balance;
@@ -137,7 +135,6 @@
     // Perform any setup necessary in order to update the view.
     
     SharedDefaults *sharedDefaults = [SharedDefaults sharedDefaults];
-    NSLog(@"FOO: %@ %@", sharedDefaults, sharedDefaults.address);
     if ([sharedDefaults.address.checksumAddress isEqualToString:_addressLabel.text] && [sharedDefaults.balance isEqual:_balanceLabel.balance]) {
         completionHandler(NCUpdateResultNoData);
         
