@@ -59,7 +59,6 @@
 #pragma mark - Service Credentials
 
 #define ETHERSCAN_API_KEY                   @"YTCX255XJGH9SCBUDP2K48S4YWACUEFSJX"
-#define INFURA_ACCESS_TOKEN                 @"VOSzw3GAef7pxbSbpYeL"
 
 
 #pragma mark - Error Domain
@@ -689,7 +688,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
     }
     
     if (![_dataStore boolForKey:DataStoreKeyUserDisableFallback] || fallbackProvider.count == 0) {
-        [fallbackProvider addProvider:[[InfuraProvider alloc] initWithTestnet:enableTestnet accessToken:INFURA_ACCESS_TOKEN]];
+        [fallbackProvider addProvider:[[InfuraProvider alloc] initWithTestnet:enableTestnet]];
         [fallbackProvider addProvider:[[EtherscanProvider alloc] initWithTestnet:enableTestnet apiKey:ETHERSCAN_API_KEY]];
     }
     
