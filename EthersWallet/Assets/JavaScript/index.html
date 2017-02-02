@@ -1,0 +1,107 @@
+<html>
+    <head>
+        <style type="text/css">
+            html {
+                overflow: hidden;
+                width: 100%;
+            }
+            body {
+                overflow: hidden;
+                width: 100%;
+            }
+            iframe {
+                position: absolute;
+                left: 0;
+                top: 0;
+                min-width: 100%;
+                width: 1px;
+                height: 90%;
+            }
+        </style>
+        <meta name="viewport" content="user-scalable=yes, width=1000, initial-scale=1.0" />
+    </head>
+    <body>
+        <iframe scrolling="no" src="https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/"></iframe>
+        <script type="text/javascript">
+            (function(_this) {
+                var ethers = window.webkit.messageHandlers.ethers;
+
+                function serialize(object, path, done) {
+                    if (path == null) { path = ''; }
+                    if (!done) { done = {}; }
+
+                    switch (typeof(object)) {
+                        case 'string':
+                        case 'number':
+                        case 'boolean':
+                            return JSON.stringify(object);
+
+                        case 'undefined':
+                            return 'undefined';
+
+                        case 'function':
+                            return object.toString();
+
+                        case 'object':
+                            return (function() {
+
+                                var result = [];
+                                for (var key in object) {
+                                    var obj = object[key];
+
+                                    if (done[obj]) {
+                                        result.push('[identical reference: ' + done[obj] + ']');
+
+                                    } else {
+                                        var keyPath = path + '/' + key;
+                                        done[obj] = keyPath;
+                                        result.push(key + ': ' + serialize(object[key], keyPath, done));
+                                    }
+                                }
+                                return '{' + result.join(', ') + '}';
+                            })();
+                            break;
+
+                        default:
+                            return '[unhandled type: ' + typeof(object) + ']';
+                    }
+                }
+
+                var console = {};
+                Object.defineProperty(_this, 'console', {
+                    enumerable: true,
+                    value: console,
+                    writable: false
+                });
+
+                Object.defineProperty(console, 'log', {
+                    enumerable: true,
+                    value: function() {
+                        var message = [];
+                        Array.prototype.forEach.call(arguments, function(arg) {
+                            message.push(serialize(arg));
+                        });
+                        ethers.postMessage({action: "console.log", message: message.join(', ')});
+                    }
+                });
+
+                window.addEventListener('message', function(event) {
+                    try {
+                        console.log('GOT', event);
+                    } catch (error) {
+                        console.log(error.message);
+                    }
+
+                    var data = event.data;
+                    if (data.ethers !== 'v\x01\n') { return; }
+
+                    console.log(event.data);
+                    ethers.postMessage(event.data);
+                });
+
+             })(this);
+
+            this.console.log('Hello World', 2, {hello: "world"}, true, function() { test() });
+        </script>
+    </body>
+</html>

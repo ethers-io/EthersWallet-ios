@@ -1,0 +1,884 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E21481C91E431B9000B87132 /* TodayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA049C1E43186D0013E5A7 /* TodayViewController.m */; };
+		E21481CA1E431BA800B87132 /* ethers.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E2FA04931E4315580013E5A7 /* ethers.ttf */; };
+		E21481CB1E431C7E00B87132 /* BalanceLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA041B1E428DF50013E5A7 /* BalanceLabel.m */; };
+		E21481CC1E431C9800B87132 /* Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA044E1E428E0E0013E5A7 /* Utilities.m */; };
+		E21481CD1E431C9E00B87132 /* UIColor+hex.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA044A1E428E0E0013E5A7 /* UIColor+hex.m */; };
+		E21481CE1E431CAE00B87132 /* SharedDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04481E428E0E0013E5A7 /* SharedDefaults.m */; };
+		E21481CF1E431CC600B87132 /* ethers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2FA046E1E4293750013E5A7 /* ethers.framework */; };
+		E2FA03E61E428AC10013E5A7 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA03E51E428AC10013E5A7 /* main.m */; };
+		E2FA03F11E428AC10013E5A7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2FA03F01E428AC10013E5A7 /* Assets.xcassets */; };
+		E2FA03FF1E428AC20013E5A7 /* EthersWalletTests.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA03FE1E428AC20013E5A7 /* EthersWalletTests.m */; };
+		E2FA04121E428DDC0013E5A7 /* Wallet.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA040F1E428DDC0013E5A7 /* Wallet.m */; };
+		E2FA04131E428DDC0013E5A7 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04111E428DDC0013E5A7 /* AppDelegate.m */; };
+		E2FA04241E428DF50013E5A7 /* SectionHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04151E428DF50013E5A7 /* SectionHeaderView.m */; };
+		E2FA04251E428DF50013E5A7 /* TransactionTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04171E428DF50013E5A7 /* TransactionTableViewCell.m */; };
+		E2FA04261E428DF50013E5A7 /* AccountTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04191E428DF50013E5A7 /* AccountTableViewCell.m */; };
+		E2FA04271E428DF50013E5A7 /* BalanceLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA041B1E428DF50013E5A7 /* BalanceLabel.m */; };
+		E2FA04281E428DF50013E5A7 /* CloudView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA041D1E428DF50013E5A7 /* CloudView.m */; };
+		E2FA04291E428DF50013E5A7 /* MnemonicPhraseView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA041F1E428DF50013E5A7 /* MnemonicPhraseView.m */; };
+		E2FA042A1E428DF50013E5A7 /* QRCodeView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04211E428DF50013E5A7 /* QRCodeView.m */; };
+		E2FA042B1E428DF50013E5A7 /* WalletView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04231E428DF50013E5A7 /* WalletView.m */; };
+		E2FA043A1E428E030013E5A7 /* AccountsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA042D1E428E020013E5A7 /* AccountsViewController.m */; };
+		E2FA043B1E428E030013E5A7 /* ApplicationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA042F1E428E020013E5A7 /* ApplicationViewController.m */; };
+		E2FA043C1E428E030013E5A7 /* InfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04311E428E020013E5A7 /* InfoViewController.m */; };
+		E2FA043D1E428E030013E5A7 /* ModalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04331E428E030013E5A7 /* ModalViewController.m */; };
+		E2FA043E1E428E030013E5A7 /* PanelViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04351E428E030013E5A7 /* PanelViewController.m */; };
+		E2FA043F1E428E030013E5A7 /* ScannerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04371E428E030013E5A7 /* ScannerViewController.m */; };
+		E2FA04401E428E030013E5A7 /* WalletViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04391E428E030013E5A7 /* WalletViewController.m */; };
+		E2FA044F1E428E0E0013E5A7 /* AsyncOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04421E428E0E0013E5A7 /* AsyncOperation.m */; };
+		E2FA04501E428E0E0013E5A7 /* CachedDataStore.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04441E428E0E0013E5A7 /* CachedDataStore.m */; };
+		E2FA04511E428E0E0013E5A7 /* IndexPathArray.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04461E428E0E0013E5A7 /* IndexPathArray.m */; };
+		E2FA04521E428E0E0013E5A7 /* SharedDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04481E428E0E0013E5A7 /* SharedDefaults.m */; };
+		E2FA04531E428E0E0013E5A7 /* UIColor+hex.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA044A1E428E0E0013E5A7 /* UIColor+hex.m */; };
+		E2FA04541E428E0E0013E5A7 /* UIImage+resize.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA044C1E428E0E0013E5A7 /* UIImage+resize.m */; };
+		E2FA04551E428E0E0013E5A7 /* Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA044E1E428E0E0013E5A7 /* Utilities.m */; };
+		E2FA04731E42940A0013E5A7 /* ethers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2FA046E1E4293750013E5A7 /* ethers.framework */; };
+		E2FA04751E429A070013E5A7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E2FA04741E429A070013E5A7 /* LaunchScreen.storyboard */; };
+		E2FA048E1E4315180013E5A7 /* cloud-0.png in Resources */ = {isa = PBXBuildFile; fileRef = E2FA048C1E4315180013E5A7 /* cloud-0.png */; };
+		E2FA048F1E4315180013E5A7 /* cloud-1.png in Resources */ = {isa = PBXBuildFile; fileRef = E2FA048D1E4315180013E5A7 /* cloud-1.png */; };
+		E2FA04911E43153E0013E5A7 /* spellcheck.json in Resources */ = {isa = PBXBuildFile; fileRef = E2FA04901E43153E0013E5A7 /* spellcheck.json */; };
+		E2FA04941E4315580013E5A7 /* ethers.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E2FA04931E4315580013E5A7 /* ethers.ttf */; };
+		E2FA04981E4316F80013E5A7 /* ethers.js in Resources */ = {isa = PBXBuildFile; fileRef = E2FA04961E4316F80013E5A7 /* ethers.js */; };
+		E2FA04991E4316F80013E5A7 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = E2FA04971E4316F80013E5A7 /* index.html */; };
+		E2FA049F1E43186D0013E5A7 /* TodayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA049C1E43186D0013E5A7 /* TodayViewController.m */; };
+		E2FA04A01E43186D0013E5A7 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E2FA049E1E43186D0013E5A7 /* Info.plist */; };
+		E2FA04A31E4318900013E5A7 /* LocalAuthentication.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2FA04A21E4318900013E5A7 /* LocalAuthentication.framework */; };
+		E2FA04AB1E4319510013E5A7 /* NotificationCenter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2FA04AA1E4319510013E5A7 /* NotificationCenter.framework */; };
+		E2FA04B71E4319510013E5A7 /* TodayExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E2FA04A91E4319510013E5A7 /* TodayExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E2FA03FB1E428AC20013E5A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E2FA03D91E428AC10013E5A7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E2FA03E01E428AC10013E5A7;
+			remoteInfo = EthersWallet;
+		};
+		E2FA046D1E4293750013E5A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E2FA04681E4293750013E5A7 /* ethers.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E2317E631E3191AC00DBE3E4;
+			remoteInfo = ethers;
+		};
+		E2FA046F1E4293750013E5A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E2FA04681E4293750013E5A7 /* ethers.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E2317E6C1E3191AC00DBE3E4;
+			remoteInfo = ethersTests;
+		};
+		E2FA04711E4293B90013E5A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E2FA04681E4293750013E5A7 /* ethers.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = E2317E621E3191AC00DBE3E4;
+			remoteInfo = ethers;
+		};
+		E2FA04B41E4319510013E5A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E2FA03D91E428AC10013E5A7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E2FA04A81E4319510013E5A7;
+			remoteInfo = TodayExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E2FA04B61E4319510013E5A7 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E2FA04B71E4319510013E5A7 /* TodayExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		E21481D01E43218A00B87132 /* TodayExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = TodayExtension.entitlements; path = TodayExtension/TodayExtension.entitlements; sourceTree = "<group>"; };
+		E2FA03E11E428AC10013E5A7 /* EthersWallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EthersWallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2FA03E51E428AC10013E5A7 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		E2FA03F01E428AC10013E5A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E2FA03F51E428AC10013E5A7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E2FA03FA1E428AC20013E5A7 /* EthersWalletTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EthersWalletTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2FA03FE1E428AC20013E5A7 /* EthersWalletTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EthersWalletTests.m; sourceTree = "<group>"; };
+		E2FA04001E428AC20013E5A7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E2FA040E1E428DDC0013E5A7 /* Wallet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Wallet.h; path = src/Wallet.h; sourceTree = "<group>"; };
+		E2FA040F1E428DDC0013E5A7 /* Wallet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Wallet.m; path = src/Wallet.m; sourceTree = "<group>"; };
+		E2FA04101E428DDC0013E5A7 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = src/AppDelegate.h; sourceTree = "<group>"; };
+		E2FA04111E428DDC0013E5A7 /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = src/AppDelegate.m; sourceTree = "<group>"; };
+		E2FA04141E428DF50013E5A7 /* SectionHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SectionHeaderView.h; path = src/Views/SectionHeaderView.h; sourceTree = "<group>"; };
+		E2FA04151E428DF50013E5A7 /* SectionHeaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SectionHeaderView.m; path = src/Views/SectionHeaderView.m; sourceTree = "<group>"; };
+		E2FA04161E428DF50013E5A7 /* TransactionTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TransactionTableViewCell.h; path = src/Views/TransactionTableViewCell.h; sourceTree = "<group>"; };
+		E2FA04171E428DF50013E5A7 /* TransactionTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TransactionTableViewCell.m; path = src/Views/TransactionTableViewCell.m; sourceTree = "<group>"; };
+		E2FA04181E428DF50013E5A7 /* AccountTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AccountTableViewCell.h; path = src/Views/AccountTableViewCell.h; sourceTree = "<group>"; };
+		E2FA04191E428DF50013E5A7 /* AccountTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AccountTableViewCell.m; path = src/Views/AccountTableViewCell.m; sourceTree = "<group>"; };
+		E2FA041A1E428DF50013E5A7 /* BalanceLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BalanceLabel.h; path = src/Views/BalanceLabel.h; sourceTree = "<group>"; };
+		E2FA041B1E428DF50013E5A7 /* BalanceLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BalanceLabel.m; path = src/Views/BalanceLabel.m; sourceTree = "<group>"; };
+		E2FA041C1E428DF50013E5A7 /* CloudView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CloudView.h; path = src/Views/CloudView.h; sourceTree = "<group>"; };
+		E2FA041D1E428DF50013E5A7 /* CloudView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CloudView.m; path = src/Views/CloudView.m; sourceTree = "<group>"; };
+		E2FA041E1E428DF50013E5A7 /* MnemonicPhraseView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MnemonicPhraseView.h; path = src/Views/MnemonicPhraseView.h; sourceTree = "<group>"; };
+		E2FA041F1E428DF50013E5A7 /* MnemonicPhraseView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MnemonicPhraseView.m; path = src/Views/MnemonicPhraseView.m; sourceTree = "<group>"; };
+		E2FA04201E428DF50013E5A7 /* QRCodeView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = QRCodeView.h; path = src/Views/QRCodeView.h; sourceTree = "<group>"; };
+		E2FA04211E428DF50013E5A7 /* QRCodeView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = QRCodeView.m; path = src/Views/QRCodeView.m; sourceTree = "<group>"; };
+		E2FA04221E428DF50013E5A7 /* WalletView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WalletView.h; path = src/Views/WalletView.h; sourceTree = "<group>"; };
+		E2FA04231E428DF50013E5A7 /* WalletView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = WalletView.m; path = src/Views/WalletView.m; sourceTree = "<group>"; };
+		E2FA042C1E428E020013E5A7 /* AccountsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AccountsViewController.h; path = src/ViewControllers/AccountsViewController.h; sourceTree = "<group>"; };
+		E2FA042D1E428E020013E5A7 /* AccountsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AccountsViewController.m; path = src/ViewControllers/AccountsViewController.m; sourceTree = "<group>"; };
+		E2FA042E1E428E020013E5A7 /* ApplicationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ApplicationViewController.h; path = src/ViewControllers/ApplicationViewController.h; sourceTree = "<group>"; };
+		E2FA042F1E428E020013E5A7 /* ApplicationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ApplicationViewController.m; path = src/ViewControllers/ApplicationViewController.m; sourceTree = "<group>"; };
+		E2FA04301E428E020013E5A7 /* InfoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InfoViewController.h; path = src/ViewControllers/InfoViewController.h; sourceTree = "<group>"; };
+		E2FA04311E428E020013E5A7 /* InfoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = InfoViewController.m; path = src/ViewControllers/InfoViewController.m; sourceTree = "<group>"; };
+		E2FA04321E428E030013E5A7 /* ModalViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ModalViewController.h; path = src/ViewControllers/ModalViewController.h; sourceTree = "<group>"; };
+		E2FA04331E428E030013E5A7 /* ModalViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ModalViewController.m; path = src/ViewControllers/ModalViewController.m; sourceTree = "<group>"; };
+		E2FA04341E428E030013E5A7 /* PanelViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PanelViewController.h; path = src/ViewControllers/PanelViewController.h; sourceTree = "<group>"; };
+		E2FA04351E428E030013E5A7 /* PanelViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PanelViewController.m; path = src/ViewControllers/PanelViewController.m; sourceTree = "<group>"; };
+		E2FA04361E428E030013E5A7 /* ScannerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ScannerViewController.h; path = src/ViewControllers/ScannerViewController.h; sourceTree = "<group>"; };
+		E2FA04371E428E030013E5A7 /* ScannerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ScannerViewController.m; path = src/ViewControllers/ScannerViewController.m; sourceTree = "<group>"; };
+		E2FA04381E428E030013E5A7 /* WalletViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WalletViewController.h; path = src/ViewControllers/WalletViewController.h; sourceTree = "<group>"; };
+		E2FA04391E428E030013E5A7 /* WalletViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = WalletViewController.m; path = src/ViewControllers/WalletViewController.m; sourceTree = "<group>"; };
+		E2FA04411E428E0E0013E5A7 /* AsyncOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AsyncOperation.h; path = src/Utilities/AsyncOperation.h; sourceTree = "<group>"; };
+		E2FA04421E428E0E0013E5A7 /* AsyncOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AsyncOperation.m; path = src/Utilities/AsyncOperation.m; sourceTree = "<group>"; };
+		E2FA04431E428E0E0013E5A7 /* CachedDataStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CachedDataStore.h; path = src/Utilities/CachedDataStore.h; sourceTree = "<group>"; };
+		E2FA04441E428E0E0013E5A7 /* CachedDataStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CachedDataStore.m; path = src/Utilities/CachedDataStore.m; sourceTree = "<group>"; };
+		E2FA04451E428E0E0013E5A7 /* IndexPathArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IndexPathArray.h; path = src/Utilities/IndexPathArray.h; sourceTree = "<group>"; };
+		E2FA04461E428E0E0013E5A7 /* IndexPathArray.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IndexPathArray.m; path = src/Utilities/IndexPathArray.m; sourceTree = "<group>"; };
+		E2FA04471E428E0E0013E5A7 /* SharedDefaults.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharedDefaults.h; path = src/Utilities/SharedDefaults.h; sourceTree = "<group>"; };
+		E2FA04481E428E0E0013E5A7 /* SharedDefaults.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SharedDefaults.m; path = src/Utilities/SharedDefaults.m; sourceTree = "<group>"; };
+		E2FA04491E428E0E0013E5A7 /* UIColor+hex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIColor+hex.h"; path = "src/Utilities/UIColor+hex.h"; sourceTree = "<group>"; };
+		E2FA044A1E428E0E0013E5A7 /* UIColor+hex.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIColor+hex.m"; path = "src/Utilities/UIColor+hex.m"; sourceTree = "<group>"; };
+		E2FA044B1E428E0E0013E5A7 /* UIImage+resize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+resize.h"; path = "src/Utilities/UIImage+resize.h"; sourceTree = "<group>"; };
+		E2FA044C1E428E0E0013E5A7 /* UIImage+resize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIImage+resize.m"; path = "src/Utilities/UIImage+resize.m"; sourceTree = "<group>"; };
+		E2FA044D1E428E0E0013E5A7 /* Utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Utilities.h; path = src/Utilities/Utilities.h; sourceTree = "<group>"; };
+		E2FA044E1E428E0E0013E5A7 /* Utilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Utilities.m; path = src/Utilities/Utilities.m; sourceTree = "<group>"; };
+		E2FA04681E4293750013E5A7 /* ethers.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ethers.xcodeproj; path = ../ethers.objc/ethers.xcodeproj; sourceTree = "<group>"; };
+		E2FA04741E429A070013E5A7 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		E2FA048C1E4315180013E5A7 /* cloud-0.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "cloud-0.png"; path = "Assets/Images/cloud-0.png"; sourceTree = "<group>"; };
+		E2FA048D1E4315180013E5A7 /* cloud-1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "cloud-1.png"; path = "Assets/Images/cloud-1.png"; sourceTree = "<group>"; };
+		E2FA04901E43153E0013E5A7 /* spellcheck.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = spellcheck.json; path = Assets/Data/spellcheck.json; sourceTree = "<group>"; };
+		E2FA04931E4315580013E5A7 /* ethers.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = ethers.ttf; path = Assets/Fonts/ethers.ttf; sourceTree = "<group>"; };
+		E2FA04961E4316F80013E5A7 /* ethers.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ethers.js; path = Assets/JavaScript/ethers.js; sourceTree = "<group>"; };
+		E2FA04971E4316F80013E5A7 /* index.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = index.html; path = Assets/JavaScript/index.html; sourceTree = "<group>"; };
+		E2FA049B1E43186D0013E5A7 /* TodayViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TodayViewController.h; path = TodayExtension/TodayViewController.h; sourceTree = "<group>"; };
+		E2FA049C1E43186D0013E5A7 /* TodayViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TodayViewController.m; path = TodayExtension/TodayViewController.m; sourceTree = "<group>"; };
+		E2FA049E1E43186D0013E5A7 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = TodayExtension/Info.plist; sourceTree = "<group>"; };
+		E2FA04A21E4318900013E5A7 /* LocalAuthentication.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LocalAuthentication.framework; path = System/Library/Frameworks/LocalAuthentication.framework; sourceTree = SDKROOT; };
+		E2FA04A41E4318D00013E5A7 /* EthersWallet.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EthersWallet.entitlements; sourceTree = "<group>"; };
+		E2FA04A91E4319510013E5A7 /* TodayExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TodayExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2FA04AA1E4319510013E5A7 /* NotificationCenter.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NotificationCenter.framework; path = System/Library/Frameworks/NotificationCenter.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E2FA03DE1E428AC10013E5A7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2FA04731E42940A0013E5A7 /* ethers.framework in Frameworks */,
+				E2FA04A31E4318900013E5A7 /* LocalAuthentication.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2FA03F71E428AC20013E5A7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2FA04A61E4319510013E5A7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E21481CF1E431CC600B87132 /* ethers.framework in Frameworks */,
+				E2FA04AB1E4319510013E5A7 /* NotificationCenter.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E2FA03D81E428AC10013E5A7 = {
+			isa = PBXGroup;
+			children = (
+				E2FA04681E4293750013E5A7 /* ethers.xcodeproj */,
+				E2FA03E31E428AC10013E5A7 /* EthersWallet */,
+				E2FA049A1E4318210013E5A7 /* TodayExtension */,
+				E2FA03FD1E428AC20013E5A7 /* EthersWalletTests */,
+				E2FA03E21E428AC10013E5A7 /* Products */,
+				E2FA04A11E43188F0013E5A7 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		E2FA03E21E428AC10013E5A7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA03E11E428AC10013E5A7 /* EthersWallet.app */,
+				E2FA03FA1E428AC20013E5A7 /* EthersWalletTests.xctest */,
+				E2FA04A91E4319510013E5A7 /* TodayExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E2FA03E31E428AC10013E5A7 /* EthersWallet */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA040D1E428DBB0013E5A7 /* Assets */,
+				E2FA04091E428D9E0013E5A7 /* src */,
+				E2FA03E41E428AC10013E5A7 /* Supporting Files */,
+			);
+			path = EthersWallet;
+			sourceTree = "<group>";
+		};
+		E2FA03E41E428AC10013E5A7 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA04A41E4318D00013E5A7 /* EthersWallet.entitlements */,
+				E2FA03F51E428AC10013E5A7 /* Info.plist */,
+				E2FA03E51E428AC10013E5A7 /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		E2FA03FD1E428AC20013E5A7 /* EthersWalletTests */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA03FE1E428AC20013E5A7 /* EthersWalletTests.m */,
+				E2FA04001E428AC20013E5A7 /* Info.plist */,
+			);
+			path = EthersWalletTests;
+			sourceTree = "<group>";
+		};
+		E2FA04091E428D9E0013E5A7 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA040C1E428DAF0013E5A7 /* Utilities */,
+				E2FA040B1E428DA80013E5A7 /* ViewControllers */,
+				E2FA040A1E428DA30013E5A7 /* Views */,
+				E2FA04101E428DDC0013E5A7 /* AppDelegate.h */,
+				E2FA04111E428DDC0013E5A7 /* AppDelegate.m */,
+				E2FA040E1E428DDC0013E5A7 /* Wallet.h */,
+				E2FA040F1E428DDC0013E5A7 /* Wallet.m */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		E2FA040A1E428DA30013E5A7 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA04181E428DF50013E5A7 /* AccountTableViewCell.h */,
+				E2FA04191E428DF50013E5A7 /* AccountTableViewCell.m */,
+				E2FA041A1E428DF50013E5A7 /* BalanceLabel.h */,
+				E2FA041B1E428DF50013E5A7 /* BalanceLabel.m */,
+				E2FA041C1E428DF50013E5A7 /* CloudView.h */,
+				E2FA041D1E428DF50013E5A7 /* CloudView.m */,
+				E2FA041E1E428DF50013E5A7 /* MnemonicPhraseView.h */,
+				E2FA041F1E428DF50013E5A7 /* MnemonicPhraseView.m */,
+				E2FA04201E428DF50013E5A7 /* QRCodeView.h */,
+				E2FA04211E428DF50013E5A7 /* QRCodeView.m */,
+				E2FA04141E428DF50013E5A7 /* SectionHeaderView.h */,
+				E2FA04151E428DF50013E5A7 /* SectionHeaderView.m */,
+				E2FA04161E428DF50013E5A7 /* TransactionTableViewCell.h */,
+				E2FA04171E428DF50013E5A7 /* TransactionTableViewCell.m */,
+				E2FA04221E428DF50013E5A7 /* WalletView.h */,
+				E2FA04231E428DF50013E5A7 /* WalletView.m */,
+			);
+			name = Views;
+			sourceTree = "<group>";
+		};
+		E2FA040B1E428DA80013E5A7 /* ViewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA042C1E428E020013E5A7 /* AccountsViewController.h */,
+				E2FA042D1E428E020013E5A7 /* AccountsViewController.m */,
+				E2FA042E1E428E020013E5A7 /* ApplicationViewController.h */,
+				E2FA042F1E428E020013E5A7 /* ApplicationViewController.m */,
+				E2FA04301E428E020013E5A7 /* InfoViewController.h */,
+				E2FA04311E428E020013E5A7 /* InfoViewController.m */,
+				E2FA04321E428E030013E5A7 /* ModalViewController.h */,
+				E2FA04331E428E030013E5A7 /* ModalViewController.m */,
+				E2FA04341E428E030013E5A7 /* PanelViewController.h */,
+				E2FA04351E428E030013E5A7 /* PanelViewController.m */,
+				E2FA04361E428E030013E5A7 /* ScannerViewController.h */,
+				E2FA04371E428E030013E5A7 /* ScannerViewController.m */,
+				E2FA04381E428E030013E5A7 /* WalletViewController.h */,
+				E2FA04391E428E030013E5A7 /* WalletViewController.m */,
+			);
+			name = ViewControllers;
+			sourceTree = "<group>";
+		};
+		E2FA040C1E428DAF0013E5A7 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA04411E428E0E0013E5A7 /* AsyncOperation.h */,
+				E2FA04421E428E0E0013E5A7 /* AsyncOperation.m */,
+				E2FA04431E428E0E0013E5A7 /* CachedDataStore.h */,
+				E2FA04441E428E0E0013E5A7 /* CachedDataStore.m */,
+				E2FA04451E428E0E0013E5A7 /* IndexPathArray.h */,
+				E2FA04461E428E0E0013E5A7 /* IndexPathArray.m */,
+				E2FA04471E428E0E0013E5A7 /* SharedDefaults.h */,
+				E2FA04481E428E0E0013E5A7 /* SharedDefaults.m */,
+				E2FA04491E428E0E0013E5A7 /* UIColor+hex.h */,
+				E2FA044A1E428E0E0013E5A7 /* UIColor+hex.m */,
+				E2FA044B1E428E0E0013E5A7 /* UIImage+resize.h */,
+				E2FA044C1E428E0E0013E5A7 /* UIImage+resize.m */,
+				E2FA044D1E428E0E0013E5A7 /* Utilities.h */,
+				E2FA044E1E428E0E0013E5A7 /* Utilities.m */,
+			);
+			name = Utilities;
+			sourceTree = "<group>";
+		};
+		E2FA040D1E428DBB0013E5A7 /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA048A1E4314C90013E5A7 /* Data */,
+				E2FA04921E4315450013E5A7 /* Fonts */,
+				E2FA048B1E4314DF0013E5A7 /* Images */,
+				E2FA04951E4316E30013E5A7 /* JavaScript */,
+				E2FA04741E429A070013E5A7 /* LaunchScreen.storyboard */,
+				E2FA03F01E428AC10013E5A7 /* Assets.xcassets */,
+			);
+			name = Assets;
+			sourceTree = "<group>";
+		};
+		E2FA04691E4293750013E5A7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA046E1E4293750013E5A7 /* ethers.framework */,
+				E2FA04701E4293750013E5A7 /* ethersTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E2FA048A1E4314C90013E5A7 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA04901E43153E0013E5A7 /* spellcheck.json */,
+			);
+			name = Data;
+			sourceTree = "<group>";
+		};
+		E2FA048B1E4314DF0013E5A7 /* Images */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA048C1E4315180013E5A7 /* cloud-0.png */,
+				E2FA048D1E4315180013E5A7 /* cloud-1.png */,
+			);
+			name = Images;
+			sourceTree = "<group>";
+		};
+		E2FA04921E4315450013E5A7 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA04931E4315580013E5A7 /* ethers.ttf */,
+			);
+			name = Fonts;
+			sourceTree = "<group>";
+		};
+		E2FA04951E4316E30013E5A7 /* JavaScript */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA04961E4316F80013E5A7 /* ethers.js */,
+				E2FA04971E4316F80013E5A7 /* index.html */,
+			);
+			name = JavaScript;
+			sourceTree = "<group>";
+		};
+		E2FA049A1E4318210013E5A7 /* TodayExtension */ = {
+			isa = PBXGroup;
+			children = (
+				E21481D01E43218A00B87132 /* TodayExtension.entitlements */,
+				E2FA049E1E43186D0013E5A7 /* Info.plist */,
+				E2FA049B1E43186D0013E5A7 /* TodayViewController.h */,
+				E2FA049C1E43186D0013E5A7 /* TodayViewController.m */,
+			);
+			name = TodayExtension;
+			sourceTree = "<group>";
+		};
+		E2FA04A11E43188F0013E5A7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E2FA04A21E4318900013E5A7 /* LocalAuthentication.framework */,
+				E2FA04AA1E4319510013E5A7 /* NotificationCenter.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E2FA03E01E428AC10013E5A7 /* EthersWallet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E2FA04031E428AC20013E5A7 /* Build configuration list for PBXNativeTarget "EthersWallet" */;
+			buildPhases = (
+				E2FA03DD1E428AC10013E5A7 /* Sources */,
+				E2FA03DE1E428AC10013E5A7 /* Frameworks */,
+				E2FA03DF1E428AC10013E5A7 /* Resources */,
+				E2FA04B61E4319510013E5A7 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E2FA04721E4293B90013E5A7 /* PBXTargetDependency */,
+				E2FA04B51E4319510013E5A7 /* PBXTargetDependency */,
+			);
+			name = EthersWallet;
+			productName = EthersWallet;
+			productReference = E2FA03E11E428AC10013E5A7 /* EthersWallet.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E2FA03F91E428AC20013E5A7 /* EthersWalletTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E2FA04061E428AC20013E5A7 /* Build configuration list for PBXNativeTarget "EthersWalletTests" */;
+			buildPhases = (
+				E2FA03F61E428AC20013E5A7 /* Sources */,
+				E2FA03F71E428AC20013E5A7 /* Frameworks */,
+				E2FA03F81E428AC20013E5A7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E2FA03FC1E428AC20013E5A7 /* PBXTargetDependency */,
+			);
+			name = EthersWalletTests;
+			productName = EthersWalletTests;
+			productReference = E2FA03FA1E428AC20013E5A7 /* EthersWalletTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E2FA04A81E4319510013E5A7 /* TodayExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E2FA04B81E4319520013E5A7 /* Build configuration list for PBXNativeTarget "TodayExtension" */;
+			buildPhases = (
+				E2FA04A51E4319510013E5A7 /* Sources */,
+				E2FA04A61E4319510013E5A7 /* Frameworks */,
+				E2FA04A71E4319510013E5A7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TodayExtension;
+			productName = TodayExtension;
+			productReference = E2FA04A91E4319510013E5A7 /* TodayExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E2FA03D91E428AC10013E5A7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0820;
+				ORGANIZATIONNAME = ethers.io;
+				TargetAttributes = {
+					E2FA03E01E428AC10013E5A7 = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = 7GS2C8FTGM;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+							com.apple.SafariKeychain = {
+								enabled = 1;
+							};
+						};
+					};
+					E2FA03F91E428AC20013E5A7 = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = 7GS2C8FTGM;
+						ProvisioningStyle = Automatic;
+						TestTargetID = E2FA03E01E428AC10013E5A7;
+					};
+					E2FA04A81E4319510013E5A7 = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = 7GS2C8FTGM;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = E2FA03DC1E428AC10013E5A7 /* Build configuration list for PBXProject "EthersWallet" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E2FA03D81E428AC10013E5A7;
+			productRefGroup = E2FA03E21E428AC10013E5A7 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = E2FA04691E4293750013E5A7 /* Products */;
+					ProjectRef = E2FA04681E4293750013E5A7 /* ethers.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				E2FA03E01E428AC10013E5A7 /* EthersWallet */,
+				E2FA03F91E428AC20013E5A7 /* EthersWalletTests */,
+				E2FA04A81E4319510013E5A7 /* TodayExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		E2FA046E1E4293750013E5A7 /* ethers.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ethers.framework;
+			remoteRef = E2FA046D1E4293750013E5A7 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E2FA04701E4293750013E5A7 /* ethersTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = ethersTests.xctest;
+			remoteRef = E2FA046F1E4293750013E5A7 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E2FA03DF1E428AC10013E5A7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2FA03F11E428AC10013E5A7 /* Assets.xcassets in Resources */,
+				E2FA04751E429A070013E5A7 /* LaunchScreen.storyboard in Resources */,
+				E2FA04A01E43186D0013E5A7 /* Info.plist in Resources */,
+				E2FA04981E4316F80013E5A7 /* ethers.js in Resources */,
+				E2FA048E1E4315180013E5A7 /* cloud-0.png in Resources */,
+				E2FA04941E4315580013E5A7 /* ethers.ttf in Resources */,
+				E2FA04991E4316F80013E5A7 /* index.html in Resources */,
+				E2FA04911E43153E0013E5A7 /* spellcheck.json in Resources */,
+				E2FA048F1E4315180013E5A7 /* cloud-1.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2FA03F81E428AC20013E5A7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2FA04A71E4319510013E5A7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E21481CA1E431BA800B87132 /* ethers.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E2FA03DD1E428AC10013E5A7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2FA042A1E428DF50013E5A7 /* QRCodeView.m in Sources */,
+				E2FA04541E428E0E0013E5A7 /* UIImage+resize.m in Sources */,
+				E2FA04281E428DF50013E5A7 /* CloudView.m in Sources */,
+				E2FA043D1E428E030013E5A7 /* ModalViewController.m in Sources */,
+				E2FA04401E428E030013E5A7 /* WalletViewController.m in Sources */,
+				E2FA043F1E428E030013E5A7 /* ScannerViewController.m in Sources */,
+				E2FA04511E428E0E0013E5A7 /* IndexPathArray.m in Sources */,
+				E2FA04531E428E0E0013E5A7 /* UIColor+hex.m in Sources */,
+				E2FA04251E428DF50013E5A7 /* TransactionTableViewCell.m in Sources */,
+				E2FA042B1E428DF50013E5A7 /* WalletView.m in Sources */,
+				E2FA04121E428DDC0013E5A7 /* Wallet.m in Sources */,
+				E2FA04291E428DF50013E5A7 /* MnemonicPhraseView.m in Sources */,
+				E2FA043B1E428E030013E5A7 /* ApplicationViewController.m in Sources */,
+				E2FA03E61E428AC10013E5A7 /* main.m in Sources */,
+				E2FA049F1E43186D0013E5A7 /* TodayViewController.m in Sources */,
+				E2FA04551E428E0E0013E5A7 /* Utilities.m in Sources */,
+				E2FA044F1E428E0E0013E5A7 /* AsyncOperation.m in Sources */,
+				E2FA04131E428DDC0013E5A7 /* AppDelegate.m in Sources */,
+				E2FA04521E428E0E0013E5A7 /* SharedDefaults.m in Sources */,
+				E2FA04241E428DF50013E5A7 /* SectionHeaderView.m in Sources */,
+				E2FA04261E428DF50013E5A7 /* AccountTableViewCell.m in Sources */,
+				E2FA04501E428E0E0013E5A7 /* CachedDataStore.m in Sources */,
+				E2FA043A1E428E030013E5A7 /* AccountsViewController.m in Sources */,
+				E2FA043C1E428E030013E5A7 /* InfoViewController.m in Sources */,
+				E2FA04271E428DF50013E5A7 /* BalanceLabel.m in Sources */,
+				E2FA043E1E428E030013E5A7 /* PanelViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2FA03F61E428AC20013E5A7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2FA03FF1E428AC20013E5A7 /* EthersWalletTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2FA04A51E4319510013E5A7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E21481CC1E431C9800B87132 /* Utilities.m in Sources */,
+				E21481CD1E431C9E00B87132 /* UIColor+hex.m in Sources */,
+				E21481C91E431B9000B87132 /* TodayViewController.m in Sources */,
+				E21481CB1E431C7E00B87132 /* BalanceLabel.m in Sources */,
+				E21481CE1E431CAE00B87132 /* SharedDefaults.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E2FA03FC1E428AC20013E5A7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E2FA03E01E428AC10013E5A7 /* EthersWallet */;
+			targetProxy = E2FA03FB1E428AC20013E5A7 /* PBXContainerItemProxy */;
+		};
+		E2FA04721E4293B90013E5A7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ethers;
+			targetProxy = E2FA04711E4293B90013E5A7 /* PBXContainerItemProxy */;
+		};
+		E2FA04B51E4319510013E5A7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E2FA04A81E4319510013E5A7 /* TodayExtension */;
+			targetProxy = E2FA04B41E4319510013E5A7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		E2FA04011E428AC20013E5A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		E2FA04021E428AC20013E5A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E2FA04041E428AC20013E5A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = EthersWallet/EthersWallet.entitlements;
+				DEVELOPMENT_TEAM = 7GS2C8FTGM;
+				INFOPLIST_FILE = EthersWallet/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = io.ethers.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		E2FA04051E428AC20013E5A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = EthersWallet/EthersWallet.entitlements;
+				DEVELOPMENT_TEAM = 7GS2C8FTGM;
+				INFOPLIST_FILE = EthersWallet/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = io.ethers.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		E2FA04071E428AC20013E5A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 7GS2C8FTGM;
+				INFOPLIST_FILE = EthersWalletTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = io.ethers.EthersWalletTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/EthersWallet.app/EthersWallet";
+			};
+			name = Debug;
+		};
+		E2FA04081E428AC20013E5A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 7GS2C8FTGM;
+				INFOPLIST_FILE = EthersWalletTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = io.ethers.EthersWalletTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/EthersWallet.app/EthersWallet";
+			};
+			name = Release;
+		};
+		E2FA04B91E4319520013E5A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TodayExtension/TodayExtension.entitlements;
+				DEVELOPMENT_TEAM = 7GS2C8FTGM;
+				INFOPLIST_FILE = TodayExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = io.ethers.app.TodayExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		E2FA04BA1E4319520013E5A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TodayExtension/TodayExtension.entitlements;
+				DEVELOPMENT_TEAM = 7GS2C8FTGM;
+				INFOPLIST_FILE = TodayExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = io.ethers.app.TodayExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E2FA03DC1E428AC10013E5A7 /* Build configuration list for PBXProject "EthersWallet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2FA04011E428AC20013E5A7 /* Debug */,
+				E2FA04021E428AC20013E5A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E2FA04031E428AC20013E5A7 /* Build configuration list for PBXNativeTarget "EthersWallet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2FA04041E428AC20013E5A7 /* Debug */,
+				E2FA04051E428AC20013E5A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E2FA04061E428AC20013E5A7 /* Build configuration list for PBXNativeTarget "EthersWalletTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2FA04071E428AC20013E5A7 /* Debug */,
+				E2FA04081E428AC20013E5A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E2FA04B81E4319520013E5A7 /* Build configuration list for PBXNativeTarget "TodayExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2FA04B91E4319520013E5A7 /* Debug */,
+				E2FA04BA1E4319520013E5A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E2FA03D91E428AC10013E5A7 /* Project object */;
+}

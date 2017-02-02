@@ -1,0 +1,17 @@
+{
+  "name": "spelling",
+  "version": "0.0.1",
+  "description": "Build reverse database for looking up typos in BIP39 mnemonics.",
+  "main": "index.js",
+  "dependencies": {
+    "bip39": "2.2.0",
+    "misspell": "1.2.1",
+    "misspellings": "1.1.0",
+    "tipo": "0.1.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Richard Moore <me@ricmoo.com>",
+  "license": "MIT"
+}

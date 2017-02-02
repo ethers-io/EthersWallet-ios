@@ -1,0 +1,109 @@
+{
+  "name": "ethers",
+  "icons": [
+    {
+      "code": "0x31",
+      "name": "1-devcon2"
+    },
+    {
+      "code": "0x32",
+      "name": "2-tnp-origami"
+    },
+    {
+      "code": "0x41",
+      "name": "A-android-warning"
+    },
+    {
+      "code": "0x42",
+      "name": "B-tnp-security-camera"
+    },
+    {
+      "code": "0x43",
+      "name": "C-checkmark"
+    },
+    {
+      "code": "0x44",
+      "name": "D-tnp-camera"
+    },
+    {
+      "code": "0x45",
+      "name": "E-tnp-accounts"
+    },
+    {
+      "code": "0x46",
+      "name": "F-tnp-privacy"
+    },
+    {
+      "code": "0x47",
+      "name": "G-tnp-fires"
+    },
+    {
+      "code": "0x48",
+      "name": "H-navicon-round"
+    },
+    {
+      "code": "0x49",
+      "name": "I-android-add-circle"
+    },
+    {
+      "code": "0x4a",
+      "name": "J-tnp-floods"
+    },
+    {
+      "code": "0x4b",
+      "name": "K-android-remove-circle"
+    },
+    {
+      "code": "0x4c",
+      "name": "L-logo"
+    },
+    {
+      "code": "0x4d",
+      "name": "M-tnp-damage"
+    },
+    {
+      "code": "0x4e",
+      "name": "N-tnp-theft"
+    },
+    {
+      "code": "0x4f",
+      "name": "O-tnp-failure"
+    },
+    {
+      "code": "0x50",
+      "name": "P-tnp-loss"
+    },
+    {
+      "code": "0x51",
+      "name": "Q-ios-search-strong"
+    },
+    {
+      "code": "0x52",
+      "name": "R-ribbon-b"
+    },
+    {
+      "code": "0x53",
+      "name": "S-tnp-checkmark"
+    },
+    {
+      "code": "0x54",
+      "name": "T-tnp-fingerprint"
+    },
+    {
+      "code": "0x55",
+      "name": "U-ios-plus-outline"
+    },
+    {
+      "code": "0x56",
+      "name": "V-tnp-photos"
+    },
+    {
+      "code": "0x57",
+      "name": "W-tnp-wallet"
+    },
+    {
+      "code": "0x58",
+      "name": "X-tnp-wrong"
+    }
+  ]
+}
