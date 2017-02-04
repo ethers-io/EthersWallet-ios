@@ -1577,6 +1577,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         [info addFlexibleGap];
         
         BlockMnemonicPhraseView *mnemonicPhraseView = [info addMnemonicPhraseView];
+        mnemonicPhraseView.userInteractionEnabled = NO;
         mnemonicPhraseView.mnemonicPhrase = mnemonicPhrase;
         
         [info addFlexibleGap];
