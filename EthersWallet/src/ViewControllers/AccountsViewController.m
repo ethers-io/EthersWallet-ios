@@ -85,10 +85,14 @@
                                                      name:WalletRemovedAccountNotification
                                                    object:_wallet];
 
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(tapDone)
+                                                     name:UIApplicationDidEnterBackgroundNotification
+                                                   object:[UIApplication sharedApplication]];
+
     }
     return self;
 }
-
 
 // @TODO: Figure out why animating these buttons causes them not to show up.
 
@@ -142,7 +146,6 @@
 }
 
 - (void)notificationAdded: (NSNotification*)note {
-    NSLog(@"Added: %@", note);
     [_tableView reloadData];
 }
 

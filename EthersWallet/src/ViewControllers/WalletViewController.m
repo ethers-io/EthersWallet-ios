@@ -576,9 +576,9 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 #pragma mark - WalletViewControllerDelegate
 
 - (void)tapAccounts {
-    AccountsViewController *accountViewController = [[AccountsViewController alloc] initWithWallet:_wallet];
-    accountViewController.delegate = self;
-    [self presentViewController:accountViewController animated:YES completion:nil];
+    AccountsViewController *accountsViewController = [[AccountsViewController alloc] initWithWallet:_wallet];
+    accountsViewController.delegate = self;
+    [self presentViewController:accountsViewController animated:YES completion:nil];
 }
 
 - (void)tapCamera {
