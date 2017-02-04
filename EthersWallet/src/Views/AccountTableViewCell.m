@@ -31,37 +31,9 @@
 
 NSString *const AccountTableViewCellResuseIdentifier = @"TransactionTableViewCellResuseIdentifier";
 const CGFloat AccountTableViewCellHeight = 80.0f;
-/*
-@interface Foo : UIView
 
-@end
 
-@implementation Foo
-
-- (void)copyAddress: (id)sender {
-    
-}
-
-- (void)changeNickname: (id)sender {
-    
-}
-
-- (BOOL)canBecomeFirstResponder {
-    return YES;
-}
-
-- (BOOL)canPerformAction:(SEL)selector withSender:(id) sender {
-    if (selector == @selector(copyAddress:) || selector == @selector(changeNickname:)) {
-        return YES;
-    }
-    return NO;
-}
-
- 
- 
-
-@end
-*/
+#pragma mark - ClearProofLabel
 
 // UITableViewCell will automatically crawl the view hierarchy and
 // set the backgroud color of UILabels to clear... We don't want this
@@ -83,6 +55,8 @@ const CGFloat AccountTableViewCellHeight = 80.0f;
 
 @end
 
+
+#pragma mark - AccountTableViewCell
 
 @interface AccountTableViewCell () <UITextFieldDelegate> {
     BalanceLabel *_balanceLabel;

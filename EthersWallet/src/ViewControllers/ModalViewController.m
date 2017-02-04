@@ -27,20 +27,10 @@
 
 #import "AsyncOperation.h"
 
-// @TODO: Debug to make sure the window is dying
-@interface ModalWindow: UIWindow
-@end
-
-@implementation ModalWindow
-
-- (void)dealloc { NSLog(@"Window removed."); }
-
-@end
-
 
 @interface ModalViewController ()
 
-@property (nonatomic, strong) ModalWindow *window;
+@property (nonatomic, strong) UIWindow *window;
 
 @property (nonatomic, copy) void (^viewControllerReady)();
 
@@ -68,7 +58,7 @@ static NSMutableArray<ModalViewController*> *ModalViewControllers = nil;
     };
 
     // Create our temporary window for this modal view controller
-    ModalWindow *window = [[ModalWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    UIWindow *window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     window.rootViewController = presentingViewController;
     [window makeKeyAndVisible];
 

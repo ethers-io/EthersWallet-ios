@@ -303,8 +303,6 @@
     // Nothing to layout yet (loadView will call this again)
     if (![self isViewLoaded]) { return; }
     
-    NSLog(@"Focus: %d", focusPanel);
-    
     UIViewController *viewController = _viewController;
     
     if (focusPanel) {

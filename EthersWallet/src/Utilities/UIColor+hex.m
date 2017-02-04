@@ -54,10 +54,8 @@ float blendedByteRatio(NSUInteger hexCode, NSUInteger overHexCode, float alpha) 
     // input = (code - (1 - alpha) * overCode) / alpha
     float input = (codeRatio - (1.0f - alpha) * overCodeRatio) / alpha;
     if (input < 0.0f) {
-        NSLog(@"Color Clamped");
         input = 0.0f;
     } else if (input > 1.0f) {
-        NSLog(@"Color Clamped");
         input = 1.0f;
     }
     

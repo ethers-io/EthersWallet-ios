@@ -29,13 +29,13 @@
 
 // This is useful for testing. It prevents us from having to re-type a mnemonic
 // phrase to add or delete an account. This is BAD for production.
-#define DEBUG_SKIP_VERIFY_MNEMONIC    YES
+#define DEBUG_SKIP_VERIFY_MNEMONIC    NO
 
 
 // @TODO: These should prolly live in the ethers Framework
-#define CHAIN_ID_HOMESTEAD             0x01
-#define CHAIN_ID_MORDEN                0x02
-#define CHAIN_ID_ROPSTEN               0x03
+//#define CHAIN_ID_HOMESTEAD             0x01
+//#define CHAIN_ID_MORDEN                0x02
+//#define CHAIN_ID_ROPSTEN               0x03
 
 
 //@import CoreText;
@@ -785,7 +785,6 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
 #pragma mark - User Interface
 
 - (void)updateEtherPriceLabel {
-    NSLog(@"Ether Price: $%.02f/ether", self.etherPrice);
     _etherPriceLabel.text = [NSString stringWithFormat:@"$%.02f\u2009/\u2009ether", self.etherPrice];
 }
 
@@ -876,20 +875,16 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
 - (void)sendTransaction: (Transaction*)transaction firm: (BOOL)firm callback:(void (^)(Hash*, NSError*))callback {
     Address *activeAccount = _activeAccount;
     
-    if (!transaction.gasLimit) {
+    if ([transaction.gasLimit isZero]) {
         transaction.gasLimit = [BigNumber bigNumberWithDecimalString:@"1000000"];
     }
    
-    if (!transaction.gasPrice) {
+    if ([transaction.gasPrice isZero]) {
         transaction.gasPrice = self.gasPrice;
     }
     
-    if (!transaction.value) {
-        transaction.value = [BigNumber constantZero];
-    }
-    
     transaction.nonce = [self nonceForAddress:activeAccount];
-    transaction.chainId = (_provider.testnet ? CHAIN_ID_ROPSTEN: CHAIN_ID_HOMESTEAD);
+    transaction.chainId = (_provider.testnet ? ChainIdRopsten: ChainIdHomestead);
 
     NSLog(@"Transaction: %@", transaction);
 
