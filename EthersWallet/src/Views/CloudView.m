@@ -32,8 +32,6 @@
     UIView *_cloudBackground, *_cloudsForeground;
 }
 
-@property (nonatomic, readonly) NSMutableArray *clouds;
-
 @end
 
 @implementation CloudView
@@ -42,7 +40,6 @@
     self = [super initWithFrame:frame];
     if (self) {
         
-        _clouds = [NSMutableArray arrayWithCapacity:4];
         _size = frame.size.height;
 
         CAGradientLayer *gradient = [CAGradientLayer layer];
@@ -81,17 +78,18 @@
         
         [self addSubview:_cloudBackground];
         [self addSubview:_cloudsForeground];
-
-        [self startAnimating];
-        
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(startAnimating)
-                                                     name:UIApplicationDidBecomeActiveNotification
-                                                   object:nil];
-
     }
     return self;
+}
+
+- (void)willMoveToWindow:(UIWindow *)newWindow {
+    [super willMoveToWindow:newWindow];
+
+    if (newWindow) {
+        [self startAnimating];
+    } else {
+        [self stopAnimating];
+    }
 }
 
 - (void)dealloc {
@@ -112,7 +110,7 @@
         _cloudBackground.transform = CGAffineTransformIdentity;
         [UIView animateWithDuration:31.0f * multiplier
                               delay:0.0f
-                            options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionRepeat
+                            options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionRepeat | UIViewAnimationOptionBeginFromCurrentState
                          animations:animate
                          completion:nil];
     }
@@ -127,10 +125,15 @@
         _cloudsForeground.transform = CGAffineTransformIdentity;
         [UIView animateWithDuration:10.0f *multiplier
                               delay:0.0f
-                            options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionRepeat
+                            options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionRepeat | UIViewAnimationOptionBeginFromCurrentState
                          animations:animate
                          completion:nil];
     }
+}
+
+- (void)stopAnimating {
+    [_cloudBackground.layer removeAllAnimations];
+    [_cloudsForeground.layer removeAllAnimations];
 }
 
 @end

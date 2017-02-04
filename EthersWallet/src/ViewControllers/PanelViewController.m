@@ -58,15 +58,39 @@
         
         _navigationBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 64.0f)];
         _navigationBar.items = @[self.navigationItem];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(notifyBackground)
+                                                     name:UIApplicationDidEnterBackgroundNotification
+                                                   object:nil];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(notifyForeground)
+                                                     name:UIApplicationWillEnterForegroundNotification
+                                                   object:nil];
+
     }
     return self;
+}
+
+- (void)notifyBackground {
+    // Reset the background's children animations for the screen grab
+    [_backgroundView removeFromSuperview];
+    [self.view insertSubview:_backgroundView atIndex:0];
+}
+
+- (void)notifyForeground {
+    // Restart any animations our background's children might be up to
+    [_backgroundView removeFromSuperview];
+    [self.view insertSubview:_backgroundView atIndex:0];
 }
 
 - (void)loadView {
     [super loadView];
     
+    // The bckground view is added/removed in focusPanel
     _backgroundView = [[UIView alloc] initWithFrame:self.view.bounds];
-    [self.view addSubview:_backgroundView];
+//    [self.view addSubview:_backgroundView];
     
     _tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     _tableView.backgroundColor = [UIColor clearColor];
@@ -279,6 +303,8 @@
     // Nothing to layout yet (loadView will call this again)
     if (![self isViewLoaded]) { return; }
     
+    NSLog(@"Focus: %d", focusPanel);
+    
     UIViewController *viewController = _viewController;
     
     if (focusPanel) {
@@ -295,6 +321,7 @@
         
         void (^complete)(BOOL) = ^(BOOL complete) {
             _curtainView.hidden = YES;
+            [_backgroundView removeFromSuperview];
         };
         
         if (animated) {
@@ -310,7 +337,8 @@
 
     } else {
         _curtainView.hidden = NO;
-        
+        [self.view insertSubview:_backgroundView atIndex:0];
+
         [self setupShadow:YES];
         
         void (^animate)() = ^() {
