@@ -25,6 +25,7 @@
 
 #import "Utilities.h"
 
+#import <ethers/Promise.h>
 #import "UIColor+hex.h"
 
 
@@ -104,6 +105,8 @@ static NSCalendar *Calendar = nil;
 static NSDateFormatter *DateFormat = nil;
 static NSDateFormatter *TimeFormat = nil;
 
+static NSMutableDictionary *FetchDedup = nil;
+
 + (void)initialize {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -121,10 +124,10 @@ static NSDateFormatter *TimeFormat = nil;
         TimeFormat = [[NSDateFormatter alloc] init];
         TimeFormat.locale = [NSLocale currentLocale];
         [TimeFormat setTimeStyle:NSDateFormatterShortStyle];
-        //        [TimeFormat setDateFormat:@"HH:mm"];
         
         // @TODO: Add notification to regenerate these on local change
 
+        FetchDedup = [NSMutableDictionary dictionary];
     });
 }
 
@@ -234,6 +237,65 @@ static NSDateFormatter *TimeFormat = nil;
 + (UIImage*)qrCodeForData: (NSData*)data width: (CGFloat)width color: (UIColor*)color padding:(CGFloat)padding {
 //UIImage* qrCodeForData(NSData *data, CGFloat width, CGFloat scale, UIColor *color) {
     return createNonInterpolatedUIImageFromCIImage(createQRForString(data, color), width, padding, [UIScreen mainScreen].scale);
+}
+
++ (DataPromise*)fetchUrl: (NSString*)url body: (NSData*)body dedupToken: (NSString*)dedupToken {
+    DataPromise *promise = nil;
+    
+    @synchronized (FetchDedup) {
+        promise = [FetchDedup objectForKey:dedupToken];
+        
+        if (promise) { return promise; }
+
+        promise = [DataPromise promiseWithSetup:^(Promise *promise) {
+            void (^handleResponse)(NSData*, NSURLResponse*, NSError*) = ^(NSData *data, NSURLResponse *response, NSError *error) {
+                if (error) {
+                    [promise reject:error];
+                    return;
+                }
+                
+                if (![response isKindOfClass:[NSHTTPURLResponse class]]) {
+                    NSDictionary *userInfo = @{@"reason": @"response not NSHTTPURLResponse", @"url": url};
+                    [promise reject:[NSError errorWithDomain:@"UtilityError" code:0 userInfo:userInfo]];
+                    return;
+                }
+                
+                NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
+                if (httpResponse.statusCode != 200) {
+                    NSDictionary *userInfo = @{@"statusCode": @(httpResponse.statusCode), @"url": url};
+                    [promise reject:[NSError errorWithDomain:@"UtilityError" code:0 userInfo:userInfo]];
+                    return;
+                }
+                
+                [promise resolve:data];
+            };
+            
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^() {
+                NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
+                [request setValue:[Utilities userAgent] forHTTPHeaderField:@"User-Agent"];
+                
+                if (body) {
+                    [request setHTTPMethod:@"POST"];
+                    [request setValue:[NSString stringWithFormat:@"%d", (int)body.length] forHTTPHeaderField:@"Content-Length"];
+                    [request setHTTPBody:body];
+                }
+                
+                NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
+                NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:handleResponse];
+                [task resume];
+            });
+        }];
+    
+        [FetchDedup setObject:promise forKey:dedupToken];
+    }
+    
+    [promise onCompletion:^(DataPromise *promise) {
+        @synchronized (FetchDedup) {
+            [FetchDedup removeObjectForKey:dedupToken];
+        }
+    }];
+    
+    return promise;
 }
 
 + (NSString*)userAgent {

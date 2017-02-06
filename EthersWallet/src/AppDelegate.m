@@ -27,8 +27,12 @@
 
 @import NotificationCenter;
 
+#import <ethers/SecureData.h>
+#import <ethers/Transaction.h>
+
 #import "ApplicationViewController.h"
 #import "CloudView.h"
+#import "InfoViewController.h"
 #import "ModalViewController.h"
 #import "PanelViewController.h"
 #import "ScannerViewController.h"
@@ -40,12 +44,20 @@
 
 //#import "LightClientProvider.h"
 
+#define CANARY_ADDRESS    @"0x70C14080922f091fD7d0E891eB483C9f8464a527"
+
+static NSString *CanaryUrl = @"https://ethers.io/canary.raw";
+
+// Test URL
+//static NSString *CanaryUrl = @"https://ethers.io/canary-test.raw";
+
+static Address *CanaryAddress = nil;
+static NSString *CanaryVersion = nil;
+
 @interface AppDelegate () <PanelViewControllerDataSource, ScannerDelegate> {
     UIWindow *_window;
     Provider *_debugProvider;
     PanelViewController *_panelViewController;
-    
-//    LightClientProvider *_lightClient;
     
     Wallet *_wallet;
     
@@ -61,6 +73,19 @@
 @implementation AppDelegate
 
 #pragma mark - Life-Cycle
+
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        CanaryAddress = [Address addressWithString:CANARY_ADDRESS];
+        
+        NSDictionary *info = [[NSBundle mainBundle] infoDictionary];
+        CanaryVersion = [NSString stringWithFormat:@"%@/%@", [info objectForKey:@"CFBundleIdentifier"],
+                         [info objectForKey:@"CFBundleShortVersionString"]];
+        
+        NSLog(@"Canary Version: %@", CanaryVersion);
+    });
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
@@ -141,6 +166,8 @@
     
     [self notifyExtensions];
     
+    [self checkCanary];
+    
     return YES;
 }
 
@@ -152,13 +179,13 @@
     if (_wallet.provider.testnet) {
         _applicationTitles = @[@"Welcome", @"Testnet Faucet"];
         _applicationUrls = @[
-                             @"https://0x5543707cc4520f3984656e8edea6527ca474e77b.ethers.space/",
+                             @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
                              @"https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/"
                              ];
     } else {
         _applicationTitles = @[@"Welcome", @"DevCon2 PoA"];
         _applicationUrls = @[
-                             @"https://0x5543707cc4520f3984656e8edea6527ca474e77b.ethers.space/",
+                             @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
                              @"https://0x2f2ab85f856ec137699cbe5d8038110dd7ce9cbe.ethers.space/"
                              ];
     }
@@ -254,6 +281,7 @@
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     [self checkAndAlertPasteboard];
+    [self checkCanary];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
@@ -265,6 +293,101 @@
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+}
+
+
+#pragma mark - Canary
+
+- (BOOL)matchesCanaryVersion: (NSString*)version {
+    return [CanaryVersion isEqual:version];
+}
+
+- (void)checkCanary {
+    NSLog(@"Check Canary");
+
+    [[Utilities fetchUrl:CanaryUrl body:nil dedupToken:@"AppDelegate-Canary"] onCompletion:^(DataPromise *promise) {
+        if (promise.error) {
+            NSLog(@"Canary Fetch Error: %@", promise);
+            return;
+        }
+        
+        NSString *hexTransaction = [[NSString alloc] initWithData:promise.value encoding:NSUTF8StringEncoding];
+        hexTransaction = [hexTransaction stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSData *data = [SecureData hexStringToData:hexTransaction];
+        if (!data) { return; }
+        Transaction *transaction = [Transaction transactionWithData:data];
+        if (!transaction || !transaction.data || ![transaction.fromAddress isEqualToAddress:CanaryAddress]) {
+            return;
+        }
+        
+        NSError *error = nil;
+        NSDictionary *payload = [NSJSONSerialization JSONObjectWithData:transaction.data options:0 error:&error];
+        if (![payload isKindOfClass:[NSDictionary class]]) { return; }
+        
+        NSLog(@"Canary Payload: %@", payload);
+        
+        if (![[payload objectForKey:@"version"] isEqual:@"0.1"]) { return; }
+        
+        NSArray *alerts = [payload objectForKey:@"alerts"];
+        if (![alerts isKindOfClass:[NSArray class]]) { return; }
+        
+        for (NSDictionary *alert in alerts) {
+            if ([alerts isKindOfClass:[NSDictionary class]]) { continue; }
+            
+            NSArray *affectedVersions = [alert objectForKey:@"affectedVersions"];
+            if (![affectedVersions isKindOfClass:[NSArray class]]) { continue; }
+            
+            BOOL affected = NO;
+            for (NSString *affectedVersion in affectedVersions) {
+                if ([self matchesCanaryVersion:affectedVersion]) {
+                    affected = YES;
+                    continue;
+                }
+            }
+            
+            if (!affected) { continue; }
+            
+            NSString *heading = [alert objectForKey:@"heading"];
+            if (![heading isKindOfClass:[NSString class]]) { continue; }
+            
+            NSArray *texts = [alert objectForKey:@"text"];
+            if (![texts isKindOfClass:[NSArray class]]) { continue; }
+            BOOL validText = YES;
+            for (NSString *text in texts) {
+                if (![text isKindOfClass:[NSString class]]) {
+                    validText = NO;
+                    break;
+                }
+            }
+            if (!validText) { continue; }
+            
+            NSString *button = [alert objectForKey:@"button"];
+            if (![button isKindOfClass:[NSString class]]) { continue; }
+            
+            InfoNavigationController *navigationController = [InfoViewController rootInfoViewControllerWithCompletionCallback:nil];
+            navigationController.rootInfoViewController.setupView = ^(InfoViewController *info) {
+                [info addFlexibleGap];
+                [info addHeadingText:heading];
+                [info addFlexibleGap];
+                for (NSString *text in texts) {
+                    [info addMarkdown:text fontSize:18.0f];
+                }
+                [info addFlexibleGap];
+                [info addButton:button action:^() {
+                    [navigationController dismissWithNil];
+                }];
+                [info addGap:44.0f];
+                
+                info.navigationItem.titleView = [Utilities navigationBarLogoTitle];
+                info.navigationItem.leftBarButtonItem = nil;
+            };
+            
+
+            [ModalViewController presentViewController:navigationController animated:YES completion:nil];
+
+            break;
+        }
+    }];
 }
 
 
