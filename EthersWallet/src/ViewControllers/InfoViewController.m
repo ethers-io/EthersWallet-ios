@@ -902,6 +902,8 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 }
 
 - (UITextView*)addMarkdown: (NSString*)markdown fontSize: (CGFloat)fontSize {
+    if (!markdown) { markdown = @""; }
+    
     CGFloat padding = 15.0f;
     if ([markdown hasPrefix:@">"]) {
         padding = 50.0f;
