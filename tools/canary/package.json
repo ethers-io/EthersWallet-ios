@@ -1,0 +1,14 @@
+{
+  "name": "ethers-canary",
+  "version": "0.0.1",
+  "description": "Script to generate and sign the https://ethers.io/canary.raw file.",
+  "main": "index.js",
+  "dependencies": {
+    "ethers-wallet": "1.0.10"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Richard Moore <me@ricmoo.com>",
+  "license": "MIT"
+}

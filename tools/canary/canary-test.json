@@ -1,0 +1,20 @@
+{
+    "version": "0.1",
+    "alerts": [
+        {
+            "affectedVersions": [
+                "io.ethers.app/0.1"
+            ],
+            "heading": "Warning",
+            "text": [
+                "This is a test of the **emergency canary** system.",
+                "This is only a drill.",
+                "",
+                "If this had been a real emergency, this would have included the problem and possible solutions.",
+                "",
+                ""
+            ],
+            "button": "I Agree"
+        }
+    ]
+}
