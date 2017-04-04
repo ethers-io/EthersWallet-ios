@@ -876,7 +876,8 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
     Address *activeAccount = _activeAccount;
     
     if ([transaction.gasLimit isZero]) {
-        transaction.gasLimit = [BigNumber bigNumberWithDecimalString:@"1000000"];
+        //transaction.gasLimit = [BigNumber bigNumberWithDecimalString:@"1000000"];
+        transaction.gasLimit = [BigNumber bigNumberWithDecimalString:@"21000"];
     }
    
     if ([transaction.gasPrice isZero]) {
@@ -1071,28 +1072,63 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
             if ([textField.text hasPrefix:@"Ξ\u2009"]) {
                 textField.text = [textField.text substringFromIndex:2];
             }
-            
+
+            NSString *text = textField.text;
+            if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+                text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
+            }
+
             // If there is no meaningful amount, clear the whole field
-            if ([[Payment parseEther:textField.text] isEqual:[BigNumber constantZero]]) {
+            if ([[Payment parseEther:text] isEqual:[BigNumber constantZero]]) {
                 textField.text = @"";
             }
         };
+        
         amountTextField.didChangeText = ^(BlockTextField *textField) {
             NSLog(@"Changed: %@", textField.text);
-            transaction.value = [Payment parseEther:textField.text];
+            
+            NSString *text = textField.text;
+            if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+                text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
+            }
+            
+            transaction.value = [Payment parseEther:text];
         };
+        
         amountTextField.didEndEditing = ^(BlockTextField *textField) {
-            BigNumber *value = [Payment parseEther:textField.text];
+
+            NSString *text = textField.text;
+            if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+                text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
+            }
+
+            BigNumber *value = [Payment parseEther:text];
             if (!value) { value = [BigNumber constantZero]; }
-            textField.text = [@"Ξ\u2009" stringByAppendingString:[Payment formatEther:value]];
+            
+            NSString *ether = [Payment formatEther:value];
+            if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+                ether = [ether stringByReplacingOccurrencesOfString:@"." withString:@","];
+            }
+            
+            textField.text = [@"Ξ\u2009" stringByAppendingString:ether];
         };
         amountTextField.inputAccessoryView = inputView;
         amountTextField.keyboardType = UIKeyboardTypeDecimalPad;
-        amountTextField.text = [@"Ξ\u2009" stringByAppendingString:[Payment formatEther:transaction.value]];
+        
+        NSString *ether = [Payment formatEther:transaction.value];
+        if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+            ether = [ether stringByReplacingOccurrencesOfString:@"." withString:@","];
+        }
+        amountTextField.text = [@"Ξ\u2009" stringByAppendingString:ether];
+        
         amountTextField.shouldChangeText = ^BOOL(BlockTextField *textField, NSRange range, NSString *string) {
-            NSString *newText = [textField.text stringByReplacingCharactersInRange:range withString:string];
+            NSString *text = [textField.text stringByReplacingCharactersInRange:range withString:string];
             
-            return (newText.length == 0 || [newText isEqualToString:@"."] || [Payment parseEther:newText] != nil);
+            if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+                text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
+            }
+
+            return (text.length == 0 || [text isEqualToString:@"."] || [Payment parseEther:text] != nil);
         };
         amountTextField.shouldReturn = ^BOOL(BlockTextField *textField) {
             if (passwordTextField.userInteractionEnabled) {
