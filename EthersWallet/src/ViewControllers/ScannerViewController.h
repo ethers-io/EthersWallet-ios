@@ -30,8 +30,8 @@
 
 @protocol ScannerDelegate <NSObject>
 
-- (BOOL)scannerViewController: (ScannerViewController*)scannerViewController shouldFinishWithMessage: (NSString*)message;
-- (void)scannerViewController: (ScannerViewController*)scannerViewController didFinishWithMessage: (NSString*)message;
+- (BOOL)scannerViewController: (ScannerViewController*)scannerViewController shouldFinishWithMessages: (NSArray<NSString*>*)messages;
+- (void)scannerViewController: (ScannerViewController*)scannerViewController didFinishWithMessages: (NSArray<NSString*>*)messages;
 
 @end
 

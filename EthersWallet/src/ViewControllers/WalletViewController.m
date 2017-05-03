@@ -680,10 +680,10 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 }
 */
 
-- (void)scannerViewController: (ScannerViewController*)scannerViewController didFinishWithMessage: (NSString*)message {
+- (void)scannerViewController:(ScannerViewController *)scannerViewController didFinishWithMessages:(NSArray<NSString *> *)messages {
     [self dismissViewControllerAnimated:YES completion:^() {
-        if (message) {
-            Payment *payment = [Payment paymentWithURI:message];
+        if (messages.count > 0) {
+            Payment *payment = [Payment paymentWithURI:[messages firstObject]];
             [_wallet sendPayment:payment callback:^(Hash *transactionHash, NSError *error) {
                 NSLog(@"TXHASH: %@ %@", transactionHash, error);
             }];
@@ -691,8 +691,8 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     }];
 }
 
-- (BOOL)scannerViewController: (ScannerViewController*)scannerViewController shouldFinishWithMessage: (NSString*)message {
-    return (([Payment paymentWithURI:message]) != nil);
+- (BOOL)scannerViewController: (ScannerViewController*)scannerViewController shouldFinishWithMessages: (NSArray<NSString*>*)messages {
+    return (messages.count > 0 && ([Payment paymentWithURI:[messages firstObject]]) != nil);
 }
 
 - (void)getSendAmount: (void (^)(BigNumber *wei))callback {

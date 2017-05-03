@@ -188,11 +188,31 @@ CGPoint pointFromArray(NSArray *points, int index) {
     NSError *error = nil;
     if ([videoCaptureDevice lockForConfiguration:&error]) {
         if (videoCaptureDevice.isAutoFocusRangeRestrictionSupported) {
+            NSLog(@"AutoRange");
             [videoCaptureDevice setAutoFocusRangeRestriction:AVCaptureAutoFocusRangeRestrictionNear];
         }
-        if ([videoCaptureDevice isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]) {
-            [videoCaptureDevice setFocusMode:AVCaptureFocusModeContinuousAutoFocus];
+//        if ([videoCaptureDevice isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]) {
+//            NSLog(@"AutoFocus");
+//            [videoCaptureDevice setFocusMode:AVCaptureFocusModeContinuousAutoFocus];
+//        }
+        if ([videoCaptureDevice isExposureModeSupported:AVCaptureExposureModeAutoExpose]) {
+            NSLog(@"AutoExpose");
+            [videoCaptureDevice setExposureMode:AVCaptureExposureModeCustom];
         }
+        
+        CMTime exposure = videoCaptureDevice.exposureDuration;
+        NSLog(@"Foo: %lld %d", exposure.value, exposure.timescale);
+        exposure.value = 1;
+        exposure.timescale = 80;
+//        CMTime maxExposure = videoCaptureDevice.activeFormat.maxExposureDuration;
+        
+//        exposure.value += 0.(maxExposure.value - exposure.value);
+        
+        float iso = videoCaptureDevice.activeFormat.minISO + 0.2f * (videoCaptureDevice.activeFormat.maxISO - videoCaptureDevice.activeFormat.minISO);
+        [videoCaptureDevice setExposureModeCustomWithDuration:exposure
+                                                          ISO:iso
+                                            completionHandler:^(CMTime syncTime) { NSLog(@"Done"); }];
+        
         [videoCaptureDevice unlockForConfiguration];
     } else {
         NSLog(@"Could not configure video capture device: %@", error);
@@ -202,7 +222,7 @@ CGPoint pointFromArray(NSArray *points, int index) {
     AVCaptureDeviceInput *videoInput = [AVCaptureDeviceInput deviceInputWithDevice:videoCaptureDevice error:&error];
     if(videoInput) {
         _captureSession = [[AVCaptureSession alloc] init];
-        [_captureSession setSessionPreset:AVCaptureSessionPreset640x480];
+        [_captureSession setSessionPreset:AVCaptureSessionPreset1280x720];
         
         [_captureSession addInput:videoInput];
     } else {
@@ -318,28 +338,34 @@ CGPoint pointFromArray(NSArray *points, int index) {
 - (void)tapCancel {
     [self stop];
 
-    if ([_delegate respondsToSelector:@selector(scannerViewController:didFinishWithMessage:)]) {
-        [_delegate scannerViewController:self didFinishWithMessage:nil];
+    if ([_delegate respondsToSelector:@selector(scannerViewController:didFinishWithMessages:)]) {
+        [_delegate scannerViewController:self didFinishWithMessages:nil];
     }
 }
 
-- (void)sendMessage: (NSString*)message {
+- (void)sendMessages: (NSArray<NSString*>*)messages {
     [self stop];
     
     _cameraRollButton.enabled = NO;
     self.navigationItem.rightBarButtonItem.enabled = NO;
     
-    if ([_delegate respondsToSelector:@selector(scannerViewController:didFinishWithMessage:)]) {
+    if ([_delegate respondsToSelector:@selector(scannerViewController:didFinishWithMessages:)]) {
         __weak NSObject<ScannerDelegate> *weakDelegate = _delegate;
         [NSTimer scheduledTimerWithTimeInterval:1.0f repeats:NO block:^(NSTimer *timer) {
-            [weakDelegate scannerViewController:self didFinishWithMessage:message];
+            [weakDelegate scannerViewController:self didFinishWithMessages:messages];
         }];
     }
 }
 
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputMetadataObjects:(NSArray *)metadataObjects fromConnection:(AVCaptureConnection *)connection {
     
+    int i = 0;
+    
+    NSMutableArray<NSString*> *messages = [NSMutableArray arrayWithCapacity:1];
+    
     for (AVMetadataObject *metadataObject in metadataObjects) {
+        i++;
+        
         if (![metadataObject isKindOfClass:[AVMetadataMachineReadableCodeObject class]]) {
             continue;
         }
@@ -349,15 +375,16 @@ CGPoint pointFromArray(NSArray *points, int index) {
         NSString *message = readableObject.stringValue;
         if (!message) { continue; }
 
-        NSArray *corners = readableObject.corners;
-        if (corners.count != 4) { continue; }
+        NSLog(@"Message: %d %@", i, message);
+        [messages addObject:message];
+        //continue;
         
-        BOOL shouldFinish = YES;
-        if ([_delegate respondsToSelector:@selector(scannerViewController:shouldFinishWithMessage:)]) {
-            shouldFinish = [_delegate scannerViewController:self shouldFinishWithMessage:message];
-        }
+        
+        /*
+         NSArray *corners = readableObject.corners;
+         if (corners.count != 4) { continue; }
 
-        if (shouldFinish) {
+         if (shouldFinish) {
             [self showMessage:nil timeout:0.0f];
             
             CGPoint topLeft = pointFromArray(corners, 0);
@@ -366,10 +393,23 @@ CGPoint pointFromArray(NSArray *points, int index) {
             CGPoint topRight = pointFromArray(corners, 3);
             NSLog(@"Points: %@ %@ %@ %@", NSStringFromCGPoint(topLeft), NSStringFromCGPoint(topRight), NSStringFromCGPoint(bottomRight), NSStringFromCGPoint(bottomLeft));
             
-            [self sendMessage:message];
             break;
         
         } else if (!_messageTimer) {
+        }
+        */
+    }
+    
+    NSLog(@"Messges: %@", messages);
+    
+    if ([_delegate respondsToSelector:@selector(scannerViewController:shouldFinishWithMessages:)]) {
+        NSLog(@"FOO1");
+        if ([_delegate scannerViewController:self shouldFinishWithMessages:messages]) {
+            NSLog(@"FOO2");
+            [self showMessage:nil timeout:0.0f];
+            [self sendMessages:messages];
+        
+        } else if (messages.count) {
             [self showMessage:@"Unsupported QR code." timeout:1.0f];
         }
     }
@@ -511,22 +551,23 @@ CGPoint pointFromArray(NSArray *points, int index) {
         [self showMessage:@"No QR code found." timeout:0.0f];
     
     } else {
-        NSString *message = [[features firstObject] messageString];
+        NSMutableArray<NSString*> *messages = [NSMutableArray arrayWithCapacity:1];
+        for (NSInteger i = 0; i < features.count; i++) {
+            [messages addObject:[[features objectAtIndex:i] messageString]];
+        }
+        NSLog(@"Messages 4: %@", messages);
         
-        BOOL shouldFinish = YES;
-        if ([_delegate respondsToSelector:@selector(scannerViewController:shouldFinishWithMessage:)]) {
-            shouldFinish = [_delegate scannerViewController:self shouldFinishWithMessage:message];
+        if ([_delegate respondsToSelector:@selector(scannerViewController:shouldFinishWithMessages:)]) {
+            if ([_delegate scannerViewController:self shouldFinishWithMessages:messages]) {
+                [self sendMessages:messages];
+            } else {
+                _cameraRollButton.enabled = YES;
+                self.navigationItem.rightBarButtonItem.enabled = YES;
+                
+                [self showMessage:@"Unsupported QR code." timeout:0.0f];
+            }
         }
         
-        if (shouldFinish) {
-            [self sendMessage:message];
-        
-        } else {
-            _cameraRollButton.enabled = YES;
-            self.navigationItem.rightBarButtonItem.enabled = YES;
-
-            [self showMessage:@"Unsupported QR code." timeout:0.0f];
-        }
     }
 }
 
