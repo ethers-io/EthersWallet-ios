@@ -168,6 +168,14 @@ static NSString *CanaryVersion = nil;
     
     [self checkCanary];
     
+    /*
+    [NSTimer scheduledTimerWithTimeInterval:1.0f repeats:NO block:^(NSTimer *timer) {
+        [_wallet sendPayment:[Payment paymentWithURI:@"IBAN:0x06B5955A67D827CDF91823E3bB8F069e6c89c1D6?amount=1.234"] callback:^(Hash *hash, NSError *error) {
+            NSLog(@"Sent: %@ %@", hash, error);
+        }];
+    }];
+     */
+    
     return YES;
 }
 
@@ -373,7 +381,7 @@ static NSString *CanaryVersion = nil;
                     [info addMarkdown:text fontSize:18.0f];
                 }
                 [info addFlexibleGap];
-                [info addButton:button action:^() {
+                [info addButton:button action:^(UIButton *button) {
                     [navigationController dismissWithNil];
                 }];
                 [info addGap:44.0f];

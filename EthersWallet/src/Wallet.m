@@ -55,6 +55,8 @@
 #import "UIColor+hex.h"
 #import "Utilities.h"
 
+#define MIN_PASSWORD_LENGTH       6
+
 
 #pragma mark - Service Credentials
 
@@ -66,7 +68,6 @@
 NSErrorDomain WalletErrorDomain = @"WalletErrorDomain";
 
 
-#define MIN_PASSWORD_LENGTH       6
 
 NSString *shortAddress(Address *address) {
     NSString *hex = address.checksumAddress;
@@ -240,16 +241,6 @@ NSDictionary<Address*, NSString*> *getKeychainNicknames(NSString *keychainKey) {
         return nil;
     }
     
-    /*
-     CachedDataStore *dataStore = [[CachedDataStore alloc] initWithKey:@"debug"];
-     NSMutableArray *calls = [[dataStore arrayForKey:@"status"] mutableCopy];
-     if (!calls) { calls = [NSMutableArray array]; }
-     [calls addObject:@(status)];
-     [dataStore setArray:calls forKey:@"status"];
-     
-     NSLog(@"Calls: %@", calls);
-     */
-    
     if (result) { CFRelease(result); }
     
     return values;
@@ -337,11 +328,13 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
     IntegerPromise *_refreshPromise;
     
     UILabel *_etherPriceLabel;
+    UIBarButtonItem *_maxButton;
     
     NSTimer *_refreshKeychainTimer;
     //    BOOL _enableLightClient, _disableFallback, _enableTestnet;
     //    NSString *_customNode;
 }
+
 
 + (void)initialize {
     static dispatch_once_t onceToken;
@@ -371,6 +364,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         _transactions = [NSMutableDictionary dictionary];
 
         _orderedAddresses = [NSMutableArray array];
+        
         NSArray<NSString*> *addresses = [_dataStore arrayForKey:DataStoreKeyUserAccounts];
         for (NSString *addressString in addresses) {
             Address *address = [Address addressWithString:addressString];
@@ -392,12 +386,8 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
             _activeAccount = [_orderedAddresses firstObject];
         }
         
-        _etherPriceLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 200.0f, 44.0f)];
-        _etherPriceLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
-        _etherPriceLabel.textColor = [UIColor colorWithWhite:0.5f alpha:1.0f];
-        _etherPriceLabel.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
-        [self updateEtherPriceLabel];
-
+        [InfoViewController setEtherPrice:self.etherPrice];
+        
         [self setupProvider:NO];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -529,6 +519,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
     
     // Try loading the keychain entries (only works if teh device is unlocked)
     NSDictionary<Address*, NSString*> *accountNicknames = getKeychainNicknames(_keychainKey);
+    
     if (accountNicknames) {
         NSMutableSet *newAccounts = [NSMutableSet set];
         
@@ -604,7 +595,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         
         [self saveAccountOrder];
     }
-
+    
     // Make sure our active account makes sense (if deleted, select a new account; if none, set to nil)
     [self refreshActiveAccount];
 }
@@ -618,7 +609,6 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
     if (etherPrice != 0.0f && etherPrice != self.etherPrice) {
         [self setEtherPrice:etherPrice];
     }
-    [self updateEtherPriceLabel];
 }
 
 - (void)notifyBlockNumber: (NSNotification*)note {
@@ -784,9 +774,9 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
 
 #pragma mark - User Interface
 
-- (void)updateEtherPriceLabel {
-    _etherPriceLabel.text = [NSString stringWithFormat:@"$%.02f\u2009/\u2009ether", self.etherPrice];
-}
+//- (void)updateEtherPriceLabel {
+//    _etherPriceLabel.text = [NSString stringWithFormat:@"$%.02f\u2009/\u2009ether", self.etherPrice];
+//}
 
 
 #pragma mark Root-Level Screens
@@ -810,10 +800,10 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         [info addText:@"How would you like to add an account?" fontSize:17.0f];
         [info addFlexibleGap];
         [info addFlexibleGap];
-        [info addButton:@"Create New Account" action:^() {
+        [info addButton:@"Create New Account" action:^(UIButton *button) {
             [self infoCreateAccount:navigationController];
         }];
-        [info addButton:@"Import Existing Account" action:^() {
+        [info addButton:@"Import Existing Account" action:^(UIButton *button) {
             [self infoImportAccount:navigationController];
         }];
         [info addGap:44.0f];
@@ -843,11 +833,11 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         [info addFlexibleGap];
         [info addFlexibleGap];
         
-        [info addButton:@"View Backup Phrase" action:^() {
+        [info addButton:@"View Backup Phrase" action:^(UIButton *button) {
             [self infoViewAccount:navigationController address:address];
         }];
         
-        [info addButton:@"Delete Account" action:^() {
+        [info addButton:@"Delete Account" action:^(UIButton *button) {
             [self infoRemoveAccount:navigationController address:address];
         }];
         
@@ -873,13 +863,10 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
 }
 
 - (void)sendTransaction: (Transaction*)transaction firm: (BOOL)firm callback:(void (^)(Hash*, NSError*))callback {
+    NSLog(@"Transaction (initial): %@", transaction);
+
     Address *activeAccount = _activeAccount;
     
-    if ([transaction.gasLimit isZero]) {
-        //transaction.gasLimit = [BigNumber bigNumberWithDecimalString:@"1000000"];
-        transaction.gasLimit = [BigNumber bigNumberWithDecimalString:@"21000"];
-    }
-   
     if ([transaction.gasPrice isZero]) {
         transaction.gasPrice = self.gasPrice;
     }
@@ -887,9 +874,11 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
     transaction.nonce = [self nonceForAddress:activeAccount];
     transaction.chainId = (_provider.testnet ? ChainIdRopsten: ChainIdHomestead);
 
-    NSLog(@"Transaction: %@", transaction);
+    BigNumberPromise *balancePromise = [_provider getBalance:activeAccount];
+    DataPromise *codePromise = [_provider getCode:transaction.toAddress];
+    BigNumberPromise *gasEstimatePromise = [_provider estimateGas:transaction];
 
-    __block NSError *completionError = nil;
+    //__block NSError *completionError = nil;
     
     void (^completionCallback)(NSObject*) = ^(NSObject *result) {
         if (!callback) { return; }
@@ -898,62 +887,151 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
             callback((Hash*)result, nil);
        
         } else {
-            if (completionError) {
-                callback(nil, completionError);
-            } else {
-                callback(nil, [NSError errorWithDomain:WalletErrorDomain code:kWalletErrorSendCancelled userInfo:@{}]);
-            }
+            //if (completionError) {
+                //callback(nil, completionError);
+            //} else {
+            callback(nil, [NSError errorWithDomain:WalletErrorDomain code:kWalletErrorSendCancelled userInfo:@{}]);
+            //}
         }
     };
     
     InfoNavigationController *navigationController = [InfoViewController rootInfoViewControllerWithCompletionCallback:completionCallback];
     
     navigationController.rootInfoViewController.setupView = ^(InfoViewController *info) {
-        __block Account* (^getAccount)(NSString*) = nil;
         
+        __block Account *account = nil;
+        
+        __block UIButton *buttonSend = nil;
+
+        __block UIButton *maxButton = nil;
+        __block BigNumber *maxSpendable = nil;
+
+        void (^didChangeValue)(InfoTextField*, BigNumber*) = ^(InfoTextField *infoTextField, BigNumber *value) {
+            NSLog(@"didChangeValue: %@ %@", infoTextField, value);
+            if (value) {
+                transaction.value = value;
+                maxButton.enabled = (maxSpendable && ![value isEqual:maxSpendable]);
+            }
+            
+            if (account) {
+                buttonSend.enabled = ([value compare:maxSpendable] != NSOrderedDescending);
+            }
+        };
+        
+        Promise *decryptedPromise = [Promise promiseWithSetup:^(Promise *promise) { } ];
+        
+        void (^decryptedAccount)(InfoTextField*, Account*) = ^(InfoTextField *infoTextField, Account *account) {
+            [decryptedPromise resolve:account];
+        };
+
+        // Layout
         [info addGap:44.0f];
         [info addHeadingText:@"Send Payment"];
         [info addText:[self nicknameForAccount:activeAccount] font:[UIFont fontWithName:FONT_ITALIC size:17.0f]];
         [info addFlexibleGap];
-        [info addSeparator:0.5f];
+        [info addSeparator];
         UILabel *toLabel = [info addLabel:@"To" value:transaction.toAddress.checksumAddress];
-        [info addSeparator:0.5f];
-        BlockTextField *amountTextField = [info addTextEntry:@"Amount" callback:^(BlockTextField *textField) { }];
-        [info addSeparator:0.5f];
+        [info addSeparator];
+        InfoTextField *amountTextField = [info addEtherEntry:@"Amount" value:transaction.value didChange:didChangeValue];
+        [info addSeparator];
         UITextView *feeTextView = [info addText:@"(estimating fee...)" font:[UIFont fontWithName:FONT_ITALIC size:12.0f]];
         [info addFlexibleGap];
-        [info addSeparator:0.5f];
-        BlockTextField *passwordTextField = [info addPasswordEntryCallback:^(BlockTextField *textField) { }];
-        [info addSeparator:0.5f];
+        [info addSeparator];
+        [info addPasswordAccount:[_jsonWallets objectForKey:activeAccount] verified:decryptedAccount];
+        [info addSeparator];
         [info addFlexibleGap];
-        UIButton *buttonSend = [info addButton:@"Send Payment" action:^() {
-            NSLog(@"Sending: account=%@ tx=%@", [_accounts objectForKey:activeAccount], transaction);
-            [[_accounts objectForKey:activeAccount] sign:transaction];
+
+        if (firm) { amountTextField.userInteractionEnabled = NO; }
+        
+        buttonSend = [info addButton:@"Send Payment" action:^(UIButton *button) {
+            [account sign:transaction];
             NSData *signedTransaction = [transaction serialize];
-            NSLog(@"Signed: %@", signedTransaction);
+            NSLog(@"Sending: account=%@ transaction=%@", account, transaction);
+
             [[_provider sendTransaction:signedTransaction] onCompletion:^(HashPromise *promise) {
-                NSLog(@"Sent Transaction: %@ %@ %@", promise.result, promise.value, promise.error);
+                NSLog(@"Sent: hash=%@ error=%@", promise.value, promise.error);
                 if (promise.error) {
+                    /*
                     NSDictionary *userInfo = @{ @"reason": [promise.error description] };
                     completionError = [NSError errorWithDomain:WalletErrorDomain
                                                           code:kWalletErrorUnknown
                                                       userInfo:userInfo];
+                     */
+                    // @TODO: Show Error
+                    NSLog(@"Error: %@", promise.error);
+                
                 } else {
                     TransactionInfo *transactionInfo = [TransactionInfo transactionInfoWithPendingTransaction:transaction hash:promise.value];
-//                    NSLog(@"Add TX: %@", transactionInfo);
                     [self addTransactionInfos:@[transactionInfo] address:activeAccount];
                     [NSTimer scheduledTimerWithTimeInterval:1.0f repeats:NO block:^(NSTimer *timer) {
                         [self refresh:nil];
                     }];
+                    
+                    [navigationController dismissWithResult:promise.value];
                 }
-                [navigationController dismissWithResult:promise.value];
             }];
         }];
+        buttonSend.enabled = NO;
+
         [info addGap:44.0f];
         
+        // Show the estimated cost once we have it
+        [gasEstimatePromise onCompletion:^(BigNumberPromise *promise) {
+            NSLog(@"Estimate: %@ %@", promise.value, promise.error);
+            if (promise.error) { return; }
+            NSString *feeEther = [Payment formatEther:[promise.value mul:self.gasPrice]
+                                              options:(EtherFormatOptionCommify | EtherFormatOptionApproximate)];
+            feeTextView.text = [NSString stringWithFormat:@"(estimated fee: Ξ\u2009%@)", feeEther];
+        }];
+        
+        __weak InfoTextField *weakAmountTextField = amountTextField;
+        
+        // Fill in the transaction and update the UI given estimated costs and EOA vs. contract.
+        ArrayPromise *transactionPromise = [Promise all:@[gasEstimatePromise, codePromise, balancePromise]];
+        [transactionPromise onCompletion:^(ArrayPromise *promise) {
+            if (promise.error) {
+                NSLog(@"Error! %@", promise.error);
+            }
+
+            BigNumber *gasEstimate = [promise.value objectAtIndex:0];
+            NSData *code = [promise.value objectAtIndex:1];
+            BigNumber *balance = [promise.value objectAtIndex:2];
+            
+            if ([transaction.gasLimit isZero]) {
+                if (code.length == 0) {
+                    transaction.gasLimit = [BigNumber bigNumberWithInteger:21000];
+                } else {
+                    transaction.gasLimit = [BigNumber bigNumberWithInteger:1000000];
+                }
+            }
+            
+            if (code.length == 0 && !firm) {
+                maxSpendable = [balance sub:[transaction.gasLimit mul:self.gasPrice]];
+                maxButton = [amountTextField setButton:@"MAX" callback:^(UIButton *button) {
+                    transaction.value = maxSpendable;
+                    [weakAmountTextField setEther:maxSpendable];
+                    maxButton.enabled = NO;
+                }];
+                maxButton.alpha = 0.0f;
+                [UIView animateWithDuration:0.5f animations:^() { maxButton.alpha = 1.0f; }];
+            }
+            
+            if ([transaction.gasLimit compare:gasEstimate] == NSOrderedAscending) {
+                NSLog(@"Warning!! Too expensive. Will prolly fail.");
+            }
+
+            NSLog(@"Transaction (populated): %@", transaction);
+        }];
+
+        // Only enable the send button after the wallet is decrypted and the transaction is ready
+        [[Promise all:@[decryptedPromise, transactionPromise]] onCompletion:^(ArrayPromise *promise) {
+            account = [promise.value objectAtIndex:0];
+            didChangeValue(weakAmountTextField, nil);
+        }];
+        
+        /*
         Account *account = [_accounts objectForKey:activeAccount];
         if (account) {
-
             LAContext *context = [[LAContext alloc] init];
             NSError *error = nil;
             
@@ -969,8 +1047,8 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
                     info.nextEnabled = NO;
                     passwordTextField.userInteractionEnabled = NO;
 
-                    passwordTextField.text = @"password";
-                    passwordTextField.status = BlockTextFieldStatusGood;
+                    //passwordTextField.text = @"password";
+                    //passwordTextField.status = InfoTextFieldStatusGood;
 
                     buttonSend.enabled = YES;
                     
@@ -1039,148 +1117,19 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
                 info.nextEnabled = YES;
             }
         }
-        
+        */
         info.navigationItem.titleView = [Utilities navigationBarLogoTitle];
         
-        UIView *inputView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, info.view.frame.size.width, 44.0f)];
-        inputView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        
-        {
-            UIToolbar *toolbar = [[UIToolbar alloc] initWithFrame:inputView.bounds];
-            toolbar.items = @[
-                              [[UIBarButtonItem alloc] initWithCustomView:_etherPriceLabel],
-                              [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
-                                                                            target:nil
-                                                                            action:nil],
-                              [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
-                                                                            target:amountTextField
-                                                                            action:@selector(resignFirstResponder)],
-                              ];
-            [inputView addSubview:toolbar];
-            
-            UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 43.5f, inputView.frame.size.width, 0.5f)];
-            separator.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-            separator.backgroundColor = [UIColor colorWithWhite:0.8f alpha:1.0f];
-            [inputView addSubview:separator];
-        }
-
         toLabel.font = [UIFont fontWithName:FONT_MONOSPACE_SMALL size:14.0f];
         toLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
-        
-        amountTextField.didBeginEditing = ^(BlockTextField *textField) {
-            // Trim off the units
-            if ([textField.text hasPrefix:@"Ξ\u2009"]) {
-                textField.text = [textField.text substringFromIndex:2];
-            }
 
-            NSString *text = textField.text;
-            if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
-                text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
-            }
 
-            // If there is no meaningful amount, clear the whole field
-            if ([[Payment parseEther:text] isEqual:[BigNumber constantZero]]) {
-                textField.text = @"";
-            }
-        };
-        
-        amountTextField.didChangeText = ^(BlockTextField *textField) {
-            NSLog(@"Changed: %@", textField.text);
-            
-            NSString *text = textField.text;
-            if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
-                text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
-            }
-            
-            transaction.value = [Payment parseEther:text];
-        };
-        
-        amountTextField.didEndEditing = ^(BlockTextField *textField) {
-
-            NSString *text = textField.text;
-            if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
-                text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
-            }
-
-            BigNumber *value = [Payment parseEther:text];
-            if (!value) { value = [BigNumber constantZero]; }
-            
-            NSString *ether = [Payment formatEther:value];
-            if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
-                ether = [ether stringByReplacingOccurrencesOfString:@"." withString:@","];
-            }
-            
-            textField.text = [@"Ξ\u2009" stringByAppendingString:ether];
-        };
-        amountTextField.inputAccessoryView = inputView;
-        amountTextField.keyboardType = UIKeyboardTypeDecimalPad;
-        
-        NSString *ether = [Payment formatEther:transaction.value];
-        if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
-            ether = [ether stringByReplacingOccurrencesOfString:@"." withString:@","];
-        }
-        amountTextField.text = [@"Ξ\u2009" stringByAppendingString:ether];
-        
-        amountTextField.shouldChangeText = ^BOOL(BlockTextField *textField, NSRange range, NSString *string) {
-            NSString *text = [textField.text stringByReplacingCharactersInRange:range withString:string];
-            
-            if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
-                text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
-            }
-
-            return (text.length == 0 || [text isEqualToString:@"."] || [Payment parseEther:text] != nil);
-        };
-        amountTextField.shouldReturn = ^BOOL(BlockTextField *textField) {
-            if (passwordTextField.userInteractionEnabled) {
-                [passwordTextField becomeFirstResponder];
-            } else {
-                [textField resignFirstResponder];
-            }
-            return YES;
-        };
         
         if (firm) {
             amountTextField.userInteractionEnabled = NO;
         }
         
-        BigNumberPromise *estimateGasPromise = [_provider estimateGas:transaction];
-        [estimateGasPromise onCompletion:^(BigNumberPromise *promise) {
-            NSLog(@"Estimate: %@ %@", promise.value, promise.error);
-            if (promise.error) { return; }
-            NSString *feeEther = [Payment formatEther:[promise.value mul:self.gasPrice]
-                                              options:(EtherFormatOptionCommify | EtherFormatOptionApproximate)];
-            feeTextView.text = [NSString stringWithFormat:@"(estimated fee: Ξ\u2009%@)", feeEther];
-        }];
-
-        
-        getAccount = [self setupCheckAddress:activeAccount passwordTextField:passwordTextField];
-        
-        passwordTextField.didChangeText = ^(BlockTextField *textField) {
-            if (textField.shouldReturn(textField)) {
-                Account *account = getAccount(textField.text);
-                [_accounts setObject:account forKey:account.address];
-
-                // Stop typing
-                if ([textField isFirstResponder]) {
-                    [textField resignFirstResponder];
-                }
-                
-                // Allow sending
-                buttonSend.enabled = YES;
-                
-                // Valid password; no need for Touch ID or any more typing
-                info.nextEnabled = NO;
-                textField.userInteractionEnabled = NO;
-            
-            } else {
-                
-                // Wrong password; Allow Touch ID
-                info.nextEnabled = YES;
-            }
-        };
-
-        buttonSend.enabled = NO;
-
+        // @TODO: Make it so when you click next on value, it takes you to the next field.
     };
     
     [ModalViewController presentViewController:navigationController animated:YES completion:nil];
@@ -1202,33 +1151,34 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         [info addMarkdown:@"This page is mainly for developers working on //Ethereum// projects. If you are here by accident, tap Done." fontSize:15.0f];
         [info addFlexibleGap];
         [info addGap:44.0f];
-        [info addSeparator:0.5f];
+        [info addSeparator];
         UISwitch *testnetToggle = [info addToggle:@"Test Network" callback:^(BOOL value) {
             [self debugSetTestnet:value];
         }];
-        [info addSeparator:0.5f];
+        [info addSeparator];
         [info addNoteText:@"The testnet network is only for devopers. Only enable this if you know what you are doing."];
         [info addGap:44.0f];
-        [info addSeparator:0.5f];
+        [info addSeparator];
         UISwitch *lightClientToggle = [info addToggle:@"Light Client" callback:^(BOOL value) {
             [self debugSetEnableLightClient:value];
         }];
-        [info addSeparator:0.5f];
-        BlockTextField *customNodeTextField = [info addTextEntry:@"Custom Node" callback:^(BlockTextField *textField) {
-            if ([textField isFirstResponder]) { [textField resignFirstResponder]; }
-        }];
-        [info addSeparator:0.5f];
+        [info addSeparator];
+        
+//        InfoTextField *customNodeTextField = [info addTextEntry:@"Custom Node" callback:^(BlockTextField *textField) {
+//            if ([textField isFirstResponder]) { [textField resignFirstResponder]; }
+//        }];
+        [info addSeparator];
         UISwitch *fallbackToggle = [info addToggle:@"Etherscan Fallback" callback:^(BOOL value) {
             [self debugSetEnableFallback:value];
         }];
-        [info addSeparator:0.5f];
+        [info addSeparator];
         [info addNoteText:@"The light client is highly experimental. If no providers are selected, Etherscan is used."];
         [info addGap:44.0f];
         [info addFlexibleGap];
         
         // Disable for now... The light client still has a long way to go.
         lightClientToggle.enabled = NO;
-        
+        /*
         customNodeTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
         customNodeTextField.autocorrectionType = UITextAutocorrectionTypeNo;
         customNodeTextField.keyboardType = UIKeyboardTypeURL;
@@ -1239,9 +1189,10 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         customNodeTextField.shouldReturn = ^BOOL(BlockTextField *textField) {
             return YES;
         };
-        
+        */
+        // @TODO: Add custom node back
         __block NSTimer *typingTimer = nil;
-        
+        /*
         customNodeTextField.didChangeText = ^(BlockTextField *textField) {
             if (typingTimer) {
                 [typingTimer invalidate];
@@ -1274,7 +1225,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
                 }];
             }];
         };
-        
+        */
         info.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
                                                                                               target:navigationController
                                                                                               action:@selector(dismissWithNil)];
@@ -1459,7 +1410,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
 
 - (void)infoRemoveAccount: (InfoNavigationController*)navigationController
                   address: (Address*)address {
-    
+    /*
     // Step 2: Agree to warning
     void (^showWarning)(Account*) = ^(Account *account) {
         
@@ -1483,7 +1434,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
                     [info addFlexibleGap];
                     [info addFlexibleGap];
                     
-                    [info addButton:@"Cancel" action:^() {
+                    [info addButton:@"Cancel" action:^(UIButton *button) {
                         [navigationController dismissWithResult:nil];
                     }];
                     
@@ -1541,6 +1492,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
                    callback:showWarning];
 
     navigationController.totalSteps = 4;
+    */
 }
 
 
@@ -1607,9 +1559,8 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         
         [info addFlexibleGap];
         
-        BlockMnemonicPhraseView *mnemonicPhraseView = [info addMnemonicPhraseView];
+        InfoMnemonicPhraseView *mnemonicPhraseView = [info addMnemonicPhraseView:mnemonicPhrase didChange:nil];
         mnemonicPhraseView.userInteractionEnabled = NO;
-        mnemonicPhraseView.mnemonicPhrase = mnemonicPhrase;
         
         [info addFlexibleGap];
         
@@ -1619,10 +1570,6 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         info.nextEnabled = YES;
         
         setupCallback(info);
-//        [info setNextTitle:nextTitle action:callback];
-//        if ([nextTitle isEqualToString:@"Done"]) {
-//            info.navigationItem.hidesBackButton = YES;
-//        }
     };
     
     [navigationController pushViewController:info animated:YES];
@@ -1637,23 +1584,21 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
     
     InfoViewController *info = [[InfoViewController alloc] init];
     info.setupView = ^(InfoViewController *info) {
+
+        __weak InfoViewController *weakInfo = info;
+        
         [info addGap:44.0f];
         [info addHeadingText:title];
         [info addGap:20.0f];
         [info addMarkdown:message fontSize:15.0f];
-        
         [info addFlexibleGap];
-        
         [info addGap:15.0f];
-        BlockMnemonicPhraseView *mnemonicPhraseView = [info addMnemonicPhraseView];
+        MnemonicPhraseView *mnemonicPhraseView = [info addMnemonicPhraseView:nil didChange:^(InfoMnemonicPhraseView *mnemonicPhraseView) {
+            weakInfo.nextEnabled = checkMnemonicPhrase(mnemonicPhraseView.mnemonicPhrase);
+        }];
         [info addGap:15.0f];
-        
         [info addFlexibleGap];
-        
-        mnemonicPhraseView.didChangeMnemonic = ^(BlockMnemonicPhraseView *mnemonicPhraseView) {
-            info.nextEnabled = checkMnemonicPhrase(mnemonicPhraseView.mnemonicPhrase);
-        };
-        
+
         [info setNextTitle:@"Next" action:^() {
             [mnemonicPhraseView resignFirstResponder];
             callback(mnemonicPhraseView.mnemonicPhrase);
@@ -1667,29 +1612,25 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
 
 
 - (void)infoGetPassword: (InfoNavigationController*)navigationController
-          setupCallback: (void (^)(BlockTextField*))setupCallback
                   title: (NSString*)title
                 message: (NSString*)message
                    note: (NSString*)note
-               callback: (void (^)(NSString*))callback {
+     setupPasswordEntry: (InfoTextField* (^)(InfoViewController*))setupPasswordEntry {
     
     InfoViewController *info = [[InfoViewController alloc] init];
     
-    void (^tapNext)(NSString*) = ^(NSString *password) {
-        callback(password);
-    };
-    
     info.setupView = ^(InfoViewController *info) {
+        
         [info addFlexibleGap];
         [info addHeadingText:title];
         [info addGap:20.0f];
         [info addMarkdown:message fontSize:15.0f];
         [info addFlexibleGap];
-        [info addSeparator:0.5f];
-        BlockTextField *textField = [info addPasswordEntryCallback:^(BlockTextField *textField) {
-            tapNext(textField.text);
-        }];
-        [info addSeparator:0.5f];
+        [info addSeparator];
+        
+        InfoTextField *infoTextField = setupPasswordEntry(info);
+        
+        [info addSeparator];
         
         // optionally add a note
         if (note.length > 0) {
@@ -1704,21 +1645,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         [info addFlexibleGap];
         [info addFlexibleGap];
         
-        // Tapping next should submit the password
-        [info setNextTitle:@"Next" action:^() {
-            tapNext(textField.text);
-        }];
-        
-//        textField.shouldReturn = shouldReturn;
-        
-        // Typing the return key should submit (if allowed)
-        textField.didChangeText = ^(BlockTextField *textField) {
-            info.nextEnabled = textField.shouldReturn(textField);
-        };
-        
-        setupCallback(textField);
-        
-        [textField becomeFirstResponder];
+        [infoTextField.textField becomeFirstResponder];
     };
     
     [navigationController pushViewController:info animated:YES];
@@ -1728,43 +1655,76 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
 - (void)infoGetAndConfirmPassword: (InfoNavigationController*)navigationController
                          callback: (void (^)(NSString*))callback {
 
-    void (^confirmPassword)(NSString*) = ^(NSString *password) {
-        void (^setup)(BlockTextField*) = ^(BlockTextField *textField) {
-            textField.shouldReturn = ^BOOL(BlockTextField *textField) {
-                return [textField.text isEqualToString:password];
-            };
-        };
+    void (^confirmPassword)(NSString*) = ^(NSString *firstPassword) {
 
+        InfoTextField* (^setupPasswordEntry)(InfoViewController*) = ^InfoTextField*(InfoViewController *info) {
+            void (^didReturn)(InfoTextField*) = ^(InfoTextField *infoTextField) {
+                callback(infoTextField.textField.text);
+            };
+
+            BOOL (^didChangePassword)(InfoTextField*) = ^BOOL(InfoTextField *infoTextField) {
+                BOOL valid = [firstPassword isEqualToString:infoTextField.textField.text];
+                info.nextEnabled = valid;
+            
+                if (valid) {
+                    // Tapping next should submit the password
+                    [info setNextTitle:@"Next" action:^() {
+                        didReturn(infoTextField);
+                    }];
+                }
+                
+                return valid;
+            };
+            
+            return [info addPasswordEntryDidChange:didChangePassword didReturn:didReturn];
+        };
+        
         [self infoGetPassword:navigationController
-                setupCallback:setup
                         title:@"Confirm Password"
                       message:@"Enter the same password again."
                          note:@""
-                     callback:callback];
+           setupPasswordEntry:setupPasswordEntry];
     };
+    
+    InfoTextField* (^setupPasswordEntry)(InfoViewController*) = ^InfoTextField*(InfoViewController *info) {
+        [info setNextTitle:@"Next" action:^() { }];
 
-    void (^setup)(BlockTextField*) = ^(BlockTextField *textField) {
-        textField.shouldReturn = ^BOOL(BlockTextField *textField) {
-            return (textField.text.length >= MIN_PASSWORD_LENGTH);
+        void (^didReturn)(InfoTextField*) = ^(InfoTextField *infoTextField) {
+            confirmPassword(infoTextField.textField.text);
         };
+
+        BOOL (^didChangePassword)(InfoTextField*) = ^BOOL(InfoTextField *infoTextField) {
+            BOOL valid = (infoTextField.textField.text.length >= MIN_PASSWORD_LENGTH);
+            info.nextEnabled = valid;
+            
+            // Tapping next should submit the password
+            if (valid) {
+                [info setNextTitle:@"Next" action:^() {
+                    didReturn(infoTextField);
+                }];
+            }
+            
+            return valid;
+        };
+
+        return [info addPasswordEntryDidChange:didChangePassword didReturn:didReturn];
     };
     
     [self infoGetPassword:navigationController
-            setupCallback:setup
                     title:@"Choose a Password"
                   message:@">Enter a password to encrypt this account on this device."
                      note:[NSString stringWithFormat:@"Password must be %d characters or longer.", MIN_PASSWORD_LENGTH]
-                 callback:confirmPassword];
+       setupPasswordEntry:setupPasswordEntry];
 }
 
-- (Account*(^)(NSString*))setupCheckAddress: (Address*)address passwordTextField: (BlockTextField*)textField {
-    
-    NSString *json = [self getJSON:address];
-    
-    // Map address to @{@"account": accountOrNil, @"error": errorOrNil} for caching
-    // scrypt kdf results
-    NSMutableDictionary *passwordToAccount = [NSMutableDictionary dictionaryWithCapacity:16];
-    
+//- (Account*(^)(NSString*))setupCheckAddress: (Address*)address passwordTextField: (InfoTextField*)textField {
+//    
+//    NSString *json = [self getJSON:address];
+//    
+//    // Map address to @{@"account": accountOrNil, @"error": errorOrNil} for caching
+//    // scrypt kdf results
+//    NSMutableDictionary *passwordToAccount = [NSMutableDictionary dictionaryWithCapacity:16];
+/*
     __block Cancellable *cancellable = nil;
     
     BOOL (^shouldReturn)(BlockTextField*) = ^BOOL(BlockTextField *textField) {
@@ -1835,38 +1795,43 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         NSString *cacheKey = [[[SecureData secureDataWithData:[password dataUsingEncoding:NSUTF8StringEncoding]] KECCAK256] hexString];
         return [[passwordToAccount objectForKey:cacheKey] objectForKey:@"account"];
     };
-    
-    return sendAccount;
-}
+     return sendAccount;
+    */
+//    return nil;
+//}
+
 
 - (void)infoCheckPassword: (InfoNavigationController*)navigationController
                   message: (NSString*)message
                   address: (Address*)address
                  callback: (void (^)(Account*))callback {
-    
-    __block Account* (^getAccount)(NSString*) = nil;
-    void (^setup)(BlockTextField*) = ^(BlockTextField *textField) {
-        getAccount = [self setupCheckAddress:address passwordTextField:textField];
-    };
-    
-    void (^sendAccount)(NSString*) = ^(NSString *password) {
-        Account *account = getAccount(password);
-        callback(account);
+
+    InfoTextField* (^setupPasswordEntry)(InfoViewController*) = ^InfoTextField*(InfoViewController *info) {
+        [info setNextTitle:@"Next" action:^() { }];
+
+        __weak InfoViewController *weakInfo = info;
+        void (^verified)(InfoTextField*, Account*) = ^(InfoTextField *infoTextField, Account *account) {
+            weakInfo.nextEnabled = YES;
+            
+            [weakInfo setNextTitle:@"Next" action:^() {
+                callback(account);
+            }];
+        };
+        
+        return [info addPasswordAccount:[self getJSON:address] verified:verified];
     };
     
     [self infoGetPassword:navigationController
-            setupCallback:setup
                     title:@"Enter Your Password"
                   message:message
                      note:@""
-                 callback:sendAccount];
+       setupPasswordEntry:setupPasswordEntry];
 }
 
 
 - (void)infoComplete: (InfoNavigationController*)navigationController
              account: (Account*)account
             password: (NSString*)password {
-    NSLog(@"Complete: %@", account);
     
     InfoViewController *info = [[InfoViewController alloc] init];
     info.setupView = ^(InfoViewController *info) {
@@ -1916,7 +1881,7 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
         
         
         [info setNextTitle:@"Done" action:^() {
-            NSLog(@"Acc: %@", account);
+            NSLog(@"Account: %@", account);
             [navigationController dismissWithResult:account];
         }];
         
@@ -1952,7 +1917,6 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
     info.navigationItem.hidesBackButton = YES;
     [navigationController pushViewController:info animated:YES];
 }
-
 
 #pragma mark - Address Operations
 
@@ -2203,7 +2167,9 @@ static NSString *DataStoreKeyUserCustomNode               = @"USER_CUSTOM_NODE";
 
 - (BOOL)setEtherPrice: (float)etherPrice {
     BOOL changed = [_dataStore setFloat:etherPrice forKey:DataStoreKeyNetworkEtherPrice];
-    [self updateEtherPriceLabel];
+    if (changed) {
+        [InfoViewController setEtherPrice:etherPrice];
+    }
     return changed;
 }
 

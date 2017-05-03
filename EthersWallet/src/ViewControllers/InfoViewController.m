@@ -25,8 +25,12 @@
 
 #import "InfoViewController.h"
 
+#import <ethers/Payment.h>
+#import <ethers/SecureData.h>
+
 #import "UIColor+hex.h"
 #import "Utilities.h"
+
 
 #pragma mark - AnimationTransition
 
@@ -179,7 +183,7 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 
 // http://stackoverflow.com/questions/3908003/uibutton-block-equivalent-to-addtargetactionforcontrolevents-method#3977305
 @interface BlockButton : UIButton {
-    void (^_action)();
+    void (^_action)(UIButton*);
 }
 
 @end
@@ -194,7 +198,7 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 }
 
 - (void)callAction: (id)sender{
-    if (_action) { _action(); }
+    if (_action) { _action(self); }
 }
 
 @end
@@ -204,14 +208,31 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 #pragma mark - BlockTextField
 
 
-@interface BlockTextField () <UITextFieldDelegate> {
+typedef enum InfoTextFieldStatus {
+    InfoTextFieldStatusNone = 0,
+    InfoTextFieldStatusGood,
+    InfoTextFieldStatusBad,
+    InfoTextFieldStatusSpinning
+} InfoTextFieldStatus;
+
+
+@interface BlockTextField : UITextField <UITextFieldDelegate> {
     UIActivityIndicatorView *_spinner;
     UILabel *_statusLabel;
 }
 
 @property (nonatomic, copy) void (^completeCallback)(BlockTextField*);
 
+@property (nonatomic, copy) BOOL (^shouldChangeText)(BlockTextField*, NSRange, NSString*);
+@property (nonatomic, copy) void (^didChangeText)(BlockTextField*);
+@property (nonatomic, copy) void (^didBeginEditing)(BlockTextField*);
+@property (nonatomic, copy) void (^didEndEditing)(BlockTextField*);
+
+@property (nonatomic, copy) BOOL (^shouldReturn)(BlockTextField*);
+
 @property (nonatomic, strong) UILabel *titleLabel;
+
+@property (nonatomic, assign) InfoTextFieldStatus status;
 
 @end
 
@@ -259,30 +280,30 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     self.attributedPlaceholder = attributedPlaceholder;
 }
 
-- (void)setStatus:(BlockTextFieldStatus)status {
+- (void)setStatus:(InfoTextFieldStatus)status {
     [self setStatus:status animated:NO];
 }
 
-- (void)setStatus:(BlockTextFieldStatus)status animated: (BOOL)animated {
+- (void)setStatus:(InfoTextFieldStatus)status animated: (BOOL)animated {
     _status = status;
     
-    if (status == BlockTextFieldStatusSpinning) {
+    if (status == InfoTextFieldStatusSpinning) {
         [_spinner startAnimating];
         _statusLabel.alpha = 0.0f;
 
     } else {
         [_spinner stopAnimating];
         
-        if (status == BlockTextFieldStatusNone) {
+        if (status == InfoTextFieldStatusNone) {
             _statusLabel.alpha = 0.0f;
         
         } else {
             
-            if (status == BlockTextFieldStatusGood) {
+            if (status == InfoTextFieldStatusGood) {
                 _statusLabel.text = @"C";
                 _statusLabel.textColor = [UIColor colorWithHex:ColorHexLightGreen];
 
-            } else if (status == BlockTextFieldStatusBad) {
+            } else if (status == InfoTextFieldStatusBad) {
                 _statusLabel.text = @"X";
                 _statusLabel.textColor = [UIColor colorWithHex:ColorHexLightRed];
             }
@@ -371,17 +392,73 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 
 @end
 
-
 #pragma mark -
-#pragma mark - BlockMnemonicPhraseView
+#pragma mark - BlockPickerView
+/*
+@interface InfoOptionsView ()
 
-@interface BlockMnemonicPhraseView () <MnemonicPhraseViewDelegate> {
+@property (nonatomic, copy) void (^callback)(InfoOptionsView*, UILabel*);
 
+@end
+
+@implementation BlockPickerLabel
+
+@end
+
+
+@interface BlockPickerView () <UIPickerViewDelegate> {
+    UIView *_pickerView;
+    NSMutableArray *_options;
+    UIView *_inputView;
 }
 
 @end
 
-@implementation BlockMnemonicPhraseView
+@implementation BlockPickerView
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        _selectedIndex = -1;
+        _options = [NSMutableArray array];
+        
+        _inputView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 100.0f)];
+        _inputView.backgroundColor = [UIColor redColor];
+        
+        self.userInteractionEnabled = YES;
+    }
+    return self;
+}
+
+- (UIView*)inputView {
+    return _inputView;
+}
+
+- (BOOL)canBecomeFirstResponder {
+    return YES;
+}
+
+
+- (UILabel*)addOptionCallback: (void (^)(BlockPickerView*, UILabel*))callback {
+    BlockPickerLabel *label = [[BlockPickerLabel alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 44.0f)];
+    label.callback = callback;
+    return label;
+}
+
+@end
+*/
+#pragma mark -
+#pragma mark - BlockMnemonicPhraseView
+
+@interface InfoMnemonicPhraseView () <MnemonicPhraseViewDelegate> {
+
+}
+
+@property (nonatomic, copy) void (^didChangeMnemonic)(InfoMnemonicPhraseView*);
+
+@end
+
+@implementation InfoMnemonicPhraseView
 
 - (instancetype)initWithFrame:(CGRect)frame withPhrase:(NSString *)phrase {
     self = [super initWithFrame:frame withPhrase:phrase];
@@ -395,6 +472,160 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     if (_didChangeMnemonic) {
         _didChangeMnemonic(self);
     }
+}
+
+@end
+
+
+#pragma mark -
+#pragma mark - InfoView
+
+@interface InfoView ()
+
+@property (nonatomic, readonly) UIView *contentView;
+@property (nonatomic, readonly) UILabel *titleLabel;
+
+@end
+
+
+@implementation InfoView
+
+- (instancetype)initWithTitle: (NSString*)title {
+    self = [super initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 50.0f)];
+    if (self){
+        
+        UIFont *labelFont = [UIFont fontWithName:FONT_BOLD size:17.0f];;
+        
+        CGSize labelSize = [title boundingRectWithSize:self.frame.size
+                                               options:NSStringDrawingUsesFontLeading
+                                            attributes:@{ NSFontAttributeName: labelFont }
+                                               context:nil].size;
+        
+        // Bold font isn't lined up with non-bold font...
+        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(15.0f, 0.0f, labelSize.width + 24.0f, 47.0f)];
+        _titleLabel.font = labelFont;
+        _titleLabel.text = title;
+        _titleLabel.textColor = [UIColor whiteColor];
+        [self addSubview:_titleLabel];
+
+        _contentView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 50.0f)];
+        [self addSubview:_contentView];
+    }
+    
+    return self;
+}
+
+- (void)layoutMaxTitleWidth: (CGFloat)width {
+    CGRect frame = _contentView.frame;
+    frame.origin.x = width;
+    frame.size.width = self.frame.size.width - width - 15.0f;
+    _contentView.frame = frame;
+}
+
+- (void)pulse {
+    void (^animate)() = ^() {
+        _titleLabel.transform = CGAffineTransformIdentity;
+    };
+    
+    _titleLabel.transform = CGAffineTransformMakeScale(0.5f, 0.5f);
+    
+    [UIView animateWithDuration:1.3f
+                          delay:0.0f
+         usingSpringWithDamping:0.4f
+          initialSpringVelocity:0.0f
+                        options:UIViewAnimationOptionBeginFromCurrentState
+                     animations:animate
+                     completion:nil];
+    
+}
+
+- (NSString*)title {
+    return _titleLabel.text;
+}
+
+@end
+
+#pragma mark -
+#pragma mark - InfoTextField
+
+@interface InfoTextField () {
+    BlockButton *_button;
+}
+
+@property (nonatomic, strong) BlockTextField *blockTextField;
+
+@end
+
+@implementation InfoTextField
+
+- (instancetype)initWithTitle: (NSString*)title completeCallback: (void (^)())completeCallback {
+    self = [super initWithTitle:title];
+    if (self) {
+        _blockTextField = [[BlockTextField alloc] initWithFrame:self.frame];
+        _blockTextField.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [self.contentView addSubview:_blockTextField];
+        
+        __weak InfoTextField *weakSelf = self;
+        _blockTextField.completeCallback = ^(BlockTextField *textField) {
+            if (completeCallback) {
+                completeCallback(weakSelf);
+            }
+        };
+        
+        _textField = _blockTextField;
+    }
+    return self;
+}
+
+- (InfoTextFieldStatus)status {
+    return _blockTextField.status;
+}
+
+- (void)setStatus:(InfoTextFieldStatus)status animated: (BOOL)animated {
+    [_blockTextField setStatus:status animated:animated];
+}
+
+- (void)setEther:(BigNumber *)ether {
+    
+    // Set the initial value
+    NSString *etherString = @"0.0";
+    if (ether) { etherString = [Payment formatEther:ether]; }
+    
+    if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+        etherString = [etherString stringByReplacingOccurrencesOfString:@"." withString:@","];
+    }
+    
+    if (self.textField.isFirstResponder) {
+        self.textField.text = etherString;
+    } else {
+        self.textField.text = [@"Ξ\u2009" stringByAppendingString:etherString];
+    }
+}
+
+- (UIButton*)setButton: (NSString*)title callback: (void (^)(UIButton*))callback {
+    if (!_button) {
+        _button = [BlockButton buttonWithType:UIButtonTypeCustom];
+        [self addSubview:_button];
+    }
+    
+    [_button handleControlEvent:UIControlEventTouchUpInside withBlock:callback];
+    [_button setTitle:title forState:UIControlStateNormal];
+
+    UIFont *font = [UIFont fontWithName:FONT_BOLD size:14.0f];
+    
+    CGSize labelSize = [title boundingRectWithSize:self.bounds.size
+                                           options:NSStringDrawingUsesFontLeading
+                                        attributes:@{ NSFontAttributeName:font }
+                                           context:nil].size;
+
+    _button.frame = CGRectMake(self.frame.size.width - labelSize.width - 20.0f, 0.0f, labelSize.width + 20, 50.0f);
+    _button.titleLabel.textAlignment = NSTextAlignmentCenter;
+    _button.titleLabel.font = font;
+    [_button setTitleColor:[UIColor colorWithHex:0x88aedf] forState:UIControlStateNormal];
+    [_button setTitleColor:[UIColor colorWithHex:0x88aedf alpha:0.5f] forState:UIControlStateHighlighted];
+    [_button setTitleColor:[UIColor colorWithHex:0x88aedf alpha:0.3f] forState:UIControlStateDisabled];
+    
+    return _button;
 }
 
 @end
@@ -536,10 +767,10 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     CGFloat _currentTop;
     NSUInteger _flexibleTag;
     
-    NSMutableArray <BlockTextField*> *_textFields;
+    //NSMutableArray <BlockTextField*> *_textFields;
     
     // We store all views that have a title, so we can align them after the view is setup
-    NSMutableArray <UIView*> *_titleViews;
+    //NSMutableArray <UIView*> *_titleViews;
     
     void (^_nextAction)();
     UIScrollView *_scrollView;
@@ -559,8 +790,8 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 - (instancetype)init {
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
-        _textFields = [NSMutableArray array];
-        _titleViews = [NSMutableArray array];
+        //_textFields = [NSMutableArray array];
+        //_titleViews = [NSMutableArray array];
     }
     return self;
 }
@@ -733,17 +964,22 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     _infoViews.frame = CGRectMake(0.0f, 0.0f, size.width, _currentTop);
     
     CGFloat maximumX = 0;
-    for (UIView *view in _titleViews) {
-        if (view.frame.origin.x > maximumX) {
-            maximumX = view.frame.origin.x;
-        }
+    for (InfoView *view in _infoViews.subviews) {
+        if (![view isKindOfClass:[InfoView class]]) { continue; }
+        CGFloat x = view.titleLabel.frame.origin.x + view.titleLabel.frame.size.width;
+        if (x > maximumX) { maximumX = x; }
     }
     
-    for (UIView *view in _titleViews) {
+    for (InfoView *view in _infoViews.subviews) {
+        if ([view respondsToSelector:@selector(layoutMaxTitleWidth:)]) {
+            [view layoutMaxTitleWidth:maximumX];
+        }
+        /*
         CGRect frame = view.frame;
         frame.origin.x = maximumX;
         frame.size.width = _infoViews.frame.size.width - maximumX - 15.0f;
         view.frame = frame;
+         */
     }
     
     
@@ -831,8 +1067,8 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     _flexibleTag++;
 }
 
-- (UIView*)addSeparator: (CGFloat)weight {
-    UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(0.0f, _currentTop, self.view.frame.size.width, weight)];
+- (UIView*)addSeparator {
+    UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(0.0f, _currentTop, self.view.frame.size.width, 0.5f)];
     separator.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.7f];
     [self addView:separator];
     return separator;
@@ -840,6 +1076,10 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 
 - (void)addView: (UIView*)view {
     CGRect frame = view.frame;
+    if ([view isKindOfClass:[InfoView class]]) {
+        frame.size.width = self.view.frame.size.width;
+        view.frame = frame;
+    }
     view.center = CGPointMake(self.view.frame.size.width / 2.0f, _currentTop + frame.size.height / 2.0f);
     [self.infoViews addSubview:view];
     
@@ -990,37 +1230,18 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 }
 
 - (UILabel*)addLabel: (NSString*)title value: (NSString*)value {
-    CGSize size = self.infoViews.frame.size;
-    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, size.width, 50.0f)];
     
-    UIFont *labelFont = [UIFont fontWithName:FONT_BOLD size:17.0f];;
+    InfoView *infoView = [[InfoView alloc] initWithTitle:title];
     
-    CGSize labelSize = [title boundingRectWithSize:view.bounds.size
-                                           options:NSStringDrawingUsesFontLeading
-                                        attributes:@{
-                                                     NSFontAttributeName: labelFont
-                                                     }
-                                           context:nil].size;
-    
-    // Bold font isn't lined up with non-bold font...
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(15.0f, 0.0f, labelSize.width + 24.0f, 47.0f)];
-    titleLabel.font = labelFont;
-    titleLabel.text = title;
-    titleLabel.textColor = [UIColor whiteColor];
-    [view addSubview:titleLabel];
-    
-    CGFloat valueX = titleLabel.frame.origin.x + titleLabel.frame.size.width;
-    CGRect valueFrame = CGRectMake(valueX, 0.0f, size.width - valueX - 15.0f, 50.0f);
-    UILabel *valueLabel = [[UILabel alloc] initWithFrame:valueFrame];
+    UILabel *valueLabel = [[UILabel alloc] initWithFrame:infoView.contentView.bounds];
+    valueLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    valueLabel.text = value;
     valueLabel.textColor = [UIColor whiteColor];
     valueLabel.tintColor = [UIColor colorWithWhite:1.0f alpha:0.8];
-    valueLabel.text = value;
-    [view addSubview:valueLabel];
+    [infoView.contentView addSubview:valueLabel];
     
-    [self addView:view];
-    
-    [_titleViews addObject:valueLabel];
-    
+    [self addView:infoView];
+
     return valueLabel;
 }
 
@@ -1029,35 +1250,28 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 #pragma mark - Interactive
 
 - (UISwitch*)addToggle: (NSString*)title callback: (void (^)(BOOL))callback {
-    CGSize size = self.infoViews.frame.size;
-    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, size.width, 50.0f)];
-    view.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    InfoView *infoView = [[InfoView alloc] initWithTitle:title];
+
+    CGSize size = infoView.contentView.frame.size;
 
     BlockSwitch *toggle = [[BlockSwitch alloc] initWithFrame:CGRectZero];
+    toggle.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+    toggle.center = CGPointMake(size.width - toggle.frame.size.width / 2.0f, infoView.contentView.frame.size.height / 2.0f);
     [toggle handleControlEvent:UIControlEventValueChanged withBlock:^(BlockSwitch *toggle) {
         if (callback) {
             callback(toggle.on);
         }
     }];
-    toggle.center = CGPointMake(size.width - 15.0f - toggle.frame.size.width / 2.0f, view.frame.size.height / 2.0f);
-    [view addSubview:toggle];
+    [infoView.contentView addSubview:toggle];
 
-    // Bold font isn't lined up with non-bold font...
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(15.0f, 0.0f, size.width - 40.0f - toggle.frame.size.width, 47.0f)];
-    label.font = [UIFont fontWithName:FONT_BOLD size:17.0f];
-    label.text = title;
-    label.textColor = [UIColor whiteColor];
-    label.userInteractionEnabled = YES;
-    [view addSubview:label];
+    [infoView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:toggle action:@selector(toggleOn)]];
     
-    [label addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:toggle action:@selector(toggleOn)]];
-    
-    [self addView:view];
+    [self addView:infoView];
     
     return toggle;
 }
 
-- (BlockButton*)addButton: (NSString*)text action: (void (^)())action {
+- (BlockButton*)addButton: (NSString*)text action: (void (^)(UIButton*))action {
     BlockButton *button = [BlockButton buttonWithType:UIButtonTypeCustom];
     button.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 
@@ -1070,23 +1284,278 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     [button setTitleColor:[UIColor colorWithHex:0x98beef alpha:0.3f] forState:UIControlStateDisabled];
     [self addView:button];
     
-//    _currentTop += button.frame.size.height;
-    
     return button;
 }
 
-- (BlockTextField*)addTextEntry:(NSString *)title callback:(void (^)(BlockTextField *))callback {
+- (InfoTextField*)addTextEntry:(NSString *)title callback:(void (^)(InfoTextField *))callback {
+    InfoTextField *infoTextField = [[InfoTextField alloc] initWithTitle:title completeCallback:callback];
+    
+    infoTextField.textField.returnKeyType = UIReturnKeyNext;
+    infoTextField.textField.textColor = [UIColor whiteColor];
+    infoTextField.textField.tintColor = [UIColor colorWithWhite:1.0f alpha:0.8];
+
+    [self addView:infoTextField];
+    /*
+    [_textFields addObject:textField];
+    [_titleViews addObject:textField];
+     */
+    
+    return infoTextField;
+}
+
+- (InfoTextField*)addPasswordAccount: (NSString*)json verified: (void (^)(InfoTextField*, Account*))verified {
+    InfoTextField *infoTextField = [self addTextEntry:@"Password" callback:nil];
+    infoTextField.textField.autocorrectionType = UITextAutocorrectionTypeNo;
+    infoTextField.textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    infoTextField.textField.placeholder = @"Required";
+    infoTextField.textField.secureTextEntry = YES;
+
+    __weak InfoTextField *weakInfoTextField = infoTextField;
+
+    __block Cancellable *cancellable = nil;
+    
+    infoTextField.blockTextField.didChangeText = ^(BlockTextField *textField) {
+        if (cancellable) {
+            [cancellable cancel];
+            cancellable = nil;
+        }
+        
+        NSString *password = textField.text;
+        NSLog(@"PS: %@", password);
+        
+        if ([password isEqualToString:@""]) {
+            textField.status = InfoTextFieldStatusNone;
+        } else {
+            [textField setStatus:InfoTextFieldStatusSpinning animated:YES];
+        }
+        
+        // Start derivation...
+        NSTimeInterval t0 = [NSDate timeIntervalSinceReferenceDate];
+        cancellable = [Account decryptSecretStorageJSON:json password:password callback:^(Account *account, NSError *error) {
+
+            // We have an account, so the password was correct
+            if (account) {
+                NSLog(@"decrypted: %@ dt=%f", account.address, [NSDate timeIntervalSinceReferenceDate] - t0);
+                
+                dispatch_async(dispatch_get_main_queue(), ^() {
+                    [textField setStatus:InfoTextFieldStatusGood animated:YES];
+                    textField.userInteractionEnabled = NO;
+                    verified(weakInfoTextField, account);
+                });
+                
+            } else if (error.code != kAccountErrorCancelled) {
+                if (error.code != kAccountErrorWrongPassword) {
+                    NSLog(@"Decryption error: %@", error);
+                }
+                
+                dispatch_async(dispatch_get_main_queue(), ^() {
+                    [textField setStatus:InfoTextFieldStatusBad animated:YES];
+                });
+            }
+        }];
+    };
+    /*
+    infoTextField.blockTextField.shouldReturn = shouldReturn;
+    
+    Account* (^sendAccount)(NSString*) = ^Account*(NSString *password) {
+        NSString *cacheKey = [[[SecureData secureDataWithData:[password dataUsingEncoding:NSUTF8StringEncoding]] KECCAK256] hexString];
+        return [[passwordToAccount objectForKey:cacheKey] objectForKey:@"account"];
+    };
+    return sendAccount;
+     */
+
+    
+    return infoTextField;
+}
+
+- (InfoTextField*)addPasswordEntryDidChange: (BOOL (^)(InfoTextField*))didChange didReturn: (void (^)(InfoTextField*))didReturn {
+
+    InfoTextField *infoTextField = [self addTextEntry:@"Password" callback:nil];
+    infoTextField.textField.autocorrectionType = UITextAutocorrectionTypeNo;
+    infoTextField.textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    infoTextField.textField.placeholder = @"Required";
+    infoTextField.textField.secureTextEntry = YES;
+    
+    __weak InfoTextField *weakInfoTextField = infoTextField;
+    __block BOOL valid = NO;
+    
+    infoTextField.blockTextField.shouldReturn = ^BOOL(BlockTextField *textField) {
+        if (valid) {
+            didReturn(weakInfoTextField);
+        }
+        return valid;
+    };
+    
+    infoTextField.blockTextField.didChangeText = ^(BlockTextField *textField) {
+        valid = didChange(weakInfoTextField);
+        if (valid) {
+            if (weakInfoTextField.status != InfoTextFieldStatusGood) {
+                [weakInfoTextField setStatus:InfoTextFieldStatusGood animated:YES];
+            }
+        } else {
+            if (weakInfoTextField.status != InfoTextFieldStatusBad) {
+                [weakInfoTextField setStatus:InfoTextFieldStatusBad animated:YES];
+            }
+        }
+    };
+    
+    /*
+    __weak InfoTextField *weakSelf = self;
+    infoTextField.blockTextField.didChangeText = ^(BlockTextField *textField) {
+        if ([textField.text isEqualToString:@""]) {
+            [weakSelf setStatus:InfoTextFieldStatusNone animated:NO];
+            return;
+        }
+        
+        [weakSelf setStatus:InfoTextFieldStatusSpinning animated:YES];
+        
+        [callback(weakSelf, textField.text) onCompletion:^(Promise *promise) {
+            if (promise.error) {
+                [weakSelf setStatus:InfoTextFieldStatusBad animated:YES];
+            } else {
+                [weakSelf setStatus:InfoTextFieldStatusGood animated:YES];
+
+                // Trigger checking for return in the near future (which will enable the "next" button)
+                dispatch_async(dispatch_get_main_queue(), ^() {
+                    textField.didChangeText(textField);
+                });
+                
+
+            }
+        }];
+        
+    };
+    */
+    return infoTextField;
+}
+
+static UILabel *EtherPriceLabel = nil;
+
++ (void)setEtherPrice:(float)etherPrice {
+    if (!EtherPriceLabel) {
+        EtherPriceLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 100.0f, 44.0f)];
+        EtherPriceLabel.adjustsFontSizeToFitWidth = YES;
+        EtherPriceLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
+        EtherPriceLabel.minimumScaleFactor = 0.1f;
+        EtherPriceLabel.textColor = [UIColor colorWithWhite:0.5f alpha:1.0f];
+        EtherPriceLabel.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
+    }
+    
+    EtherPriceLabel.text = [NSString stringWithFormat:@"$%.02f\u2009/\u2009ether", etherPrice];
+}
+
+- (InfoTextField*)addEtherEntry: (NSString*)title value: (BigNumber*)value didChange: (void (^)(InfoTextField*, BigNumber*))didChange {
+    
+    InfoTextField *infoTextField = [self addTextEntry:title callback:nil];
+    infoTextField.textField.keyboardType = UIKeyboardTypeDecimalPad;
+
+    [infoTextField setEther:value];
+    
+    // Custom Keyboard
+    UIView *amountInputView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, self.view.frame.size.width, 44.0f)];
+    infoTextField.textField.inputAccessoryView = amountInputView;
+
+    amountInputView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    
+    UIToolbar *toolbar = [[UIToolbar alloc] initWithFrame:amountInputView.bounds];
+    toolbar.items = @[
+                      [[UIBarButtonItem alloc] initWithCustomView:EtherPriceLabel],
+                      [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                                                    target:nil
+                                                                    action:nil],
+                      //maxButton,
+//                      [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+//                                                                    target:nil
+//                                                                    action:nil],
+                      [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                                                    target:infoTextField.textField
+                                                                    action:@selector(resignFirstResponder)],
+                      ];
+    [amountInputView addSubview:toolbar];
+    
+    UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 43.5f, amountInputView.frame.size.width, 0.5f)];
+    separator.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    separator.backgroundColor = [UIColor colorWithWhite:0.8f alpha:1.0f];
+    [amountInputView addSubview:separator];
+    
+    
+    // Began editing...
+    infoTextField.blockTextField.didBeginEditing = ^(BlockTextField *textField) {
+        // Trim off the units
+        if ([textField.text hasPrefix:@"Ξ\u2009"]) {
+            textField.text = [textField.text substringFromIndex:2];
+        }
+        
+        NSString *text = textField.text;
+        if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+            text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
+        }
+        
+        // If there is no meaningful amount, clear the whole field
+        if ([[Payment parseEther:text] isEqual:[BigNumber constantZero]]) {
+            textField.text = @"";
+        }
+    };
+    
+    
+    // Value changed...
+    __weak InfoTextField *weakSelf = infoTextField;
+    infoTextField.blockTextField.didChangeText = ^(BlockTextField *textField) {
+        NSLog(@"Changed: %@", textField.text);
+        
+        NSString *text = textField.text;
+        if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+            text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
+        }
+        
+        didChange(weakSelf, [Payment parseEther:text]);
+    };
+    
+    
+    // Done editing...
+    infoTextField.blockTextField.didEndEditing = ^(BlockTextField *textField) {
+        NSString *text = textField.text;
+        if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+            text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
+        }
+        
+        BigNumber *value = [Payment parseEther:text];
+        if (!value) { value = [BigNumber constantZero]; }
+        
+        NSString *ether = [Payment formatEther:value];
+        if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+            ether = [ether stringByReplacingOccurrencesOfString:@"." withString:@","];
+        }
+        
+        textField.text = [@"Ξ\u2009" stringByAppendingString:ether];
+    };
+    
+    infoTextField.blockTextField.shouldChangeText = ^BOOL(BlockTextField *textField, NSRange range, NSString *string) {
+        NSString *text = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        
+        if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {
+            text = [text stringByReplacingOccurrencesOfString:@"," withString:@"."];
+        }
+        
+        return (text.length == 0 || [text isEqualToString:@"."] || [Payment parseEther:text] != nil);
+    };
+    
+    return infoTextField;
+}
+
+/*
+- (BlockPickerView*)addPickerView: (NSString*)title callback: (void (^)(BOOL))callback {
     CGSize size = self.infoViews.frame.size;
     UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, size.width, 50.0f)];
     view.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-
+ 
     UIFont *labelFont = [UIFont fontWithName:FONT_BOLD size:17.0f];;
     
     CGSize labelSize = [title boundingRectWithSize:view.bounds.size
                                            options:NSStringDrawingUsesFontLeading
                                         attributes:@{
                                                      NSFontAttributeName: labelFont
-                                                    }
+                                                     }
                                            context:nil].size;
     
     // Bold font isn't lined up with non-bold font...
@@ -1095,43 +1564,30 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     label.text = title;
     label.textColor = [UIColor whiteColor];
     [view addSubview:label];
-    
-    CGFloat textFieldX = label.frame.origin.x + label.frame.size.width;
-    CGRect textFieldFrame = CGRectMake(textFieldX, 0.0f, size.width - textFieldX - 15.0f, 50.0f);
-    BlockTextField *textField = [[BlockTextField alloc] initWithFrame:textFieldFrame];
-    textField.completeCallback = callback;
-    textField.returnKeyType = UIReturnKeyNext;
-    textField.textColor = [UIColor whiteColor];
-    textField.tintColor = [UIColor colorWithWhite:1.0f alpha:0.8];
-    textField.titleLabel = label;
-    [view addSubview:textField];
 
     [self addView:view];
     
-    [_textFields addObject:textField];
-    [_titleViews addObject:textField];
+    [_titleViews addObject:label];
     
-    return textField;
-}
-
-- (BlockTextField*)addPasswordEntryCallback: (void (^)(BlockTextField*))callback {
-    BlockTextField *textField = [self addTextEntry:@"Password" callback:callback];
-    textField.autocorrectionType = UITextAutocorrectionTypeNo;
-    textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    textField.placeholder = @"Required";
-    textField.secureTextEntry = YES;
+    CGFloat blockPickerX = label.frame.origin.x + label.frame.size.width;
+    CGRect blockPickerFrame = CGRectMake(blockPickerX, 0.0f, size.width - blockPickerX - 15.0f, 50.0f);
+    BlockPickerView *blockPickerView = [[BlockPickerView alloc] initWithFrame:blockPickerFrame];
+    [view addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:blockPickerView action:@selector(becomeFirstResponder)]];
     
-    return textField;
+    return blockPickerView;
 }
+*/
 
-- (BlockMnemonicPhraseView*)addMnemonicPhraseView {
+- (InfoMnemonicPhraseView*)addMnemonicPhraseView:(NSString *)mnemonic didChange:(void (^)(InfoMnemonicPhraseView *))didChange {
     CGRect frame = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, 100.0f);
-    BlockMnemonicPhraseView *mnemonicPhraseView = [[BlockMnemonicPhraseView alloc] initWithFrame:frame withPhrase:nil];
+    InfoMnemonicPhraseView *mnemonicPhraseView = [[InfoMnemonicPhraseView alloc] initWithFrame:frame withPhrase:mnemonic];
     mnemonicPhraseView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    mnemonicPhraseView.didChangeMnemonic = didChange;
     [self addView:mnemonicPhraseView];
     return mnemonicPhraseView;
 }
 
+/*
 - (NSUInteger)textFieldCount {
     return [_textFields count];
 }
@@ -1139,5 +1595,5 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 - (BlockTextField*)textFieldAtIndex:(NSUInteger)index {
     return [_textFields objectAtIndex:index];
 }
-
+*/
 @end

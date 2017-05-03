@@ -25,35 +25,42 @@
 
 #import <UIKit/UIKit.h>
 
+#import <ethers/Account.h>
+#import <ethers/BigNumber.h>
 #import "MnemonicPhraseView.h"
 
-typedef enum BlockTextFieldStatus {
-    BlockTextFieldStatusNone = 0,
-    BlockTextFieldStatusGood,
-    BlockTextFieldStatusBad,
-    BlockTextFieldStatusSpinning
-} BlockTextFieldStatus;
 
-@interface BlockTextField: UITextField
+@interface InfoView : UIView
 
-@property (nonatomic, copy) BOOL (^shouldChangeText)(BlockTextField*, NSRange, NSString*);
-@property (nonatomic, copy) void (^didChangeText)(BlockTextField*);
-@property (nonatomic, copy) void (^didBeginEditing)(BlockTextField*);
-@property (nonatomic, copy) void (^didEndEditing)(BlockTextField*);
-
-@property (nonatomic, copy) BOOL (^shouldReturn)(BlockTextField*);
-
-@property (nonatomic, assign) BlockTextFieldStatus status;
-- (void)setStatus:(BlockTextFieldStatus)status animated: (BOOL)animated;
+@property (nonatomic, readonly) NSString *title;
 
 - (void)pulse;
 
 @end
 
 
-@interface BlockMnemonicPhraseView : MnemonicPhraseView
 
-@property (nonatomic, copy) void (^didChangeMnemonic)(BlockMnemonicPhraseView*);
+@interface InfoTextField: InfoView
+
+@property (nonatomic, readonly) UITextField *textField;
+
+- (void)setEther: (BigNumber*)ether;
+
+- (UIButton*)setButton: (NSString*)title callback: (void (^)(UIButton*))callback;
+
+@end
+
+/*
+@interface InfoOptionsView : InfoView
+
+@property (nonatomic, readonly) NSInteger selectedIndex;
+
+- (UILabel*)addOptionCallback: (void (^)(InfoOptionsView*, UILabel*))callback;
+
+@end
+*/
+
+@interface InfoMnemonicPhraseView : MnemonicPhraseView
 
 @end
 
@@ -101,7 +108,7 @@ typedef enum BlockTextFieldStatus {
 - (void)addGap: (CGFloat)height;
 - (void)addFlexibleGap;
 
-- (UIView*)addSeparator: (CGFloat)weight;
+- (UIView*)addSeparator;
 
 - (UITextView*)addMarkdown: (NSString*)html fontSize: (CGFloat)fontSize;
 - (UITextView*)addAttributedText: (NSAttributedString*)attributedText;
@@ -109,8 +116,6 @@ typedef enum BlockTextFieldStatus {
 - (UITextView*)addText: (NSString*)text fontSize: (CGFloat)fontSize;
 
 - (UILabel*)addLabel: (NSString*)header value: (NSString*)value;
-
-- (BlockMnemonicPhraseView*)addMnemonicPhraseView;
 
 - (void)addView: (UIView*)view;
 - (void)addViews: (NSArray<UIView*>*)views;
@@ -121,11 +126,17 @@ typedef enum BlockTextFieldStatus {
 
 - (UISwitch*)addToggle: (NSString*)title callback: (void (^)(BOOL))callback;
 
-- (UIButton*)addButton: (NSString*)text action: (void (^)())action;
-- (BlockTextField*)addTextEntry: (NSString*)title callback: (void (^)(BlockTextField*))callback;
-- (BlockTextField*)addPasswordEntryCallback: (void (^)(BlockTextField*))callback;
+//- (InfoOptionsView*)addOptionsView: (NSString*)title didChange: (void (^)(InfoOptionsView*))didchange;
 
-- (NSUInteger)textFieldCount;
-- (BlockTextField*)textFieldAtIndex: (NSUInteger)index;
+- (InfoMnemonicPhraseView*)addMnemonicPhraseView: (NSString*)mnemonic didChange:(void (^)(InfoMnemonicPhraseView*))didChange;
+
+- (UIButton*)addButton: (NSString*)text action: (void (^)(UIButton*))action;
+
+- (InfoTextField*)addTextEntry: (NSString*)title callback: (void (^)(InfoTextField*))callback;
+- (InfoTextField*)addPasswordAccount: (NSString*)json verified: (void (^)(InfoTextField*, Account*))verified;
+- (InfoTextField*)addPasswordEntryDidChange: (BOOL (^)(InfoTextField*))didChange didReturn: (void (^)(InfoTextField*))didReturn;
+- (InfoTextField*)addEtherEntry: (NSString*)title value: (BigNumber*)value didChange: (void (^)(InfoTextField*, BigNumber*))didChange;
+
++ (void)setEtherPrice: (float)etherPrice;
 
 @end
