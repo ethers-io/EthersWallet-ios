@@ -36,4 +36,8 @@
 @property (nonatomic, strong) Address *address;
 @property (nonatomic, strong) BigNumber *balance;
 
+@property (nonatomic, strong) BigNumber *totalBalance;
+
+@property (nonatomic, assign) float etherPrice;
+
 @end

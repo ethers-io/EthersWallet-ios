@@ -26,7 +26,10 @@
 #import "SharedDefaults.h"
 
 NSString* UserDefaultsAddress = @"USER_SHARED_DEFAULTS_ADDRESS";
-NSString* UserDefaultsBalamce = @"USER_SHARED_DEFAULTS_BALANCE";
+NSString* UserDefaultsBalance = @"USER_SHARED_DEFAULTS_BALANCE";
+
+NSString* UserDefaultsTotalBalance = @"USER_SHARED_DEFAULTS_TOTAL_BALANCE";
+NSString* UserDefaultsEtherPrice = @"USER_SHARED_DEFAULTS_ETHER_PRICE";
 
 @interface SharedDefaults () {
     NSUserDefaults *_userDefaults;
@@ -54,13 +57,13 @@ NSString* UserDefaultsBalamce = @"USER_SHARED_DEFAULTS_BALANCE";
 }
 
 - (BigNumber*)balance {
-    NSString *balanceHex = [_userDefaults objectForKey:UserDefaultsBalamce];
+    NSString *balanceHex = [_userDefaults objectForKey:UserDefaultsBalance];
     if (!balanceHex) { return [BigNumber constantZero]; }
     return [BigNumber bigNumberWithHexString:balanceHex];
 }
 
 - (void)setBalance:(BigNumber *)balance {
-    [_userDefaults setObject:[balance hexString] forKey:UserDefaultsBalamce];
+    [_userDefaults setObject:[balance hexString] forKey:UserDefaultsBalance];
 }
 
 - (Address*)address {
@@ -77,5 +80,22 @@ NSString* UserDefaultsBalamce = @"USER_SHARED_DEFAULTS_BALANCE";
     }
 }
 
+- (BigNumber*)totalBalance {
+    NSString *balanceHex = [_userDefaults objectForKey:UserDefaultsTotalBalance];
+    if (!balanceHex) { return [BigNumber constantZero]; }
+    return [BigNumber bigNumberWithHexString:balanceHex];
+}
+
+- (void)setTotalBalance:(BigNumber *)totalBalance {
+    [_userDefaults setObject:[totalBalance hexString] forKey:UserDefaultsTotalBalance];
+}
+
+- (float)etherPrice {
+    return [_userDefaults floatForKey:UserDefaultsEtherPrice];
+}
+
+- (void)setEtherPrice:(float)etherPrice {
+    [_userDefaults setFloat:etherPrice forKey:UserDefaultsEtherPrice];
+}
 
 @end

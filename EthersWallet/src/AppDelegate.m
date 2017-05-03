@@ -553,6 +553,8 @@ static NSString *CanaryVersion = nil;
 - (void)notifyExtensions {
     SharedDefaults *sharedDefaults = [SharedDefaults sharedDefaults];
     
+    BigNumber *totalBalance = [BigNumber constantZero];
+    
     BOOL changed = NO, hasContent = NO;
     if (_wallet.numberOfAccounts == 0) {
         hasContent = YES;
@@ -570,12 +572,21 @@ static NSString *CanaryVersion = nil;
             sharedDefaults.address = addres;
             changed = YES;
         }
+        
         BigNumber *balance = [_wallet balanceForAddress:addres];
         if (![sharedDefaults.balance isEqual:balance]) {
             sharedDefaults.balance = balance;
             changed = YES;
         }
+        
+        for (NSUInteger i = 0; i < _wallet.numberOfAccounts; i++) {
+            totalBalance = [totalBalance add:[_wallet balanceForAddress:[_wallet addressAtIndex:i]]];
+        }
     }
+    
+    sharedDefaults.totalBalance = totalBalance;
+    
+    sharedDefaults.etherPrice = _wallet.etherPrice;
     
 //    if (changed) {
         [[NCWidgetController widgetController] setHasContent:hasContent
