@@ -28,6 +28,7 @@
 #import <ethers/Payment.h>
 #import <ethers/SecureData.h>
 
+#import "BlockButton.h"
 #import "UIColor+hex.h"
 #import "Utilities.h"
 
@@ -48,14 +49,14 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 
 // This provides a nice transition for View Controllers which have transparent backgrounds
 
-@interface AnimatedTransition : NSObject <UIViewControllerAnimatedTransitioning> {
+@interface AnimatedTransition2 : NSObject <UIViewControllerAnimatedTransitioning> {
     UINavigationControllerOperation _operation;
     CGFloat _width;
 }
 @end
 
 
-@implementation AnimatedTransition
+@implementation AnimatedTransition2
 
 - (instancetype)initWithOperation: (UINavigationControllerOperation)operation width: (CGFloat)width {
     self = [super init];
@@ -177,7 +178,7 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 
 @end
 
-
+/*
 #pragma mark -
 #pragma mark - BlockButton
 
@@ -202,7 +203,7 @@ NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 }
 
 @end
-
+*/
 
 #pragma mark -
 #pragma mark - BlockTextField
@@ -1043,7 +1044,7 @@ typedef enum InfoTextFieldStatus {
     switch (operation) {
         case UINavigationControllerOperationPush:
         case UINavigationControllerOperationPop:
-            return [[AnimatedTransition alloc] initWithOperation:operation width:self.view.frame.size.width];
+            return [[AnimatedTransition2 alloc] initWithOperation:operation width:self.view.frame.size.width];
         case UINavigationControllerOperationNone:
         default:
             break;

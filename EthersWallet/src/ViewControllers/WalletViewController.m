@@ -106,22 +106,22 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(updateBalance)
-                                                     name:WalletBalanceChangedNotification
+                                                     name:WalletAccountBalanceDidChangeNotification
                                                    object:_wallet];
         
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(noticeUpdateTransactions)
-                                                     name:WalletAccountTransactionsUpdatedNotification
+                                                     name:WalletAccountHistoryUpdatedNotification
                                                    object:_wallet];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(noticeUpdateActiveAccount)
-                                                     name:WalletChangedActiveAccountNotification
+                                                     name:WalletActiveAccountDidChangeNotification
                                                    object:_wallet];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(noticeUpdateActiveAccount)
-                                                     name:WalletChangedNicknameNotification
+                                                     name:WalletAccountNicknameDidChangeNotification
                                                    object:_wallet];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -335,14 +335,14 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     _nicknameLabel.font = [UIFont fontWithName:FONT_NORMAL size:12.0f];
     _nicknameLabel.text = @"ethers.io";
     _nicknameLabel.textAlignment = NSTextAlignmentCenter;
-    _nicknameLabel.textColor = [UIColor lightGrayColor];
+    _nicknameLabel.textColor = [UIColor colorWithWhite:0.4f alpha:1.0f];
     [status addSubview:_nicknameLabel];
 
     _accountsButton = [Utilities ethersButton:ICON_NAME_ACCOUNTS fontSize:36.0f color:ColorHexToolbarIcon];
     [_accountsButton addTarget:self action:@selector(tapAccounts) forControlEvents:UIControlEventTouchUpInside];
     UIBarButtonItem *accounts = [[UIBarButtonItem alloc] initWithCustomView:_accountsButton];
 
-    _cameraButton = [Utilities ethersButton:ICON_NAME_CAMERA fontSize:30.0f color:ColorHexToolbarIcon];
+    _cameraButton = [Utilities ethersButton:ICON_NAME_AIRPLANE fontSize:36.0f color:ColorHexToolbarIcon];
     [_cameraButton addTarget:self action:@selector(tapCamera) forControlEvents:UIControlEventTouchUpInside];
     UIBarButtonItem *camera = [[UIBarButtonItem alloc] initWithCustomView:_cameraButton];
     
@@ -367,9 +367,12 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 
 - (void)reloadTableAnimated: (BOOL)animated {
     
+    NSArray <TransactionInfo*> *transactions = nil;
+    
     // @TODO: Animate by fading
-    if (_wallet.activeAccount && [_wallet transactionCountForAddress:_wallet.activeAccount]) {
-        _noTransactionsView.hidden = YES;
+    if (_wallet.activeAccount) {
+        transactions = [_wallet transactionHistoryForAddress:_wallet.activeAccount];
+        _noTransactionsView.hidden = (transactions.count > 0);
     } else {
         _noTransactionsView.hidden = NO;
     }
@@ -378,23 +381,24 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     NSMutableArray *inProgress = [NSMutableArray array];
     NSMutableArray *confirmed = [NSMutableArray array];
     
-    Address *activeAccount = _wallet.activeAccount;
+    //Address *activeAccount = _wallet.activeAccount;
     NSUInteger blockNumber = _wallet.blockNumber;
     
     int minInProgressConfirmations = CONFIRMED_COUNT;
     int maxInProgressConfirmations = 0;
     
-    NSUInteger transactionCount = [_wallet transactionCountForAddress:activeAccount];
-    for (NSUInteger i = 0; i < transactionCount; i++) {
-        TransactionInfo *transactionInfo = [_wallet transactionForAddress:activeAccount index:i];
+    //NSUInteger transactionCount = [transactions];
+    for (TransactionInfo *transaction in transactions) {
+    //for (NSUInteger i = 0; i < transactions.count; i++) {
+        //TransactionInfo *transactionInfo = [_wallet transactionForAddress:activeAccount index:i];
 
-        if (transactionInfo.blockNumber == -1) {
-            [pending addObject:transactionInfo];
+        if (transaction.blockNumber == -1) {
+            [pending addObject:transaction];
             
         } else {
-            int confirmations = (int)(blockNumber - transactionInfo.blockNumber + 1);
+            int confirmations = (int)(blockNumber - transaction.blockNumber + 1);
             if (confirmations < CONFIRMED_COUNT) {
-                [inProgress addObject:transactionInfo];
+                [inProgress addObject:transaction];
                 if (confirmations < minInProgressConfirmations) {
                     minInProgressConfirmations = confirmations;
                 }
@@ -402,7 +406,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
                     maxInProgressConfirmations = confirmations;
                 }
             } else {
-                [confirmed addObject:transactionInfo];
+                [confirmed addObject:transaction];
             }
         }
     }
@@ -411,7 +415,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     // from the list, and after changing networks (i.e. from mainnet to testnet or
     //  vice versa) transactions may have been deleted
     // @TODO: Support animated deletion of transactions
-    if (transactionCount == 0) { animated = NO; }
+    if (transactions.count == 0) { animated = NO; }
     
     NSArray<NSArray*> *oldSections = _sections;
     _sections = @[ pending, inProgress, confirmed ];
