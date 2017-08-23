@@ -27,11 +27,11 @@
 
 const NSUInteger ColorHexNavigationBar            = 0x80aaeb;
 const NSUInteger ColorHexNavigationBarTitle       = 0xffffff;
-const NSUInteger ColorHexToolbarIcon              = 0x64aaf1;
+const NSUInteger ColorHexToolbarIcon              = 0x4499ff; //0x64aaf1;
 
-const NSUInteger ColorHexDark                     = 0x517495;
-const NSUInteger ColorHexNormal                   = 0x859db5;
-const NSUInteger ColorHexLight                    = 0xb9c7d5;
+const NSUInteger ColorHexDark                     = 0x416485;
+const NSUInteger ColorHexNormal                   = 0x758da5;
+const NSUInteger ColorHexLight                    = 0xa9b7c5;
 
 const NSUInteger ColorHexRed                      = 0xc05757;
 const NSUInteger ColorHexLightRed                 = 0xe79c9c;

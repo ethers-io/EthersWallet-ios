@@ -61,7 +61,7 @@
         _detailsLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         _detailsLabel.font = [UIFont fontWithName:FONT_ITALIC size:10.0f];
         _detailsLabel.textAlignment = NSTextAlignmentRight;
-        _detailsLabel.textColor = [UIColor colorWithHex:ColorHexNavigationBar];
+        _detailsLabel.textColor = [UIColor colorWithWhite:0.4f alpha:1.0f];
         [self addSubview:_detailsLabel];
     }
     return self;

@@ -46,19 +46,17 @@
     if (self) {
         _address = address;
         
-        _qrCodeView = [[QRCodeView alloc] initWithWidth:qrWidth
-                                                  color:[UIColor colorWithHex:ColorHexDark]];
+        _qrCodeView = [[QRCodeView alloc] initWithWidth:qrWidth color:[UIColor colorWithHex:ColorHexDark]];
         _qrCodeView.center = CGPointMake(width / 2.0f, qrWidth / 2.0f);
         _qrCodeView.transform = CGAffineTransformMakeRotation(-M_PI_2);
         [self addSubview:_qrCodeView];
         
         UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, 0.0f, qrWidth - 20.0f, 44.0f)];
         titleLabel.center = CGPointMake(65.0f - 22.0f, _qrCodeView.center.y);
-        //        titleLabel.font = [UIFont fontWithName:@"CourierNewPS-BoldMT" size:12.0f];
         titleLabel.font = [UIFont fontWithName:FONT_MONOSPACE size:12.0f];
         titleLabel.text = @"Your Public Address";
         titleLabel.textAlignment = NSTextAlignmentCenter;
-        titleLabel.textColor = [UIColor colorWithHex:ColorHexNormal];
+        titleLabel.textColor = [UIColor colorWithHex:ColorHexDark];
         titleLabel.transform = CGAffineTransformMakeRotation(-M_PI_2);
         [self addSubview:titleLabel];
         
@@ -68,7 +66,7 @@
         _addressLabel.font = [UIFont fontWithName:FONT_MONOSPACE_SMALL size:12.0f];
         _addressLabel.minimumScaleFactor = 0.1f;
         _addressLabel.textAlignment = NSTextAlignmentCenter;
-        _addressLabel.textColor = [UIColor colorWithHex:ColorHexNormal];
+        _addressLabel.textColor = [UIColor colorWithHex:ColorHexDark];
         _addressLabel.transform = CGAffineTransformMakeRotation(-M_PI_2);
         [self addSubview:_addressLabel];
         
@@ -107,10 +105,6 @@
 - (void)copyAddress: (id)sender {
     [[UIPasteboard generalPasteboard] setString:_address.checksumAddress];
     
-    // Flash the address we are copying
-    //_addressLabel.textColor = [UIColor colorWithWhite:0.9f alpha:1.0f];
-    //[NSTimer scheduledTimerWithTimeInterval:0.0 target:self selector:@selector(animateAddressLabel) userInfo:nil repeats:NO];
-    
     void (^animate)() = ^() {
         _qrCodeView.transform = CGAffineTransformIdentity;
     };
@@ -137,7 +131,7 @@
     ModalViewController *modalViewController = [ModalViewController presentViewController:shareViewController animated:YES completion:nil];
 
     shareViewController.completionWithItemsHandler = ^(UIActivityType type, BOOL completed, NSArray *items, NSError *error) {
-        NSLog(@"type=%@ compl=%d returned=%@ error=%@", type, completed, items, error);
+        //NSLog(@"type=%@ compl=%d returned=%@ error=%@", type, completed, items, error);
         [modalViewController dismissViewControllerAnimated:YES completion:nil];
     };
 
