@@ -47,39 +47,59 @@
 #import <ethers/TransactionInfo.h>
 
 
+typedef NSUInteger AccountIndex;
+
+#define AccountNotFound          NSIntegerMax
+
+
 #pragma mark - Notifications
 
-extern const NSNotificationName WalletAddedAccountNotification;
-extern const NSNotificationName WalletRemovedAccountNotification;
-extern const NSNotificationName WalletReorderedAccountsNotification;
-extern const NSNotificationName WalletChangedNicknameNotification;
+extern const NSNotificationName WalletAccountAddedNotification;
+extern const NSNotificationName WalletAccountRemovedNotification;
+extern const NSNotificationName WalletAccountsReorderedNotification;
+
+// Nickname of any account changes
+extern const NSNotificationName WalletAccountNicknameDidChangeNotification;
 
 // If the balance for any account changes
-extern const NSNotificationName WalletBalanceChangedNotification;
+extern const NSNotificationName WalletAccountBalanceDidChangeNotification;
 
 // If the active account transactions change (including confirmation count)
-extern const NSNotificationName WalletTransactionChangedNotification;
-extern const NSNotificationName WalletAccountTransactionsUpdatedNotification;
+extern const NSNotificationName WalletTransactionDidChangeNotification;
+extern const NSNotificationName WalletAccountHistoryUpdatedNotification;
 
-extern const NSNotificationName WalletChangedActiveAccountNotification;
+extern const NSNotificationName WalletActiveAccountDidChangeNotification;
 
 extern const NSNotificationName WalletDidSyncNotification;
 
-extern const NSNotificationName WalletDidChangeNetwork;
+
+#pragma mark - Notification Keys
+
+extern const NSString* WalletNotificationAddressKey;
+extern const NSString* WalletNotificationProviderKey;
+extern const NSString* WalletNotificationIndexKey;
+
+extern const NSString* WalletNotificationNicknameKey;
+
+extern const NSString* WalletNotificationBalanceKey;
+extern const NSString* WalletNotificationTransactionKey;
+
+extern const NSString* WalletNotificationSyncDateKey;
 
 
 #pragma mark - Errors
 
 extern NSErrorDomain WalletErrorDomain;
 
-#define kWalletErrorNetwork                         -1
-#define kWalletErrorUnknown                         -5
+typedef enum WalletError {
+    WalletErrorNetwork                   =  -1,
+    WalletErrorUnknown                   =  -5,
+    WalletErrorSendCancelled             = -11,
+    WalletErrorSendInsufficientFunds     = -12,
+} WalletError;
 
-#define kWalletErrorSendCancelled                   -11
-#define kWalletErrorSendInsufficientFunds           -12
 
-
-#pragma mark -
+#pragma mark - Wallet
 
 @interface Wallet : NSObject
 
@@ -87,65 +107,48 @@ extern NSErrorDomain WalletErrorDomain;
 
 @property (nonatomic, readonly) NSString *keychainKey;
 
-@property (nonatomic, strong) Address *activeAccount;
-
-@property (nonatomic, readonly) Provider *provider;
-
 @property (nonatomic, readonly) NSTimeInterval syncDate;
 
 @property (nonatomic, readonly) float etherPrice;
-@property (nonatomic, readonly) BlockTag blockNumber;
-@property (nonatomic, readonly) BigNumber *gasPrice;
 
 - (void)refresh: (void (^)(BOOL))callback;
 
 
-#pragma mark - Ordered Access operations
+#pragma mark - Accounts
+
+@property (nonatomic, assign) AccountIndex activeAccountIndex;
+
+@property (nonatomic, readonly) Address *activeAccountAddress;
+@property (nonatomic, readonly) Provider *activeAccountProvider;
+
+@property (nonatomic, assign) NSUInteger activeAccountBlockNumber;
+
 
 @property (nonatomic, readonly) NSUInteger numberOfAccounts;
 
-- (void)exchangeAccountAtIndex: (NSUInteger)fromIndex withIndex: (NSUInteger)toIndex;
+- (Address*)addressForIndex: (AccountIndex)index;
+- (BigNumber*)balanceForIndex: (AccountIndex)index;
+- (ChainId)chainIdForIndex: (AccountIndex)index;
+- (NSString*)nicknameForIndex: (AccountIndex)index;
+- (void)setNickname: (NSString*)nickname forIndex: (AccountIndex)index;
+- (NSArray<TransactionInfo*>*)transactionHistoryForIndex: (AccountIndex)index;
+
 - (void)moveAccountAtIndex: (NSUInteger)fromIndex toIndex: (NSUInteger)toIndex;
-- (Address*)addressAtIndex: (NSUInteger)index;
-- (NSUInteger)indexForAddress: (Address*)address;
 
 
-#pragma mark - Locked
-
-// Locked Accounts - Unlocked accounts keep the private key in memory, and can send transactions with only the Touch ID
-
-- (BOOL)isAccountUnlocked: (Address*)address;
-- (BOOL)lockAccount: (Address*)address;
-//- (void)unlockAccount: (Address*)address callback:(void (^)(BOOL unlocked))callback;
-
-
-#pragma mark - Queries
-
-- (BOOL)containsAddress: (Address*)address;
-
-- (NSString*)nicknameForAccount: (Address*)address;
-- (void)setNickname: (NSString*)nickname address: (Address*)address;
-
-- (BigNumber*)balanceForAddress: (Address*)address;
-
-- (NSUInteger)transactionCountForAddress: (Address*)address;
-- (TransactionInfo*)transactionForAddress: (Address*)address index: (NSUInteger)index;
-
-
-#pragma mark - Account Management (these present their own modal UI)
+#pragma mark - Account Management (Modal UI)
 
 - (void)addAccountCallback: (void (^)(Address *address))callback;
-- (void)manageAccount: (Address*)address callback: (void (^)())callback;
+- (void)manageAccountAtIndex: (AccountIndex)index callback: (void (^)())callback;
 
 
-#pragma mark - Transactions (these present their own modal UI)
+#pragma mark - Transactions (Modal UI)
 
 - (void)sendPayment: (Payment*)payment callback: (void (^)(Hash*, NSError*))callback;
-
 - (void)sendTransaction: (Transaction*)transaction callback:(void (^)(Hash*, NSError*))callback;
 
 
-#pragma mark - Debug
+#pragma mark - Debug (Modal UI)
 
 - (void)showDebuggingOptionsCallback: (void (^)())callback;
 

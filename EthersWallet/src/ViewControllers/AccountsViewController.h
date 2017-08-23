@@ -32,7 +32,7 @@
 @protocol AccountsViewControllerDelegate <NSObject>
 
 - (void)accountsViewControllerDidCancel: (AccountsViewController*)accountsViewController;
-- (void)accountsViewController: (AccountsViewController*)accountsViewController didSelectAccount: (Address*)accountAddress;
+- (void)accountsViewController: (AccountsViewController*)accountsViewController didSelectAccountIndex: (NSInteger)accountIndex;
 
 @end
 

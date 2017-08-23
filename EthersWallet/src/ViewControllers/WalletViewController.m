@@ -154,10 +154,12 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 #pragma mark - State Updating
 
 - (void)updatedActiveAccountAnimated: (BOOL)animated {
-    _walletView.address = _wallet.activeAccount;
+    _walletView.address = _wallet.activeAccountAddress;
 
-    if (_wallet.activeAccount) {
-        _nicknameLabel.text = [_wallet nicknameForAccount:_wallet.activeAccount];
+    float targetNoAccountAlpha = 0.0f;
+    
+    if (_wallet.activeAccountIndex != AccountNotFound) {
+        _nicknameLabel.text = [_wallet nicknameForIndex:_wallet.activeAccountIndex];
 
         _accountsButton.enabled = YES;
         _cameraButton.enabled = YES;
@@ -166,6 +168,8 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         _nicknameLabel.hidden = NO;
     
     } else {
+        targetNoAccountAlpha = 1.0f;
+
         _accountsButton.enabled = NO;
         _cameraButton.enabled = NO;
 
@@ -175,7 +179,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     
     {
         void (^animate)() = ^() {
-            _noAccountView.alpha = (_wallet.activeAccount ? 0.0f: 1.0f);
+            _noAccountView.alpha = targetNoAccountAlpha;
         };
         
         if (animated) {
@@ -190,8 +194,8 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 }
 
 - (void)updateBalance {
-    if (_wallet.activeAccount) {
-        _balanceLabel.balance = [_wallet balanceForAddress:_wallet.activeAccount];
+    if (_wallet.activeAccountIndex != AccountNotFound) {
+        _balanceLabel.balance = [_wallet balanceForIndex:_wallet.activeAccountIndex];
         _balanceLabel.hidden = NO;
     } else {
         _balanceLabel.hidden = YES;
@@ -225,7 +229,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     
     _headerView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 0.0f)];
 
-    _walletView = [[WalletView alloc] initWithAddress:_wallet.activeAccount width:frame.size.width];
+    _walletView = [[WalletView alloc] initWithAddress:_wallet.activeAccountAddress width:frame.size.width];
     {
         CGRect frame = _walletView.frame;
         frame.origin.y = top;
@@ -370,8 +374,8 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     NSArray <TransactionInfo*> *transactions = nil;
     
     // @TODO: Animate by fading
-    if (_wallet.activeAccount) {
-        transactions = [_wallet transactionHistoryForAddress:_wallet.activeAccount];
+    if (_wallet.activeAccountIndex != AccountNotFound) {
+        transactions = [_wallet transactionHistoryForIndex:_wallet.activeAccountIndex];
         _noTransactionsView.hidden = (transactions.count > 0);
     } else {
         _noTransactionsView.hidden = NO;
@@ -380,9 +384,6 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     NSMutableArray *pending = [NSMutableArray array];
     NSMutableArray *inProgress = [NSMutableArray array];
     NSMutableArray *confirmed = [NSMutableArray array];
-    
-    //Address *activeAccount = _wallet.activeAccount;
-    NSUInteger blockNumber = _wallet.blockNumber;
     
     int minInProgressConfirmations = CONFIRMED_COUNT;
     int maxInProgressConfirmations = 0;
@@ -396,7 +397,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
             [pending addObject:transaction];
             
         } else {
-            int confirmations = (int)(blockNumber - transaction.blockNumber + 1);
+            int confirmations = (int)(_wallet.activeAccountBlockNumber - transaction.blockNumber + 1);
             if (confirmations < CONFIRMED_COUNT) {
                 [inProgress addObject:transaction];
                 if (confirmations < minInProgressConfirmations) {
@@ -543,7 +544,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         
         TransactionInfo *transactionInfo = [[_sections objectAtIndex:indexPath.section - 1] objectAtIndex:indexPath.row];
         
-        [((TransactionTableViewCell*)cell) setAddress:_wallet.activeAccount transactionInfo:transactionInfo];
+        [((TransactionTableViewCell*)cell) setAddress:_wallet.activeAccountAddress transactionInfo:transactionInfo];
     }
     
     return cell;
@@ -573,8 +574,8 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)accountsViewController:(AccountsViewController *)accountsViewController didSelectAccount:(Address *)accountAddress {
-    _wallet.activeAccount = accountAddress;
+- (void)accountsViewController:(AccountsViewController *)accountsViewController didSelectAccountIndex:(NSInteger)accountIndex {
+    _wallet.activeAccountIndex = accountIndex;
 }
 
 #pragma mark - WalletViewControllerDelegate

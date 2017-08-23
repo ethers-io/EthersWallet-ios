@@ -69,6 +69,9 @@ static NSDictionary<NSString*, NSArray<NSString*>*> *PrefixLookup = nil;
     return result;
 }
 
+#define TAG_LABEL         100
+#define TAG_TEXTFIELD     200
+
 - (instancetype)initWithFrame:(CGRect)frame withPhrase: (NSString*)phrase {
     frame.size.height = 6.0f * 40.0f;
     if (phrase && ![Account isValidMnemonicPhrase:phrase]) { return nil; }
@@ -84,18 +87,18 @@ static NSDictionary<NSString*, NSArray<NSString*>*> *PrefixLookup = nil;
             _words = [phrase componentsSeparatedByString:@" "];
             if ([_words count] != 12) { return nil; }
         }
-
-        CGSize size = frame.size;
         
-        _accessoryView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, size.width, 44.0f)];
+        _accessoryView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 44.0f)];
+        
         UIToolbar *toolbar = [[UIToolbar alloc] initWithFrame:_accessoryView.bounds];
         toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         toolbar.userInteractionEnabled = NO;
         [_accessoryView addSubview:toolbar];
         
+        float width_3 = _accessoryView.frame.size.width / 3.0f;
         for (int i = 0; i < 3; i++) {
             UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-            button.frame = CGRectMake(i * size.width / 3.0f, 0.0f, size.width / 3.0f, 44.0f);
+            button.frame = CGRectMake(i * width_3, 0.0f, width_3, 44.0f);
             [button setTitleColor:[UIColor colorWithWhite:0.4f alpha:1.0f] forState:UIControlStateNormal];
             [button setTitleColor:[UIColor colorWithWhite:0.4f alpha:0.3f] forState:UIControlStateHighlighted];
             [button addTarget:self action:@selector(tapOption:) forControlEvents:UIControlEventTouchUpInside];
@@ -114,35 +117,31 @@ static NSDictionary<NSString*, NSArray<NSString*>*> *PrefixLookup = nil;
                                                 NSForegroundColorAttributeName: [UIColor colorWithWhite:1.0f alpha:0.2],
                                                 };
         
-        float padding = 30.0f;
-        if (size.width == 320.0f) { padding = 16.0f; }
+        const float height = 30.0f;
         
-        float width = ((size.width - 3 * padding) / 2.0f), height = 30.0f;
         for (int i = 0; i < 12; i++) {
-            float x = padding;
-            if (i / 6) { x += width + padding; }
-            float y = (float)(i % 6) * 40.0f;
 
-            NSString *placeholder = [NSString stringWithFormat:@"word #%d", i + 1];
-            placeholder = @"___________";
+            //NSString *placeholder = [NSString stringWithFormat:@"word #%d", i + 1];
+            NSString *placeholder = @"___________";
             NSMutableAttributedString *attributedPlaceholder = [[NSMutableAttributedString alloc] initWithString:placeholder
                                                                                                       attributes:placeholderAttributes];
 
-            UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(x, y, 30.0f, height)];
+            UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 30.0f, height)];
             label.font = [UIFont fontWithName:FONT_NORMAL size:16.0f];
+            label.tag = TAG_LABEL + i;
             label.text = [NSString stringWithFormat:@"%d.", i + 1];
             label.textAlignment = NSTextAlignmentRight;
             label.textColor = [UIColor colorWithWhite:1.0f alpha:1.0f];
             [self addSubview:label];
             
-            UITextField *textField = [[UITextField alloc] initWithFrame:CGRectMake(x + 36.0f, y, width - 36.0f, height)];
+            UITextField *textField = [[UITextField alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 30.0f, height)];
             textField.attributedPlaceholder = attributedPlaceholder;
             textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
             textField.autocorrectionType = UITextAutocorrectionTypeNo;
             textField.delegate = self;
             textField.font = [UIFont fontWithName:FONT_BOLD size:16.0f];
             textField.inputAccessoryView = _accessoryView;
-            textField.tag = i;
+            textField.tag = TAG_TEXTFIELD + i;
             textField.text = @"";
             textField.textColor = [UIColor whiteColor];
             textField.tintColor = [UIColor colorWithWhite:1.0f alpha:0.8f];
@@ -163,6 +162,30 @@ static NSDictionary<NSString*, NSArray<NSString*>*> *PrefixLookup = nil;
         [self updateAccessoryViewPrefix:nil];
     }
     return self;
+}
+
+- (void)setFrame:(CGRect)frame {
+    frame.size.height = 6.0f * 40.0f;
+    [super setFrame:frame];
+}
+
+- (void)layoutSubviews {
+    CGSize size = self.frame.size;
+
+    _accessoryView.frame = CGRectMake(0.0f, 0.0f, size.width, 44.0f);
+
+    float padding = 30.0f;
+    if (size.width == 320.0f) { padding = 16.0f; }
+    float width = ((size.width - 3 * padding) / 2.0f), height = 30.0f;
+    
+    for (int i = 0; i < 12; i++) {
+        float x = padding;
+        if (i / 6) { x += width + padding; }
+        float y = (float)(i % 6) * 40.0f;
+        
+        [self viewWithTag:TAG_LABEL + i].frame = CGRectMake(x, y, 30.0f, height);
+        [self viewWithTag:TAG_TEXTFIELD + i].frame = CGRectMake(x + 36.0f, y, width - 36.0f, height);
+    }
 }
 
 - (void)setMnemonicPhrase:(NSString *)mnemonicPhrase {
@@ -199,7 +222,7 @@ static NSDictionary<NSString*, NSArray<NSString*>*> *PrefixLookup = nil;
     if (firstResponder) {
         return [firstResponder resignFirstResponder];
     }
-    return NO;
+    return [super resignFirstResponder];
 }
 
 - (BOOL)isFirstResponder {
@@ -289,11 +312,11 @@ static NSDictionary<NSString*, NSArray<NSString*>*> *PrefixLookup = nil;
     UITextField *textField = [self _firstResponder];
     textField.text = [sender currentAttributedTitle].string;
     
-    if (textField.tag == 11) {
+    if (textField.tag == TAG_TEXTFIELD + 11) {
         [textField resignFirstResponder];
 
     } else {
-        UITextField *nextTextfield = [_textFields objectAtIndex:(textField.tag + 1) % 12];
+        UITextField *nextTextfield = [_textFields objectAtIndex:(textField.tag + 1 - TAG_TEXTFIELD) % 12];
         [nextTextfield becomeFirstResponder];
     }
 

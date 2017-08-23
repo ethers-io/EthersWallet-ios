@@ -81,9 +81,9 @@
 }
 
 - (NSArray *)selectionRectsForRange:(UITextRange *)range {
-    if (_options & ConfigTextFieldOptionNoMenu) {
+    if (_options & ConfigTextFieldOptionNoCaret) {
         self.selectedTextRange = nil;
-        return nil;
+        return @[];
     }
     
     return [super selectionRectsForRange:range];
@@ -99,7 +99,25 @@
         return NO;
     }
     
-    return [super canPerformAction:action withSender:sender];
+    // @TODO: Wrap this up into the options
+    
+    static NSSet *enableActions = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        enableActions = [NSSet setWithArray:@[
+                                              @"copy:",
+                                              @"cut:",
+                                              @"select:",
+                                              @"selectAll:",
+                                              @"paste:",
+                                              ]];
+    });
+    
+    if ([enableActions containsObject:NSStringFromSelector(action)]) {
+        return [super canPerformAction:action withSender:sender];
+    }
+    
+    return NO;
 }
 @end
 

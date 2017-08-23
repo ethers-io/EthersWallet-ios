@@ -104,18 +104,16 @@
 @end
 
 
-@implementation ConfigNavigationController {
-    ConfigController *_rootViewController;
-}
+@implementation ConfigNavigationController
 
 + (instancetype)configNavigationController: (ConfigController*)rootViewController {
     return [[ConfigNavigationController alloc] initWithRootViewController:rootViewController];
 }
 
 - (instancetype)initWithRootViewController: (ConfigController*)rootViewController {
+
     self = [super initWithRootViewController:rootViewController];
     if (self) {
-        _rootViewController = rootViewController;
         
         self.navigationBar.barStyle = UIBarStyleBlack;
         self.navigationBar.tintColor = [UIColor colorWithHex:0x5ca2fe];
@@ -129,10 +127,6 @@
     return self;
 }
 
-//- (void)setTotalSteps:(NSUInteger)totalSteps {
-//    _totalSteps = totalSteps;
-//    ((ConfigViewController*)self.topViewController).step = 1;
-//}
 
 - (void)loadView {
     [super loadView];
@@ -180,10 +174,18 @@
 }
 
 - (void)dismissWithResult:(NSObject *)result {
+    __weak ConfigNavigationController *weakSelf = self;
     [self.presentingViewController dismissViewControllerAnimated:YES completion:^() {
-        if (_onDismiss) {
-            _onDismiss(result);
+        if (weakSelf.onDismiss) {
+            weakSelf.onDismiss(result);
         }
+        
+        // Warn if the dismiss left any view controllers living
+        [NSTimer scheduledTimerWithTimeInterval:1.0f repeats:NO block:^(NSTimer *timer) {
+            if (weakSelf) {
+                NSLog(@"WARNING: ConfigNavigationController did not release - %@", weakSelf);
+            }
+        }];
     }];
 }
 

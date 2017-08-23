@@ -38,6 +38,24 @@
 
 @implementation CachedDataStore
 
+NSMutableDictionary<NSString*, CachedDataStore*> *SharedCachedDataStores;
+
++ (instancetype)sharedCachedDataStoreWithKey: (NSString*)key {
+    
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        SharedCachedDataStores = [NSMutableDictionary dictionary];
+    });
+    
+    CachedDataStore *cachedDataStore = [SharedCachedDataStores objectForKey:key];
+    if (!cachedDataStore) {
+        cachedDataStore = [[CachedDataStore alloc] initWithKey:key];
+        [SharedCachedDataStores setObject:cachedDataStore forKey:key];
+    }
+    
+    return cachedDataStore;
+}
+
 - (instancetype)initWithKey: (NSString*)key {
     self = [super init];
     if (self) {

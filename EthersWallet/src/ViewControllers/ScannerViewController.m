@@ -555,7 +555,6 @@ CGPoint pointFromArray(NSArray *points, int index) {
         for (NSInteger i = 0; i < features.count; i++) {
             [messages addObject:[[features objectAtIndex:i] messageString]];
         }
-        NSLog(@"Messages 4: %@", messages);
         
         if ([_delegate respondsToSelector:@selector(scannerViewController:shouldFinishWithMessages:)]) {
             if ([_delegate scannerViewController:self shouldFinishWithMessages:messages]) {

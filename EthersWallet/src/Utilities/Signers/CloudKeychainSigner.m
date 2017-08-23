@@ -14,7 +14,6 @@
 
 #import "CachedDataStore.h"
 
-
 static Address *checkJson(NSString *json) {
     NSError *error = nil;
     NSDictionary *jsonData = [NSJSONSerialization JSONObjectWithData:[json dataUsingEncoding:NSUTF8StringEncoding]
@@ -41,7 +40,7 @@ static NSString *getNickname(NSString *label) {
         NSError *error = nil;
         regexLabel = [NSRegularExpression regularExpressionWithPattern:@"[^(]*\\((.*)\\)" options:0 error:&error];
         if (error) {
-            NSLog(@"Error: %@", error);
+            NSLog(@"CloudKeychainSigner: Error creating regular expression - %@", error);
         }
     });
     
@@ -140,7 +139,7 @@ static BOOL addKeychainVaue(NSString *keychainKey, Address *address, NSString *n
         
         status = SecItemAdd((__bridge CFDictionaryRef)addEntry, NULL);
         if (status != noErr) {
-            NSLog(@"Error: Failed to add %@ - %d", address, (int)status);
+            NSLog(@"Keychain: Error adding %@ - %d", address, (int)status);
         }
         
     }
@@ -184,7 +183,7 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     NSString *cacheKey = [@"cloudkeychainsigner-" stringByAppendingString:keychainKey];
     CachedDataStore *dataStore = [CachedDataStore sharedCachedDataStoreWithKey:cacheKey];;
     
-    NSMutableArray *addresses = [NSMutableArray array];
+    NSMutableArray<Address*> *addresses = [NSMutableArray array];
     
     // If the devices is unlocked, we can load all the JSON wallets
     NSDictionary *query = @{
@@ -201,24 +200,28 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef*)&result);
     
     if (status == noErr) {
-        NSLog(@"Keychain: Found accounts");
+        NSMutableArray *addressStrings = [NSMutableArray array];
         
         for (NSDictionary *entry in ((__bridge NSArray*)result)) {
-            [addresses addObject:[Address addressWithString:[entry objectForKey:(id)kSecAttrAccount]]];
+            NSString *addressString = [entry objectForKey:(id)kSecAttrAccount];
+            [addressStrings addObject:addressString];
+            [addresses addObject:[Address addressWithString:addressString]];
         }
-        
+
+        NSLog(@"Keychain: Found %d accounts for %@", (int)(addresses.count), keychainKey);
+
         // Save the list of addresses to the data store (so we can load it without keychain access if needed)
-        [dataStore setArray:addresses forKey:DataStoreKeyAccounts];
+        [dataStore setArray:addressStrings forKey:DataStoreKeyAccounts];
         
     } else if (status == errSecItemNotFound) {
         // No problem... No exisitng entries
-        NSLog(@"Keychain: No accounts");
+        NSLog(@"Keychain: No accounts for %@", keychainKey);
 
         [dataStore setArray:nil forKey:DataStoreKeyAccounts];
         
     } else {
         // Error... Possibly the device is locked?
-        NSLog(@"Keychain: Error - status=%d", (int)status);
+        NSLog(@"Keychain: Error - status=%d (maybe the device is locked?)", (int)status);
 
         // Device locked; load the addresses from the data store
         for (NSString *addressString in [dataStore arrayForKey:DataStoreKeyAccounts]) {
@@ -227,8 +230,6 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     }
     
     if (result) { CFRelease(result); }
-
-    NSLog(@"Keychain: Found - %@", addresses);
     
     return addresses;
 }
@@ -261,19 +262,20 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
         __weak CloudKeychainSigner *weakSelf = self;
         [NSTimer scheduledTimerWithTimeInterval:4.0f repeats:YES block:^(NSTimer *timer) {
             if (!weakSelf) {
-                NSLog(@"Keychain thing dead; killing timer");
                 [timer invalidate];
                 return;
             }
             
-            [weakSelf checkNickname];
+            // No longer alive, stop polling
+            BOOL maybeAlive = [weakSelf checkNickname];
+            if (!maybeAlive) { [timer invalidate]; }
         }];
     }
     return self;
 }
 
 - (BOOL)checkNickname {
-    BOOL alive = YES;
+    BOOL maybeAlive = YES;
     
     NSDictionary *query = @{
                             //(id)kSecMatchLimit: (id)kSecMatchLimitAll,
@@ -296,13 +298,15 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
         label = [(__bridge NSDictionary*)entry objectForKey:(id)kSecAttrLabel];
         
     } else if (status == errSecItemNotFound) {
-        NSLog(@"Not found! Removed Event");
-        alive = NO;
+        maybeAlive = NO;
+        
         __weak CloudKeychainSigner *weakSelf = self;
+        //NSDictionary *userInfo = @{ SignerNotificationSignerKey: self };
+        NSDictionary *userInfo = @{};
         dispatch_async(dispatch_get_main_queue(), ^() {
             [[NSNotificationCenter defaultCenter] postNotificationName:SignerRemovedNotification
                                                                 object:weakSelf
-                                                              userInfo:@{ @"signer": weakSelf }];
+                                                              userInfo:userInfo];
         });
     }
     
@@ -314,7 +318,7 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
         if (nickname) { [super setNickname:nickname]; }
     }
     
-    return alive;
+    return maybeAlive;
 }
 
 - (void)setNickname:(NSString *)nickname {
@@ -333,7 +337,21 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
 
 - (BOOL)remove {
     if (!_account) { return NO; }
-    return removeKeychainValue(_keychainKey, self.address);
+    
+    BOOL success = removeKeychainValue(_keychainKey, self.address);
+    if (success) {
+        __weak CloudKeychainSigner *weakSelf = self;
+        
+        //NSDictionary *userInfo = @{ SignerNotificationSignerKey: self };
+        NSDictionary *userInfo = @{};
+        dispatch_async(dispatch_get_main_queue(), ^() {
+            [[NSNotificationCenter defaultCenter] postNotificationName:SignerRemovedNotification
+                                                                object:weakSelf
+                                                              userInfo:userInfo];
+        });
+    }
+    
+    return success;
 }
 
 - (BOOL)supportsFingerprintUnlock {

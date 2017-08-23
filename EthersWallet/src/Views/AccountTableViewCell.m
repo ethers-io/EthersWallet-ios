@@ -141,18 +141,18 @@ const CGFloat AccountTableViewCellHeight = 80.0f;
         [self.contentView addSubview:_addressLabel];
         
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(updateAddressNotification:)
-                                                     name:WalletBalanceChangedNotification
+                                                 selector:@selector(notifyBalanceDidChange:)
+                                                     name:WalletAccountBalanceDidChangeNotification
                                                    object:_wallet];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(updateAddressNotification:)
-                                                     name:WalletChangedNicknameNotification
+                                                 selector:@selector(notifyNicknameDidChange:)
+                                                     name:WalletAccountNicknameDidChangeNotification
                                                    object:_wallet];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(updateActiveAccountNotification:)
-                                                     name:WalletChangedActiveAccountNotification
+                                                 selector:@selector(notifyActiveAccountDidChange:)
+                                                     name:WalletActiveAccountDidChangeNotification
                                                    object:_wallet];
     }
     return self;
@@ -164,7 +164,7 @@ const CGFloat AccountTableViewCellHeight = 80.0f;
 }
 
 - (void)copyAddress: (id)sender {
-    [[UIPasteboard generalPasteboard] setString:_address.checksumAddress];
+    [[UIPasteboard generalPasteboard] setString:_accountAddress.checksumAddress];
 }
 
 - (void)changeNickname: (id)sender {
@@ -201,25 +201,51 @@ const CGFloat AccountTableViewCellHeight = 80.0f;
     }
 }
 
-- (void)updateActiveAccountNotification: (NSNotification*)note {
-    Address *address = [note.userInfo objectForKey:@"address"];
-    [self setAccountSelected:[address isEqualToAddress:_address] animated:YES];
+- (void)notifyActiveAccountDidChange: (NSNotification*)note {
+    ChainId activeChainId = (_wallet.activeAccountProvider.testnet ? ChainIdRopsten: ChainIdHomestead);
+    BOOL selected = (_wallet.activeAccountAddress == _accountAddress && activeChainId == _accountChainId);
+    [self setAccountSelected:selected animated:YES];
 }
 
-- (void)updateAddressNotification: (NSNotification*)note {
-    Address *address = [note.userInfo objectForKey:@"address"];
-    if (![_address isEqual:address]) { return; }
-    [self setAddress:_address];
+/*
+- (void)updateAccountIndex: (NSInteger)accountIndex {
+    if (accountIndex != _accountIndex) { return; }
+    [self setAccountIndex:accountIndex];
 }
+ */
 
-- (void)setAddress:(Address *)address {
-    _address = address;
+- (BOOL)checkNote: (NSNotification*)note {
+    Address *address = [note.userInfo objectForKey:WalletNotificationAddressKey];
+    Provider *provider = [note.userInfo objectForKey:WalletNotificationProviderKey];
+    if (!address || !provider) { return NO; }
     
-    [self setAccountSelected:[_wallet.activeAccount isEqualToAddress:_address] animated:NO];    
+    ChainId chainId = (provider.testnet ? ChainIdRopsten: ChainIdHomestead);
+    return (chainId == _accountChainId && [address isEqualToAddress:_accountAddress]);
+}
 
-    _nicknameTextField.text = [_wallet nicknameForAccount:address];
-    _balanceLabel.balance = [_wallet balanceForAddress:address];
-    _addressLabel.text  = address.checksumAddress;
+- (void)notifyBalanceDidChange: (NSNotification*)note {
+    if ([self checkNote:note]) {
+        _balanceLabel.balance = [note.userInfo objectForKey:WalletNotificationBalanceKey];
+    }
+}
+
+- (void)notifyNicknameDidChange: (NSNotification*)note {
+    if ([self checkNote:note]) {
+        _nicknameTextField.text = [note.userInfo objectForKey:WalletNotificationNicknameKey];
+    }
+}
+
+- (void)setupWithAccountIndex: (AccountIndex)accountIndex {
+    _accountAddress = [_wallet addressForIndex:accountIndex];
+    _accountChainId = [_wallet chainIdForIndex:accountIndex];
+    
+    ChainId activeChainId = (_wallet.activeAccountProvider.testnet ? ChainIdRopsten: ChainIdHomestead);
+    BOOL selected = (_wallet.activeAccountAddress == _accountAddress && activeChainId == _accountChainId);
+    [self setAccountSelected:selected animated:NO];
+
+    _nicknameTextField.text = [_wallet nicknameForIndex:accountIndex];
+    _balanceLabel.balance = [_wallet balanceForIndex:accountIndex];
+    _addressLabel.text  = [_wallet addressForIndex:accountIndex].checksumAddress;
 }
 
 - (void)setAccountSelected:(BOOL)accountSelected {

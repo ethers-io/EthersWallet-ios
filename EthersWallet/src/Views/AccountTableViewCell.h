@@ -50,14 +50,15 @@ extern const CGFloat AccountTableViewCellHeight;
 
 @property (nonatomic, readonly) Wallet *wallet;
 
-@property (nonatomic, strong) Address *address;
+
+- (void)setupWithAccountIndex: (AccountIndex)accountIndex;
+
+@property (nonatomic, readonly) Address *accountAddress;
+@property (nonatomic, readonly) ChainId accountChainId;
 
 
 @property (nonatomic, readonly) NSString *nickname;
 
 @property (nonatomic, assign) BOOL editingNickname;
-
-//@property (nonatomic, assign) BOOL accountSelected;
-//- (void)setAccountSelected:(BOOL)accountSelected animated: (BOOL)animated;
 
 @end

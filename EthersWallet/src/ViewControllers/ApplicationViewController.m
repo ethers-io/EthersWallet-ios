@@ -115,14 +115,14 @@ Transaction *getTransaction(NSDictionary *info) {
         
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(noticeAccountChanged:)
-                                                     name:WalletChangedActiveAccountNotification
+                                                 selector:@selector(notifyActiveAccountDidChange:)
+                                                     name:WalletActiveAccountDidChangeNotification
                                                    object:_wallet];
         
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(noticeBlockChanged:)
+                                                 selector:@selector(notifyDidReceiveNewBlock:)
                                                      name:ProviderDidReceiveNewBlockNotification
-                                                   object:_wallet.provider];
+                                                   object:_wallet.activeAccountProvider];
     }
     
     return self;
@@ -134,14 +134,16 @@ Transaction *getTransaction(NSDictionary *info) {
 }
 
 
-- (void)noticeAccountChanged: (NSNotification*)note {
+- (void)notifyActiveAccountDidChange: (NSNotification*)note {
     if (!_ready) { return; }
     
-    NSObject *account = (_wallet.activeAccount ? _wallet.activeAccount.checksumAddress: [NSNull null]);
+    NSObject *account = _wallet.activeAccountAddress.checksumAddress;
+    if (!account) { account = [NSNull null]; }
+    
     [self send:@{ @"action": @"accountChanged", @"account": account }];
 }
 
-- (void)noticeBlockChanged: (NSNotification*)note {
+- (void)notifyDidReceiveNewBlock: (NSNotification*)note {
     NSUInteger blockNumber = [[note.userInfo objectForKey:@"blockNumber"] integerValue];
     if (!_ready || _lastBlockNumber == blockNumber) { return; }
     
@@ -231,18 +233,18 @@ Transaction *getTransaction(NSDictionary *info) {
      */
 
     } else if ([action isEqualToString:@"getAccount"]) {
-        if (_wallet.activeAccount) {
-            [self sendResult:_wallet.activeAccount.checksumAddress messageId:messageId];
+        if (_wallet.activeAccountAddress) {
+            [self sendResult:_wallet.activeAccountAddress.checksumAddress messageId:messageId];
         } else {
             [self sendResult:[NSNull null] messageId:messageId];
         }
 
     } else if ([action isEqualToString:@"getNetwork"]) {
-        [self sendResult:(_wallet.provider.testnet ? @"morden": @"homestead") messageId:messageId];
+        [self sendResult:(_wallet.activeAccountProvider.testnet ? @"ropsten": @"homestead") messageId:messageId];
         
     } else if ([action isEqualToString:@"fundAccount"]) {
         
-        if (!_wallet.provider.testnet) {
+        if (!_wallet.activeAccountProvider.testnet) {
             [self sendError:@"invalid network" messageId:messageId];
 
         } else {
@@ -302,7 +304,7 @@ Transaction *getTransaction(NSDictionary *info) {
 
     } else if ([action isEqualToString:@"send"]) {
         
-        if (!_wallet.activeAccount) {
+        if (!_wallet.activeAccountAddress) {
             [self sendError:@"cancelled" messageId:messageId];
         
         } else {
@@ -325,7 +327,7 @@ Transaction *getTransaction(NSDictionary *info) {
                 [_wallet sendPayment:payment callback:^(Hash *hash, NSError *error) {
                     if (hash) {
                         [self sendResult:hash.hexString messageId:messageId];
-                    } else if ([error.domain isEqualToString:WalletErrorDomain] && error.code == kWalletErrorSendCancelled) {
+                    } else if ([error.domain isEqualToString:WalletErrorDomain] && error.code == WalletErrorSendCancelled) {
                         [self sendError:@"cancelled" messageId:messageId];
                     } else {
                         [self sendError:@"unknown error" messageId:messageId];
@@ -376,11 +378,11 @@ Transaction *getTransaction(NSDictionary *info) {
             [self sendError:@"invalid transaction" messageId:messageId];
         
         } else {
-            [[_wallet.provider call:transaction] onCompletion:^(DataPromise *promise) {
+            [[_wallet.activeAccountProvider call:transaction] onCompletion:^(DataPromise *promise) {
                 if (promise.result) {
                     [self sendResult:[SecureData dataToHexString:promise.value] messageId:messageId];
                 } else {
-                    NSLog(@"Error: %@", promise.error);
+                    NSLog(@"ApplicationViewController: Error during call - %@", promise.error);
                     [self sendError:@"unknown error" messageId:messageId];
                 }
             }];
@@ -396,7 +398,7 @@ Transaction *getTransaction(NSDictionary *info) {
             [self sendError:@"invalid address" messageId:messageId];
 
         } else {
-            [[_wallet.provider getBalance:address] onCompletion:^(BigNumberPromise *promise) {
+            [[_wallet.activeAccountProvider getBalance:address] onCompletion:^(BigNumberPromise *promise) {
                 if (promise.result) {
                     [self sendResult:promise.value messageId:messageId];
                 } else {
@@ -428,14 +430,14 @@ Transaction *getTransaction(NSDictionary *info) {
 
 
             } else {
-                NSLog(@"Error: %@", promise.error);
+                NSLog(@"ApplicationViewController: Error during getBlock - %@", promise.error);
                 [self sendError:@"unknown error" messageId:messageId];
             }
         };
         
         Hash *blockHash = queryPath(params, @"dictionary:block/hash");
         if (blockHash) {
-            [[_wallet.provider getBlockByBlockHash:blockHash] onCompletion:sendBlock];
+            [[_wallet.activeAccountProvider getBlockByBlockHash:blockHash] onCompletion:sendBlock];
             
         } else {
             BOOL validBlockTag = NO;
@@ -469,17 +471,32 @@ Transaction *getTransaction(NSDictionary *info) {
             }
             
             if (validBlockTag) {
-                [[_wallet.provider getBlockByBlockTag:blockTag] onCompletion:sendBlock];
+                [[_wallet.activeAccountProvider getBlockByBlockTag:blockTag] onCompletion:sendBlock];
             } else {
                 [self sendError:@"invalid parameters" messageId:messageId];
             }
         }
 
     } else if ([action isEqualToString:@"getBlockNumber"]) {
-        [self sendResult:@(_wallet.blockNumber) messageId:messageId];
+        [[_wallet.activeAccountProvider getBlockNumber] onCompletion:^(IntegerPromise *promise) {
+            if (promise.error) {
+                NSLog(@"ApplicationViewController: Error during getBlockNumber - %@", promise.error);
+                [self sendError:@"unknown error" messageId:messageId];
+            } else {
+                [self sendResult:@(promise.value) messageId:messageId];
+            }
+        }];
 
     } else if ([action isEqualToString:@"getGasPrice"]) {
-        [self sendResult:[_wallet.gasPrice hexString] messageId:messageId];
+        NSLog(@"Deprecated: getGasPrice");
+        [[_wallet.activeAccountProvider getGasPrice] onCompletion:^(BigNumberPromise *promise) {
+            if (promise.error) {
+                NSLog(@"ApplicationViewController: Error during getGasPrice - %@", promise.error);
+                [self sendError:@"unknown error" messageId:messageId];
+            } else {
+                [self sendResult:[promise.value hexString] messageId:messageId];
+            }
+        }];
 
     } else if ([action isEqualToString:@"getTransaction"]) {
         Hash *hash = queryPath(params, @"dictionary:hash/hash");
@@ -487,7 +504,7 @@ Transaction *getTransaction(NSDictionary *info) {
             [self sendError:@"invalid hash" messageId:messageId];
             
         } else {
-            [[_wallet.provider getTransaction:hash] onCompletion:^(TransactionInfoPromise *promise) {
+            [[_wallet.activeAccountProvider getTransaction:hash] onCompletion:^(TransactionInfoPromise *promise) {
                 if (promise.result) {
                     
                     NSMutableDictionary *info = [NSMutableDictionary dictionary];
@@ -530,7 +547,7 @@ Transaction *getTransaction(NSDictionary *info) {
             [self sendError:@"invalid address" messageId:messageId];
 
         } else {
-            [[_wallet.provider getTransactionCount:address] onCompletion:^(IntegerPromise *promise) {
+            [[_wallet.activeAccountProvider getTransactionCount:address] onCompletion:^(IntegerPromise *promise) {
                 if (promise.result) {
                     [self sendResult:@(promise.value) messageId:messageId];
                 } else {
@@ -552,9 +569,10 @@ Transaction *getTransaction(NSDictionary *info) {
         
     } else if ([action isEqualToString:@"ready"]) {
         _ready = YES;
-        // @TODO: Remvoe loading animation
         
-        _lastBlockNumber = _wallet.blockNumber;
+        // @TODO: Remvoe loading animation
+
+        _lastBlockNumber = _wallet.activeAccountBlockNumber;
         
         [self send:@{@"action": @"ready"}];
         [self send:@{@"action": @"block", @"blockNumber": @(_lastBlockNumber)}];
@@ -587,14 +605,31 @@ Transaction *getTransaction(NSDictionary *info) {
         _wallet = wallet;
         _etherScriptHandler = [[EthersScriptHandler alloc] initWithWallet:wallet];
         _etherScriptHandler.delegate = self;
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(notifyActiveAccountDidChange:)
+                                                     name:WalletActiveAccountDidChangeNotification
+                                                   object:_wallet];
     }
     return self;
 }
 
+- (void)notifyActiveAccountDidChange: (NSNotification*)note {
+    NSLog(@"Warning: Active user changed during application; shutting down app (state may not be consistent)");
+    
+    _webView.userInteractionEnabled = NO;
+    _webView.alpha = 0.5f;
+    
+    // @TODO: Put up a message explaining this
+}
+
 - (void)dealloc {
-    // Make sure we allow the
+    // Make sure we allow the webview, et al to be cleaned up
     [_webView.configuration.userContentController removeAllUserScripts];
     [_webView.configuration.userContentController removeScriptMessageHandlerForName:@"ethers"];
+    
+    // Stop listening for events
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)loadView {

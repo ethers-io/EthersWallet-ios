@@ -122,7 +122,8 @@
         
         NSArray *promises = @[
                               [_signer.provider getCode:_transaction.toAddress],
-                              [_signer.provider estimateGas:_transaction]
+                              [_signer.provider estimateGas:_transaction],
+                              [GasPriceKeyboardView checkForUpdatedGasPrices]
                               ];
         
         _addressInspectionPromise = [Promise all:promises];

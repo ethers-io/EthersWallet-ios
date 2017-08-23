@@ -32,15 +32,19 @@
 
 #import "ApplicationViewController.h"
 #import "CloudView.h"
-#import "InfoViewController.h"
+#import "ConfigNavigationController.h"
+#import "GasPriceKeyboardView.h"
 #import "ModalViewController.h"
+#import "OptionsConfigController.h"
 #import "PanelViewController.h"
 #import "ScannerViewController.h"
 #import "SharedDefaults.h"
+#import "SignedRemoteDictionary.h"
 #import "UIColor+hex.h"
 #import "Utilities.h"
 #import "Wallet.h"
 #import "WalletViewController.h"
+
 
 //#import "LightClientProvider.h"
 
@@ -91,16 +95,6 @@ static NSString *CanaryVersion = nil;
 
 //    _lightClient = [[LightClientProvider alloc] initWithTestnet:NO];
     
-    // Userful for finding fonts..
-    if ((NO)) {
-        for (NSString* family in [UIFont familyNames]) {
-            NSLog(@"%@", family);
-            for (NSString* name in [UIFont fontNamesForFamilyName: family]) {
-                NSLog(@"  %@", name);
-            }
-        }
-    }
-    
     // Schedule us for background fetching
     [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
     
@@ -130,33 +124,29 @@ static NSString *CanaryVersion = nil;
     
     [_window makeKeyAndVisible];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(notifyDidChangeNetwork:)
-                                                 name:WalletDidChangeNetwork
-                                               object:_wallet];
     
     // If an account was added, we may now have a different primary account
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(notifyExtensions)
-                                                 name:WalletAddedAccountNotification
+                                                 name:WalletAccountAddedNotification
                                                object:_wallet];
 
     // If an account was removed, we may now have a different primary account
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(notifyExtensions)
-                                                 name:WalletRemovedAccountNotification
+                                                 name:WalletAccountRemovedNotification
                                                object:_wallet];
 
     // If an account was re-ordered, we may now have a different primary account
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(notifyExtensions)
-                                                 name:WalletReorderedAccountsNotification
+                                                 name:WalletAccountsReorderedNotification
                                                object:_wallet];
 
     // If the balance of the primary account changed, we need to update the widet
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(notifyExtensions)
-                                                 name:WalletBalanceChangedNotification
+                                                 name:WalletAccountBalanceDidChangeNotification
                                                object:_wallet];
 
     NSURL *url = [launchOptions objectForKey:UIApplicationLaunchOptionsURLKey];
@@ -166,15 +156,52 @@ static NSString *CanaryVersion = nil;
     
     [self notifyExtensions];
     
+    [self setupApplications];
+    
     [self checkCanary];
     
-    /*
+    // Debugging
     [NSTimer scheduledTimerWithTimeInterval:1.0f repeats:NO block:^(NSTimer *timer) {
+        /*
         [_wallet sendPayment:[Payment paymentWithURI:@"IBAN:0x06B5955A67D827CDF91823E3bB8F069e6c89c1D6?amount=1.234"] callback:^(Hash *hash, NSError *error) {
             NSLog(@"Sent: %@ %@", hash, error);
         }];
+         */
+        /*
+        OptionsConfigController *a = [OptionsConfigController configWithHeading:@"H" subheading:@"S" messages:@[] options:@[@"1"]];
+        a.onOption = ^(OptionsConfigController *a, NSUInteger i) {
+            NSLog(@"Option: %@", a);
+        };
+        a.onLoad = ^(ConfigController *a) {
+            NSLog(@"Load: %@", a);
+            
+        };
+        a.onNext = ^(ConfigController *a) {
+            NSLog(@"Next: %@", a);
+        };
+        ConfigNavigationController *b = [[ConfigNavigationController alloc] initWithRootViewController:a];
+        [ModalViewController presentViewController:b animated:YES completion:nil];
+        */
+        /*
+        Transaction *tx = [Transaction transaction];
+
+        // EOA
+        //tx.toAddress = [Address addressWithString:@"0x06B5955A67D827CDF91823E3bB8F069e6c89c1D6"];
+        // Contract
+        tx.toAddress = [Address addressWithString:@"0x6fc21092da55b392b045ed78f4732bff3c580e2c"];
+
+        tx.value = [Payment parseEther:@"0.0314"];
+        [_wallet sendTransaction:tx callback:^(Hash *hash, NSError *error) {
+            
+        }];
+        */
+        //[_wallet showDebuggingOptionsCallback:^() { }];
+        /*
+        [_wallet addAccountCallback:^(Address *address) {
+            NSLog(@"Address: %@", address);
+        }];
+         */
     }];
-     */
     
     return YES;
 }
@@ -184,30 +211,28 @@ static NSString *CanaryVersion = nil;
 }
 
 - (void)setupApplications {
-    if (_wallet.provider.testnet) {
-        _applicationTitles = @[@"Welcome", @"Testnet Faucet"];
+//    if (_wallet.provider.testnet) {
+        _applicationTitles = @[@"Welcome", @"Testnet Faucet", @"DevCon2 PoA"];
         _applicationUrls = @[
                              @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
-                             @"https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/"
-                             ];
-    } else {
-        _applicationTitles = @[@"Welcome", @"DevCon2 PoA"];
-        _applicationUrls = @[
-                             @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
+                             @"https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/",
                              @"https://0x2f2ab85f856ec137699cbe5d8038110dd7ce9cbe.ethers.space/"
                              ];
-    }
-    
+//    } else {
+//        _applicationTitles = @[@"Welcome", @"DevCon2 PoA"];
+//        _applicationUrls = @[
+//                             @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
+//                             ];
+//    }
+//    
     [_panelViewController reloadData];
 }
 
-- (void)notifyDidChangeNetwork: (NSNotification*)note {
-    [self setupApplications];
-}
 
 // iban://0x05ABcF02682E2b3fB6e38840Cd57d2ea77edd41F
 // https://ethers.io/app-link/#!debug
-
+/*
+ @TOOD: Create the new Scanner
 - (Payment*)checkPasteboard {
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     if ([pasteboard hasStrings]) {
@@ -234,7 +259,8 @@ static NSString *CanaryVersion = nil;
 
     return nil;
 }
-
+*/
+/*
 - (void)checkAndAlertPasteboard {
     Payment *payment = [self checkPasteboard];
     if (!payment || [payment.address isEqualToAddress:_wallet.activeAccount] || !_wallet.activeAccount) {
@@ -275,6 +301,7 @@ static NSString *CanaryVersion = nil;
         [ModalViewController presentViewController:alertController animated:YES completion:nil];
     }];
 }
+ */
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
@@ -288,7 +315,7 @@ static NSString *CanaryVersion = nil;
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-    [self checkAndAlertPasteboard];
+//    [self checkAndAlertPasteboard];
     [self checkCanary];
 }
 
@@ -311,32 +338,18 @@ static NSString *CanaryVersion = nil;
 }
 
 - (void)checkCanary {
-    NSLog(@"Check Canary");
-
-    [[Utilities fetchUrl:CanaryUrl body:nil dedupToken:@"AppDelegate-Canary"] onCompletion:^(DataPromise *promise) {
-        if (promise.error) {
-            NSLog(@"Canary Fetch Error: %@", promise);
-            return;
-        }
+    
+    // Might as well check and possibly update the gas prices
+    [GasPriceKeyboardView checkForUpdatedGasPrices];
+    
+    // Check for canary data. This is an emergency broadcast system, in case there is
+    // either an Ethers Wallet or Ethereum-wide notification we need to send out
+    SignedRemoteDictionary *canary = [SignedRemoteDictionary dictionaryWithUrl:CanaryUrl address:CanaryAddress defaultData:@{}];
+    [canary.data onCompletion:^(DictionaryPromise *promise) {
         
-        NSString *hexTransaction = [[NSString alloc] initWithData:promise.value encoding:NSUTF8StringEncoding];
-        hexTransaction = [hexTransaction stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        NSData *data = [SecureData hexStringToData:hexTransaction];
-        if (!data) { return; }
-        Transaction *transaction = [Transaction transactionWithData:data];
-        if (!transaction || !transaction.data || ![transaction.fromAddress isEqualToAddress:CanaryAddress]) {
-            return;
-        }
+        if (![[promise.value objectForKey:@"version"] isEqual:@"0.1"]) { return; }
         
-        NSError *error = nil;
-        NSDictionary *payload = [NSJSONSerialization JSONObjectWithData:transaction.data options:0 error:&error];
-        if (![payload isKindOfClass:[NSDictionary class]]) { return; }
-        
-        NSLog(@"Canary Payload: %@", payload);
-        
-        if (![[payload objectForKey:@"version"] isEqual:@"0.1"]) { return; }
-        
-        NSArray *alerts = [payload objectForKey:@"alerts"];
+        NSArray *alerts = [promise.value objectForKey:@"alerts"];
         if (![alerts isKindOfClass:[NSArray class]]) { return; }
         
         for (NSDictionary *alert in alerts) {
@@ -353,15 +366,18 @@ static NSString *CanaryVersion = nil;
                 }
             }
             
+            // DEBUG!
+            //affected = YES;
+            
             if (!affected) { continue; }
             
             NSString *heading = [alert objectForKey:@"heading"];
             if (![heading isKindOfClass:[NSString class]]) { continue; }
             
-            NSArray *texts = [alert objectForKey:@"text"];
-            if (![texts isKindOfClass:[NSArray class]]) { continue; }
+            NSArray *messages = [alert objectForKey:@"text"];
+            if (![messages isKindOfClass:[NSArray class]]) { continue; }
             BOOL validText = YES;
-            for (NSString *text in texts) {
+            for (NSString *text in messages) {
                 if (![text isKindOfClass:[NSString class]]) {
                     validText = NO;
                     break;
@@ -372,29 +388,25 @@ static NSString *CanaryVersion = nil;
             NSString *button = [alert objectForKey:@"button"];
             if (![button isKindOfClass:[NSString class]]) { continue; }
             
-            InfoNavigationController *navigationController = [InfoViewController rootInfoViewControllerWithCompletionCallback:nil];
-            navigationController.rootInfoViewController.setupView = ^(InfoViewController *info) {
-                [info addFlexibleGap];
-                [info addHeadingText:heading];
-                [info addFlexibleGap];
-                for (NSString *text in texts) {
-                    [info addMarkdown:text fontSize:18.0f];
-                }
-                [info addFlexibleGap];
-                [info addButton:button action:^(UIButton *button) {
-                    [navigationController dismissWithNil];
-                }];
-                [info addGap:44.0f];
-                
-                info.navigationItem.titleView = [Utilities navigationBarLogoTitle];
-                info.navigationItem.leftBarButtonItem = nil;
+            OptionsConfigController *config = [OptionsConfigController configWithHeading:heading
+                                                                              subheading:@""
+                                                                                messages:messages
+                                                                                 options:@[button]];
+            
+            config.onLoad = ^(ConfigController *configController) {
+                configController.navigationItem.leftBarButtonItem = nil;
             };
             
-
-            [ModalViewController presentViewController:navigationController animated:YES completion:nil];
-
+            config.onOption = ^(OptionsConfigController *configController, NSUInteger index) {
+                [(ConfigNavigationController*)configController.navigationController dismissWithNil];
+            };
+            
+            [ModalViewController presentViewController:[ConfigNavigationController configNavigationController:config]
+                                              animated:YES
+                                            completion:nil];
             break;
         }
+
     }];
 }
 
@@ -433,7 +445,7 @@ static NSString *CanaryVersion = nil;
 
 - (void)showScanner {
     [ModalViewController dismissAllCompletionCallback:^() {
-        if (_wallet.activeAccount) {
+        if (_wallet.activeAccountIndex != AccountNotFound) {
             ScannerViewController *scannerViewController = [[ScannerViewController alloc] init];
             scannerViewController.delegate = self;
             
@@ -556,6 +568,7 @@ static NSString *CanaryVersion = nil;
     return YES;
 }
 
+
 #pragma mark - Extensions
 
 - (void)notifyExtensions {
@@ -575,20 +588,20 @@ static NSString *CanaryVersion = nil;
     } else {
         hasContent = YES;
         
-        Address *addres = [_wallet addressAtIndex:0];
-        if (![sharedDefaults.address isEqualToAddress:addres]) {
-            sharedDefaults.address = addres;
+        Address *address = [_wallet addressForIndex:0];
+        if (![sharedDefaults.address isEqualToAddress:address]) {
+            sharedDefaults.address = address;
             changed = YES;
         }
         
-        BigNumber *balance = [_wallet balanceForAddress:addres];
+        BigNumber *balance = [_wallet balanceForIndex:0];
         if (![sharedDefaults.balance isEqual:balance]) {
             sharedDefaults.balance = balance;
             changed = YES;
         }
         
         for (NSUInteger i = 0; i < _wallet.numberOfAccounts; i++) {
-            totalBalance = [totalBalance add:[_wallet balanceForAddress:[_wallet addressAtIndex:i]]];
+            totalBalance = [totalBalance add:[_wallet balanceForIndex:i]];
         }
     }
     

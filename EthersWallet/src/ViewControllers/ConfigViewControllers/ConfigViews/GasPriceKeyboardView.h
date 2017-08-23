@@ -26,13 +26,15 @@
 #import <UIKit/UIKit.h>
 
 #import <ethers/BigNumber.h>
+#import <ethers/Promise.h>
 
 #import "SliderKeyboardView.h"
 
 
 @interface GasPriceKeyboardView : SliderKeyboardView
 
-//@property (nonatomic, assign) NSUInteger gasPriceTier;
++ (Promise*)checkForUpdatedGasPrices;
+
 @property (nonatomic, readonly) BigNumber *gasPrice;
 
 @property (nonatomic, copy) void (^didChangeGasPrice)(GasPriceKeyboardView*);

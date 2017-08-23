@@ -85,7 +85,7 @@
     __weak OptionsConfigController *weakSelf = self;
     
     void (^tapButton)(UIButton *button)  = ^(UIButton *button) {
-        if (_onOption) {
+        if (weakSelf.onOption) {
             weakSelf.onOption(weakSelf, button.tag);
         }
     };

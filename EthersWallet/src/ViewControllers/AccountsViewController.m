@@ -77,12 +77,12 @@
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(notificationAdded:)
-                                                     name:WalletAddedAccountNotification
+                                                     name:WalletAccountAddedNotification
                                                    object:_wallet];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(notificationRemoved:)
-                                                     name:WalletRemovedAccountNotification
+                                                     name:WalletAccountRemovedNotification
                                                    object:_wallet];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -153,7 +153,7 @@
     [_tableView reloadData];
     
     // No accounts left, we no longer have any purpose
-    if (!_wallet.activeAccount) { [self tapDone]; }
+    if (_wallet.activeAccountIndex == AccountNotFound) { [self tapDone]; }
 }
 
 - (void)dealloc {
@@ -177,8 +177,8 @@
     [self.view addSubview:_tableView];
    
     // @TODO: Check this... Should it return a uint? If not found, does it return -1 or NSNOTFOUND?
-    NSInteger selectedIndex = [_wallet indexForAddress:_wallet.activeAccount];
-    NSLog(@"Wallet: %@ %d %@ ", _wallet, (int)_wallet.numberOfAccounts, [_wallet addressAtIndex:selectedIndex]);
+    //NSInteger selectedIndex = [_wallet indexForAddress:_wallet.activeAccount];
+    //NSLog(@"Wallet: %@ %d %@ ", _wallet, (int)_wallet.numberOfAccounts, [_wallet addressAtIndex:selectedIndex]);
     /*
     if (selectedIndex >= 0) {
         
@@ -197,7 +197,8 @@
 #pragma mark - AccountTableViewCellDelegate
 
 - (void)accountTableViewCell:(AccountTableViewCell *)accountTableViewCell changedNickname:(NSString *)nickname {
-    [_wallet setNickname:nickname address:accountTableViewCell.address];
+    NSInteger index = [_tableView indexPathForCell:accountTableViewCell].row;
+    [_wallet setNickname:nickname forIndex:index];
 }
 
 - (void)accountTableViewCell:(AccountTableViewCell *)accountTableViewCell changedEditingNickname:(BOOL)isEditing {
@@ -225,15 +226,15 @@
         cell.delegate = self;
     }
     
-    cell.address = [_wallet addressAtIndex:indexPath.row];
+    [cell setupWithAccountIndex:indexPath.row];
     
     return cell;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [self resignNicknameTextFields];
-    if ([_delegate respondsToSelector:@selector(accountsViewController:didSelectAccount:)]) {
-        [_delegate accountsViewController:self didSelectAccount:[_wallet addressAtIndex:indexPath.row]];
+    if ([_delegate respondsToSelector:@selector(accountsViewController:didSelectAccountIndex:)]) {
+        [_delegate accountsViewController:self didSelectAccountIndex:indexPath.row];
     }
 }
 
@@ -273,8 +274,9 @@
     
     void (^handleAction)(UITableViewRowAction*, NSIndexPath*) = ^(UITableViewRowAction *rowAction, NSIndexPath *indexPath) {
         NSLog(@"Action: %@ %@", rowAction, indexPath);
-        [_wallet manageAccount:((AccountTableViewCell*)[tableView cellForRowAtIndexPath:indexPath]).address
-                      callback:nil];
+        [_wallet manageAccountAtIndex:indexPath.row callback:nil];
+//        [_wallet manageAccount:((AccountTableViewCell*)[tableView; cellForRowAtIndexPath:indexPath]).address
+//                      callback:nil];
         
         [tableView setEditing:NO animated:YES];
     };

@@ -27,10 +27,11 @@
 
 #import "Wallet.h"
 
-
 @interface ApplicationViewController : UIViewController
 
-- (instancetype)initWithApplicationTitle: (NSString*)applicationTitle url: (NSURL*)url wallet: (Wallet*)wallet;
+- (instancetype)initWithApplicationTitle: (NSString*)applicationTitle
+                                     url: (NSURL*)url
+                                  wallet: (Wallet*)wallet;
 
 @property (nonatomic, readonly) NSString *applicationTitle;
 @property (nonatomic, readonly) NSURL *url;

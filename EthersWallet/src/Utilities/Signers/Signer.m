@@ -11,6 +11,7 @@
 #import <ethers/Payment.h>
 #import "CachedDataStore.h"
 
+#pragma mark - Notifications
 
 const NSNotificationName SignerRemovedNotification                = @"SignerRemovedNotification";
 const NSNotificationName SignerNicknameDidChangeNotification      = @"SignerNicknameDidChangeNotification";
@@ -19,19 +20,37 @@ const NSNotificationName SignerHistoryUpdatedNotification         = @"SignerHist
 const NSNotificationName SignerTransactionDidChangeNotification   = @"SignerTransactionDidChangeNotification";
 
 
+#pragma mark - Notification Keys
+
+const NSString* SignerNotificationSignerKey                       = @"SignerNotificationSignerKey";
+
+const NSString* SignerNotificationNicknameKey                     = @"SignerNotificationNicknameKey";
+const NSString* SignerNotificationFormerNicknameKey               = @"SignerNotificationFormerNicknameKey";
+
+const NSString* SignerNotificationBalanceKey                      = @"SignerNotificationBalanceKey";
+const NSString* SignerNotificationFormerBalanceKey                = @"SignerNotificationFormerBalanceKey";
+const NSString* SignerNotificationTransactionKey                  = @"SignerNotificationTransactionKey";
+
+
+#pragma mark - Data Store Keys
 
 static NSString *DataStoreKeyAccountIndexPrefix                   = @"ACCOUNT_INDEX_";
 static NSString *DataStoreKeyBalancePrefix                        = @"BALANCE_";
+static NSString *DataStoreKeyBlockNumberPrefix                    = @"BLOCK_NUMBER_";
 static NSString *DataStoreKeyNicknamePrefix                       = @"NICKNAME_";
 static NSString *DataStoreKeyNoncePrefix                          = @"NONCE_";
 static NSString *DataStoreKeyTransactionHistoryPrefix             = @"TRANSACTION_HISTORY_";
 static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTION_HISTORY_TRUNCATED_";
 
 
+#pragma mark - Signer
+
 @implementation Signer {
     CachedDataStore *_dataStore;
 }
 
+
+#pragma mark - Life-Cycle
 
 - (instancetype)initWithCacheKey:(NSString *)cacheKey address:(Address *)address provider:(Provider *)provider {
     self = [super init];
@@ -50,12 +69,20 @@ static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTIO
     return self;
 }
 
-- (void)setAccountIndex:(NSInteger)accountIndex {
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+
+#pragma mark - UI State
+
+- (void)setAccountIndex:(NSUInteger)accountIndex {
     NSString *key = [DataStoreKeyAccountIndexPrefix stringByAppendingString:self.address.checksumAddress];
+    NSLog(@"SetAccountIndex: %@ %d", self.address, (int)accountIndex);
     [_dataStore setInteger:accountIndex forKey:key];
 }
 
-- (NSInteger)accoutIndex {
+- (NSUInteger)accountIndex {
     NSString *key = [DataStoreKeyAccountIndexPrefix stringByAppendingString:self.address.checksumAddress];
     return [_dataStore integerForKey:key];
 }
@@ -64,9 +91,9 @@ static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTIO
     __weak Signer *weakSelf = self;
 
     NSDictionary *userInfo = @{
-                               @"signer": self,
-                               @"nickname": nickname,
-                               @"oldNickname": self.nickname
+                               SignerNotificationSignerKey: self,
+                               SignerNotificationNicknameKey: nickname,
+                               SignerNotificationFormerNicknameKey: self.nickname
                                };
 
     NSString *key = [DataStoreKeyNicknamePrefix stringByAppendingString:self.address.checksumAddress];
@@ -89,12 +116,16 @@ static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTIO
 
 #pragma mark - Blockchain Data
 
-- (void)notifyDidReceiveNewBlock: (NSNotification*)note {    
+- (void)notifyDidReceiveNewBlock: (NSNotification*)note {
+    
     __weak Signer *weakSelf = self;
+    
+    NSInteger blockNumber = [[note.userInfo objectForKey:@"blockNumber"] integerValue];
+    [_dataStore setInteger:blockNumber forKey:[DataStoreKeyBlockNumberPrefix stringByAppendingString:_address.checksumAddress]];
     
     [[_provider getBalance:self.address] onCompletion:^(BigNumberPromise *promise) {
         if (!promise.result || promise.error) {
-            NSLog(@"Error: getBalance - %@", promise.error);
+            //NSLog(@"Error: getBalance - %@", promise.error);
             return;
         }
         [weakSelf _setBalance:promise.value];
@@ -102,7 +133,7 @@ static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTIO
 
     [[_provider getTransactionCount:self.address] onCompletion:^(IntegerPromise *promise) {
         if (!promise.result || promise.error) {
-            NSLog(@"Error: getTransactionCount - %@", promise.error);
+            //NSLog(@"Error: getTransactionCount - %@", promise.error);
             return;
         }
         [weakSelf _setTransactionCount:promise.value];
@@ -110,7 +141,7 @@ static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTIO
     
     [[_provider getTransactions:self.address startBlockTag:0] onCompletion:^(ArrayPromise *promise) {
         if (!promise.result || promise.error) {
-            NSLog(@"Error: %@", promise.error);
+            //NSLog(@"Error: %@", promise.error);
             return;
         }
         
@@ -138,9 +169,9 @@ static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTIO
     
     __weak Signer *weakSelf = self;
     NSDictionary *info = @{
-                           @"signer": self,
-                           @"balance": balance,
-                           @"oldBalance": oldBalance,
+                           SignerNotificationSignerKey: self,
+                           SignerNotificationBalanceKey: balance,
+                           SignerNotificationFormerBalanceKey: oldBalance,
                            };
     dispatch_async(dispatch_get_main_queue(), ^() {
         [[NSNotificationCenter defaultCenter] postNotificationName:SignerBalanceDidChangeNotification
@@ -156,6 +187,10 @@ static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTIO
     BigNumber *value = [BigNumber bigNumberWithHexString:valueHex];
     if (!value) { return [BigNumber constantZero]; }
     return value;
+}
+
+- (NSUInteger)blockNumber {
+    return [_dataStore integerForKey:[DataStoreKeyBlockNumberPrefix stringByAppendingString:_address.checksumAddress]];
 }
 
 - (void)_setTransactionCount: (NSUInteger)transactionCount {
@@ -226,14 +261,18 @@ static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTIO
     
     if (changedTransactions.count) {
         dispatch_async(dispatch_get_main_queue(), ^() {
-            NSInteger highestBlockNumber = 0;   // @TODO: Populate this
-            NSDictionary *userInfo = @{ @"signer": self, @"highestBlockNumber": @(highestBlockNumber) };
+            NSDictionary *userInfo = @{
+                                       SignerNotificationSignerKey: self,
+                                       };
             [[NSNotificationCenter defaultCenter] postNotificationName:SignerHistoryUpdatedNotification
                                                                 object:self
                                                               userInfo:userInfo];
             
             for (TransactionInfo *entry in changedTransactions) {
-                NSDictionary *userInfo = @{ @"signer": self, @"transaction": entry };
+                NSDictionary *userInfo = @{
+                                           SignerNotificationSignerKey: self,
+                                           SignerNotificationTransactionKey: entry
+                                           };
                 [[NSNotificationCenter defaultCenter] postNotificationName:SignerTransactionDidChangeNotification
                                                                     object:self
                                                                   userInfo:userInfo];
@@ -264,9 +303,8 @@ static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTIO
     return transactionHistory;
 }
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
+
+#pragma mark - Signing
 
 - (BOOL)supportsFingerprintUnlock {
     return NO;
@@ -316,10 +354,13 @@ static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTIO
     });
 }
 
+
+#pragma mark - NSObject
+
 - (NSString*)description {
-    return [NSString stringWithFormat:@"<%@ address=%@ nickname='%@' balance=%@ nonce=%d provider=%@>",
-            NSStringFromClass([self class]), self.address, self.nickname, [Payment formatEther:self.balance],
-            (int)self.transactionCount, self.provider];
+    return [NSString stringWithFormat:@"<%@ index=%d address=%@ nickname='%@' balance=%@ nonce=%d chainId=%d>",
+            NSStringFromClass([self class]), (int)self.accountIndex, self.address, self.nickname,
+            [Payment formatEther:self.balance], (int)self.transactionCount, (self.provider.testnet ? ChainIdRopsten: ChainIdHomestead)];
 }
 
 @end

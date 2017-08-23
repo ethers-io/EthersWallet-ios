@@ -37,7 +37,7 @@
 
 @interface CachedDataStore : NSObject
 
-- (instancetype)initWithKey: (NSString*)key;
++ (instancetype)sharedCachedDataStoreWithKey: (NSString*)key;
 
 - (void)purgeData;
 - (void)filterData: (BOOL (^)(CachedDataStore *dataStore, NSString *key))filterCallback;

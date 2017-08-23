@@ -138,7 +138,7 @@ NSAttributedString *getTimestamp(NSTimeInterval timestamp) {
         
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(noticeTransactionUpdated:)
-                                                     name:WalletTransactionChangedNotification
+                                                     name:WalletTransactionDidChangeNotification
                                                    object:nil];
     }
     return self;

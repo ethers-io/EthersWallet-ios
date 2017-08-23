@@ -14,6 +14,26 @@
 		E21481CD1E431C9E00B87132 /* UIColor+hex.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA044A1E428E0E0013E5A7 /* UIColor+hex.m */; };
 		E21481CE1E431CAE00B87132 /* SharedDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04481E428E0E0013E5A7 /* SharedDefaults.m */; };
 		E21481CF1E431CC600B87132 /* ethers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2FA046E1E4293750013E5A7 /* ethers.framework */; };
+		E22A59E71EBA9D8500AEE894 /* Signer.m in Sources */ = {isa = PBXBuildFile; fileRef = E22A59E61EBA9D8500AEE894 /* Signer.m */; };
+		E2491AB61F42642A007DB5A4 /* ConfigLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2491AB51F42642A007DB5A4 /* ConfigLabel.m */; };
+		E28B15331EAC3D6C00D79C52 /* BLECast.m in Sources */ = {isa = PBXBuildFile; fileRef = E28B15321EAC3D6C00D79C52 /* BLECast.m */; };
+		E29AB1091F4E199C0009FEF0 /* SignedRemoteDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB1081F4E199C0009FEF0 /* SignedRemoteDictionary.m */; };
+		E2B3BE491F4165B400C5EC1C /* TransactionConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B3BE481F4165B400C5EC1C /* TransactionConfigController.m */; };
+		E2B6A30C1F3CF10300B315B6 /* ConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A30B1F3CF10300B315B6 /* ConfigController.m */; };
+		E2B6A30F1F3CF39B00B315B6 /* ConfigNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A30E1F3CF39B00B315B6 /* ConfigNavigationController.m */; };
+		E2B6A3121F3CFB1B00B315B6 /* OptionsConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A3111F3CFB1B00B315B6 /* OptionsConfigController.m */; };
+		E2B6A3151F3D025D00B315B6 /* FlexibleView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A3141F3D025D00B315B6 /* FlexibleView.m */; };
+		E2B6A3191F3D113000B315B6 /* BlockButton.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A3181F3D113000B315B6 /* BlockButton.m */; };
+		E2B6A31C1F3D12B200B315B6 /* MnemonicWarningConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A31B1F3D12B200B315B6 /* MnemonicWarningConfigController.m */; };
+		E2B6A31F1F3D18FD00B315B6 /* IconView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A31E1F3D18FD00B315B6 /* IconView.m */; };
+		E2B6A3221F3D250000B315B6 /* MnemonicConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A3211F3D250000B315B6 /* MnemonicConfigController.m */; };
+		E2B6A3251F3E2FA400B315B6 /* PasswordConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A3241F3E2FA400B315B6 /* PasswordConfigController.m */; };
+		E2B6A3291F3E358B00B315B6 /* ConfigTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A3281F3E358B00B315B6 /* ConfigTextField.m */; };
+		E2B6A32C1F3E35A400B315B6 /* ConfigView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A32B1F3E35A400B315B6 /* ConfigView.m */; };
+		E2B6A32F1F3E534300B315B6 /* DoneConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A32E1F3E534300B315B6 /* DoneConfigController.m */; };
+		E2B6A3321F3EEF0500B315B6 /* CloudKeychainSigner.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A3311F3EEF0500B315B6 /* CloudKeychainSigner.m */; };
+		E2C1671E1F4AB48F001B4A31 /* DebugConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2C1671D1F4AB48F001B4A31 /* DebugConfigController.m */; };
+		E2C167221F4AB5A2001B4A31 /* ConfigToggle.m in Sources */ = {isa = PBXBuildFile; fileRef = E2C167211F4AB5A2001B4A31 /* ConfigToggle.m */; };
 		E2FA03E61E428AC10013E5A7 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA03E51E428AC10013E5A7 /* main.m */; };
 		E2FA03F11E428AC10013E5A7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2FA03F01E428AC10013E5A7 /* Assets.xcassets */; };
 		E2FA03FF1E428AC20013E5A7 /* EthersWalletTests.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA03FE1E428AC20013E5A7 /* EthersWalletTests.m */; };
@@ -54,6 +74,11 @@
 		E2FA04A31E4318900013E5A7 /* LocalAuthentication.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2FA04A21E4318900013E5A7 /* LocalAuthentication.framework */; };
 		E2FA04AB1E4319510013E5A7 /* NotificationCenter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2FA04AA1E4319510013E5A7 /* NotificationCenter.framework */; };
 		E2FA04B71E4319510013E5A7 /* TodayExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E2FA04A91E4319510013E5A7 /* TodayExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E2FF6A0F1F4673F300544B0B /* GasLimitKeyboardView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FF6A0E1F4673F300544B0B /* GasLimitKeyboardView.m */; };
+		E2FF6A131F467F1700544B0B /* GasPriceKeyboardView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FF6A121F467F1700544B0B /* GasPriceKeyboardView.m */; };
+		E2FF6A161F46AFC100544B0B /* CrossfadeLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FF6A151F46AFC100544B0B /* CrossfadeLabel.m */; };
+		E2FF6A191F4773A800544B0B /* KeyboardView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FF6A181F4773A800544B0B /* KeyboardView.m */; };
+		E2FF6A1C1F47988E00544B0B /* SliderKeyboardView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FF6A1B1F47988E00544B0B /* SliderKeyboardView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,6 +135,46 @@
 
 /* Begin PBXFileReference section */
 		E21481D01E43218A00B87132 /* TodayExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = TodayExtension.entitlements; path = TodayExtension/TodayExtension.entitlements; sourceTree = "<group>"; };
+		E22A59E51EBA9D8500AEE894 /* Signer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Signer.h; path = src/Utilities/Signers/Signer.h; sourceTree = "<group>"; };
+		E22A59E61EBA9D8500AEE894 /* Signer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Signer.m; path = src/Utilities/Signers/Signer.m; sourceTree = "<group>"; };
+		E2491AB41F42642A007DB5A4 /* ConfigLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigLabel.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigLabel.h; sourceTree = "<group>"; };
+		E2491AB51F42642A007DB5A4 /* ConfigLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ConfigLabel.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigLabel.m; sourceTree = "<group>"; };
+		E28B15311EAC3D6C00D79C52 /* BLECast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BLECast.h; path = src/Utilities/BLECast.h; sourceTree = "<group>"; };
+		E28B15321EAC3D6C00D79C52 /* BLECast.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BLECast.m; path = src/Utilities/BLECast.m; sourceTree = "<group>"; };
+		E29AB1071F4E199C0009FEF0 /* SignedRemoteDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SignedRemoteDictionary.h; path = src/Utilities/SignedRemoteDictionary.h; sourceTree = "<group>"; };
+		E29AB1081F4E199C0009FEF0 /* SignedRemoteDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SignedRemoteDictionary.m; path = src/Utilities/SignedRemoteDictionary.m; sourceTree = "<group>"; };
+		E2B3BE471F4165B400C5EC1C /* TransactionConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TransactionConfigController.h; path = src/ViewControllers/ConfigViewControllers/TransactionConfigController.h; sourceTree = "<group>"; };
+		E2B3BE481F4165B400C5EC1C /* TransactionConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TransactionConfigController.m; path = src/ViewControllers/ConfigViewControllers/TransactionConfigController.m; sourceTree = "<group>"; };
+		E2B6A30A1F3CF10300B315B6 /* ConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigController.h; path = src/ViewControllers/ConfigViewControllers/ConfigController.h; sourceTree = "<group>"; };
+		E2B6A30B1F3CF10300B315B6 /* ConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ConfigController.m; path = src/ViewControllers/ConfigViewControllers/ConfigController.m; sourceTree = "<group>"; };
+		E2B6A30D1F3CF39B00B315B6 /* ConfigNavigationController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigNavigationController.h; path = src/ViewControllers/ConfigViewControllers/ConfigNavigationController.h; sourceTree = "<group>"; };
+		E2B6A30E1F3CF39B00B315B6 /* ConfigNavigationController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ConfigNavigationController.m; path = src/ViewControllers/ConfigViewControllers/ConfigNavigationController.m; sourceTree = "<group>"; };
+		E2B6A3101F3CFB1B00B315B6 /* OptionsConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionsConfigController.h; path = src/ViewControllers/ConfigViewControllers/OptionsConfigController.h; sourceTree = "<group>"; };
+		E2B6A3111F3CFB1B00B315B6 /* OptionsConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OptionsConfigController.m; path = src/ViewControllers/ConfigViewControllers/OptionsConfigController.m; sourceTree = "<group>"; };
+		E2B6A3131F3D025D00B315B6 /* FlexibleView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FlexibleView.h; path = src/Views/FlexibleView.h; sourceTree = "<group>"; };
+		E2B6A3141F3D025D00B315B6 /* FlexibleView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FlexibleView.m; path = src/Views/FlexibleView.m; sourceTree = "<group>"; };
+		E2B6A3171F3D113000B315B6 /* BlockButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BlockButton.h; path = src/Views/BlockButton.h; sourceTree = "<group>"; };
+		E2B6A3181F3D113000B315B6 /* BlockButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BlockButton.m; path = src/Views/BlockButton.m; sourceTree = "<group>"; };
+		E2B6A31A1F3D12B200B315B6 /* MnemonicWarningConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MnemonicWarningConfigController.h; path = src/ViewControllers/ConfigViewControllers/MnemonicWarningConfigController.h; sourceTree = "<group>"; };
+		E2B6A31B1F3D12B200B315B6 /* MnemonicWarningConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MnemonicWarningConfigController.m; path = src/ViewControllers/ConfigViewControllers/MnemonicWarningConfigController.m; sourceTree = "<group>"; };
+		E2B6A31D1F3D18FD00B315B6 /* IconView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IconView.h; path = src/Views/IconView.h; sourceTree = "<group>"; };
+		E2B6A31E1F3D18FD00B315B6 /* IconView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IconView.m; path = src/Views/IconView.m; sourceTree = "<group>"; };
+		E2B6A3201F3D250000B315B6 /* MnemonicConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MnemonicConfigController.h; path = src/ViewControllers/ConfigViewControllers/MnemonicConfigController.h; sourceTree = "<group>"; };
+		E2B6A3211F3D250000B315B6 /* MnemonicConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MnemonicConfigController.m; path = src/ViewControllers/ConfigViewControllers/MnemonicConfigController.m; sourceTree = "<group>"; };
+		E2B6A3231F3E2FA400B315B6 /* PasswordConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PasswordConfigController.h; path = src/ViewControllers/ConfigViewControllers/PasswordConfigController.h; sourceTree = "<group>"; };
+		E2B6A3241F3E2FA400B315B6 /* PasswordConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PasswordConfigController.m; path = src/ViewControllers/ConfigViewControllers/PasswordConfigController.m; sourceTree = "<group>"; };
+		E2B6A3271F3E358B00B315B6 /* ConfigTextField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigTextField.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigTextField.h; sourceTree = "<group>"; };
+		E2B6A3281F3E358B00B315B6 /* ConfigTextField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ConfigTextField.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigTextField.m; sourceTree = "<group>"; };
+		E2B6A32A1F3E35A400B315B6 /* ConfigView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigView.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigView.h; sourceTree = "<group>"; };
+		E2B6A32B1F3E35A400B315B6 /* ConfigView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ConfigView.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigView.m; sourceTree = "<group>"; };
+		E2B6A32D1F3E534300B315B6 /* DoneConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DoneConfigController.h; path = src/ViewControllers/DoneConfigController.h; sourceTree = "<group>"; };
+		E2B6A32E1F3E534300B315B6 /* DoneConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DoneConfigController.m; path = src/ViewControllers/DoneConfigController.m; sourceTree = "<group>"; };
+		E2B6A3301F3EEF0500B315B6 /* CloudKeychainSigner.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CloudKeychainSigner.h; path = src/Utilities/Signers/CloudKeychainSigner.h; sourceTree = "<group>"; };
+		E2B6A3311F3EEF0500B315B6 /* CloudKeychainSigner.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CloudKeychainSigner.m; path = src/Utilities/Signers/CloudKeychainSigner.m; sourceTree = "<group>"; };
+		E2C1671C1F4AB48F001B4A31 /* DebugConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DebugConfigController.h; path = src/ViewControllers/ConfigViewControllers/DebugConfigController.h; sourceTree = "<group>"; };
+		E2C1671D1F4AB48F001B4A31 /* DebugConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DebugConfigController.m; path = src/ViewControllers/ConfigViewControllers/DebugConfigController.m; sourceTree = "<group>"; };
+		E2C167201F4AB5A2001B4A31 /* ConfigToggle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigToggle.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigToggle.h; sourceTree = "<group>"; };
+		E2C167211F4AB5A2001B4A31 /* ConfigToggle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ConfigToggle.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigToggle.m; sourceTree = "<group>"; };
 		E2FA03E11E428AC10013E5A7 /* EthersWallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EthersWallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2FA03E51E428AC10013E5A7 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		E2FA03F01E428AC10013E5A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -180,6 +245,16 @@
 		E2FA04A41E4318D00013E5A7 /* EthersWallet.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EthersWallet.entitlements; sourceTree = "<group>"; };
 		E2FA04A91E4319510013E5A7 /* TodayExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TodayExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2FA04AA1E4319510013E5A7 /* NotificationCenter.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NotificationCenter.framework; path = System/Library/Frameworks/NotificationCenter.framework; sourceTree = SDKROOT; };
+		E2FF6A0D1F4673F300544B0B /* GasLimitKeyboardView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GasLimitKeyboardView.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/GasLimitKeyboardView.h; sourceTree = "<group>"; };
+		E2FF6A0E1F4673F300544B0B /* GasLimitKeyboardView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GasLimitKeyboardView.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/GasLimitKeyboardView.m; sourceTree = "<group>"; };
+		E2FF6A111F467F1700544B0B /* GasPriceKeyboardView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GasPriceKeyboardView.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/GasPriceKeyboardView.h; sourceTree = "<group>"; };
+		E2FF6A121F467F1700544B0B /* GasPriceKeyboardView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GasPriceKeyboardView.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/GasPriceKeyboardView.m; sourceTree = "<group>"; };
+		E2FF6A141F46AFC100544B0B /* CrossfadeLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CrossfadeLabel.h; path = src/Views/CrossfadeLabel.h; sourceTree = "<group>"; };
+		E2FF6A151F46AFC100544B0B /* CrossfadeLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CrossfadeLabel.m; path = src/Views/CrossfadeLabel.m; sourceTree = "<group>"; };
+		E2FF6A171F4773A800544B0B /* KeyboardView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = KeyboardView.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/KeyboardView.h; sourceTree = "<group>"; };
+		E2FF6A181F4773A800544B0B /* KeyboardView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = KeyboardView.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/KeyboardView.m; sourceTree = "<group>"; };
+		E2FF6A1A1F47988E00544B0B /* SliderKeyboardView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SliderKeyboardView.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/SliderKeyboardView.h; sourceTree = "<group>"; };
+		E2FF6A1B1F47988E00544B0B /* SliderKeyboardView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SliderKeyboardView.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/SliderKeyboardView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -211,6 +286,66 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		E22A59E31EBA9D6400AEE894 /* Signers */ = {
+			isa = PBXGroup;
+			children = (
+				E22A59E51EBA9D8500AEE894 /* Signer.h */,
+				E22A59E61EBA9D8500AEE894 /* Signer.m */,
+				E2B6A3301F3EEF0500B315B6 /* CloudKeychainSigner.h */,
+				E2B6A3311F3EEF0500B315B6 /* CloudKeychainSigner.m */,
+			);
+			name = Signers;
+			sourceTree = "<group>";
+		};
+		E2B6A3081F3CEFCC00B315B6 /* CongifViewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				E2B6A3261F3E354A00B315B6 /* ConfigViews */,
+				E2B6A30A1F3CF10300B315B6 /* ConfigController.h */,
+				E2B6A30B1F3CF10300B315B6 /* ConfigController.m */,
+				E2B6A30D1F3CF39B00B315B6 /* ConfigNavigationController.h */,
+				E2B6A30E1F3CF39B00B315B6 /* ConfigNavigationController.m */,
+				E2C1671C1F4AB48F001B4A31 /* DebugConfigController.h */,
+				E2C1671D1F4AB48F001B4A31 /* DebugConfigController.m */,
+				E2B6A32D1F3E534300B315B6 /* DoneConfigController.h */,
+				E2B6A32E1F3E534300B315B6 /* DoneConfigController.m */,
+				E2B6A3201F3D250000B315B6 /* MnemonicConfigController.h */,
+				E2B6A3211F3D250000B315B6 /* MnemonicConfigController.m */,
+				E2B6A31A1F3D12B200B315B6 /* MnemonicWarningConfigController.h */,
+				E2B6A31B1F3D12B200B315B6 /* MnemonicWarningConfigController.m */,
+				E2B6A3101F3CFB1B00B315B6 /* OptionsConfigController.h */,
+				E2B6A3111F3CFB1B00B315B6 /* OptionsConfigController.m */,
+				E2B6A3231F3E2FA400B315B6 /* PasswordConfigController.h */,
+				E2B6A3241F3E2FA400B315B6 /* PasswordConfigController.m */,
+				E2B3BE471F4165B400C5EC1C /* TransactionConfigController.h */,
+				E2B3BE481F4165B400C5EC1C /* TransactionConfigController.m */,
+			);
+			name = CongifViewControllers;
+			sourceTree = "<group>";
+		};
+		E2B6A3261F3E354A00B315B6 /* ConfigViews */ = {
+			isa = PBXGroup;
+			children = (
+				E2491AB41F42642A007DB5A4 /* ConfigLabel.h */,
+				E2491AB51F42642A007DB5A4 /* ConfigLabel.m */,
+				E2C167201F4AB5A2001B4A31 /* ConfigToggle.h */,
+				E2C167211F4AB5A2001B4A31 /* ConfigToggle.m */,
+				E2B6A3271F3E358B00B315B6 /* ConfigTextField.h */,
+				E2B6A3281F3E358B00B315B6 /* ConfigTextField.m */,
+				E2B6A32A1F3E35A400B315B6 /* ConfigView.h */,
+				E2B6A32B1F3E35A400B315B6 /* ConfigView.m */,
+				E2FF6A0D1F4673F300544B0B /* GasLimitKeyboardView.h */,
+				E2FF6A0E1F4673F300544B0B /* GasLimitKeyboardView.m */,
+				E2FF6A111F467F1700544B0B /* GasPriceKeyboardView.h */,
+				E2FF6A121F467F1700544B0B /* GasPriceKeyboardView.m */,
+				E2FF6A171F4773A800544B0B /* KeyboardView.h */,
+				E2FF6A181F4773A800544B0B /* KeyboardView.m */,
+				E2FF6A1A1F47988E00544B0B /* SliderKeyboardView.h */,
+				E2FF6A1B1F47988E00544B0B /* SliderKeyboardView.m */,
+			);
+			name = ConfigViews;
+			sourceTree = "<group>";
+		};
 		E2FA03D81E428AC10013E5A7 = {
 			isa = PBXGroup;
 			children = (
@@ -283,8 +418,16 @@
 				E2FA04191E428DF50013E5A7 /* AccountTableViewCell.m */,
 				E2FA041A1E428DF50013E5A7 /* BalanceLabel.h */,
 				E2FA041B1E428DF50013E5A7 /* BalanceLabel.m */,
+				E2B6A3171F3D113000B315B6 /* BlockButton.h */,
+				E2B6A3181F3D113000B315B6 /* BlockButton.m */,
 				E2FA041C1E428DF50013E5A7 /* CloudView.h */,
 				E2FA041D1E428DF50013E5A7 /* CloudView.m */,
+				E2FF6A141F46AFC100544B0B /* CrossfadeLabel.h */,
+				E2FF6A151F46AFC100544B0B /* CrossfadeLabel.m */,
+				E2B6A3131F3D025D00B315B6 /* FlexibleView.h */,
+				E2B6A3141F3D025D00B315B6 /* FlexibleView.m */,
+				E2B6A31D1F3D18FD00B315B6 /* IconView.h */,
+				E2B6A31E1F3D18FD00B315B6 /* IconView.m */,
 				E2FA041E1E428DF50013E5A7 /* MnemonicPhraseView.h */,
 				E2FA041F1E428DF50013E5A7 /* MnemonicPhraseView.m */,
 				E2FA04201E428DF50013E5A7 /* QRCodeView.h */,
@@ -302,6 +445,7 @@
 		E2FA040B1E428DA80013E5A7 /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				E2B6A3081F3CEFCC00B315B6 /* CongifViewControllers */,
 				E2FA042C1E428E020013E5A7 /* AccountsViewController.h */,
 				E2FA042D1E428E020013E5A7 /* AccountsViewController.m */,
 				E2FA042E1E428E020013E5A7 /* ApplicationViewController.h */,
@@ -323,6 +467,9 @@
 		E2FA040C1E428DAF0013E5A7 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				E22A59E31EBA9D6400AEE894 /* Signers */,
+				E28B15311EAC3D6C00D79C52 /* BLECast.h */,
+				E28B15321EAC3D6C00D79C52 /* BLECast.m */,
 				E2FA04411E428E0E0013E5A7 /* AsyncOperation.h */,
 				E2FA04421E428E0E0013E5A7 /* AsyncOperation.m */,
 				E2FA04431E428E0E0013E5A7 /* CachedDataStore.h */,
@@ -331,6 +478,8 @@
 				E2FA04461E428E0E0013E5A7 /* IndexPathArray.m */,
 				E2FA04471E428E0E0013E5A7 /* SharedDefaults.h */,
 				E2FA04481E428E0E0013E5A7 /* SharedDefaults.m */,
+				E29AB1071F4E199C0009FEF0 /* SignedRemoteDictionary.h */,
+				E29AB1081F4E199C0009FEF0 /* SignedRemoteDictionary.m */,
 				E2FA04491E428E0E0013E5A7 /* UIColor+hex.h */,
 				E2FA044A1E428E0E0013E5A7 /* UIColor+hex.m */,
 				E2FA044B1E428E0E0013E5A7 /* UIImage+resize.h */,
@@ -597,31 +746,56 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2B6A3321F3EEF0500B315B6 /* CloudKeychainSigner.m in Sources */,
+				E2C1671E1F4AB48F001B4A31 /* DebugConfigController.m in Sources */,
 				E2FA042A1E428DF50013E5A7 /* QRCodeView.m in Sources */,
 				E2FA04541E428E0E0013E5A7 /* UIImage+resize.m in Sources */,
+				E29AB1091F4E199C0009FEF0 /* SignedRemoteDictionary.m in Sources */,
 				E2FA04281E428DF50013E5A7 /* CloudView.m in Sources */,
+				E2B3BE491F4165B400C5EC1C /* TransactionConfigController.m in Sources */,
+				E2B6A30F1F3CF39B00B315B6 /* ConfigNavigationController.m in Sources */,
 				E2FA043D1E428E030013E5A7 /* ModalViewController.m in Sources */,
+				E2B6A32C1F3E35A400B315B6 /* ConfigView.m in Sources */,
+				E2B6A3291F3E358B00B315B6 /* ConfigTextField.m in Sources */,
 				E2FA04401E428E030013E5A7 /* WalletViewController.m in Sources */,
 				E2FA043F1E428E030013E5A7 /* ScannerViewController.m in Sources */,
 				E2FA04511E428E0E0013E5A7 /* IndexPathArray.m in Sources */,
+				E22A59E71EBA9D8500AEE894 /* Signer.m in Sources */,
 				E2FA04531E428E0E0013E5A7 /* UIColor+hex.m in Sources */,
 				E2FA04251E428DF50013E5A7 /* TransactionTableViewCell.m in Sources */,
 				E2FA042B1E428DF50013E5A7 /* WalletView.m in Sources */,
+				E2C167221F4AB5A2001B4A31 /* ConfigToggle.m in Sources */,
 				E2FA04121E428DDC0013E5A7 /* Wallet.m in Sources */,
+				E2B6A31F1F3D18FD00B315B6 /* IconView.m in Sources */,
+				E2B6A3191F3D113000B315B6 /* BlockButton.m in Sources */,
 				E2FA04291E428DF50013E5A7 /* MnemonicPhraseView.m in Sources */,
 				E2FA043B1E428E030013E5A7 /* ApplicationViewController.m in Sources */,
+				E2B6A3151F3D025D00B315B6 /* FlexibleView.m in Sources */,
+				E2FF6A131F467F1700544B0B /* GasPriceKeyboardView.m in Sources */,
+				E2FF6A0F1F4673F300544B0B /* GasLimitKeyboardView.m in Sources */,
 				E2FA03E61E428AC10013E5A7 /* main.m in Sources */,
+				E2B6A3121F3CFB1B00B315B6 /* OptionsConfigController.m in Sources */,
 				E2FA049F1E43186D0013E5A7 /* TodayViewController.m in Sources */,
 				E2FA04551E428E0E0013E5A7 /* Utilities.m in Sources */,
 				E2FA044F1E428E0E0013E5A7 /* AsyncOperation.m in Sources */,
+				E2B6A3251F3E2FA400B315B6 /* PasswordConfigController.m in Sources */,
+				E2FF6A1C1F47988E00544B0B /* SliderKeyboardView.m in Sources */,
 				E2FA04131E428DDC0013E5A7 /* AppDelegate.m in Sources */,
 				E2FA04521E428E0E0013E5A7 /* SharedDefaults.m in Sources */,
+				E2B6A30C1F3CF10300B315B6 /* ConfigController.m in Sources */,
+				E2B6A3221F3D250000B315B6 /* MnemonicConfigController.m in Sources */,
+				E2491AB61F42642A007DB5A4 /* ConfigLabel.m in Sources */,
+				E2FF6A191F4773A800544B0B /* KeyboardView.m in Sources */,
 				E2FA04241E428DF50013E5A7 /* SectionHeaderView.m in Sources */,
 				E2FA04261E428DF50013E5A7 /* AccountTableViewCell.m in Sources */,
 				E2FA04501E428E0E0013E5A7 /* CachedDataStore.m in Sources */,
+				E2B6A32F1F3E534300B315B6 /* DoneConfigController.m in Sources */,
 				E2FA043A1E428E030013E5A7 /* AccountsViewController.m in Sources */,
 				E2FA043C1E428E030013E5A7 /* InfoViewController.m in Sources */,
+				E2FF6A161F46AFC100544B0B /* CrossfadeLabel.m in Sources */,
+				E2B6A31C1F3D12B200B315B6 /* MnemonicWarningConfigController.m in Sources */,
 				E2FA04271E428DF50013E5A7 /* BalanceLabel.m in Sources */,
+				E28B15331EAC3D6C00D79C52 /* BLECast.m in Sources */,
 				E2FA043E1E428E030013E5A7 /* PanelViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

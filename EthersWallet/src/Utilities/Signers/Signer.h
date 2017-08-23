@@ -13,6 +13,8 @@
 #import <ethers/Transaction.h>
 
 
+#pragma mark - Notifications
+
 extern const NSNotificationName SignerRemovedNotification;
 
 extern const NSNotificationName SignerNicknameDidChangeNotification;
@@ -22,18 +24,34 @@ extern const NSNotificationName SignerHistoryUpdatedNotification;
 extern const NSNotificationName SignerTransactionDidChangeNotification;
 
 
+#pragma mark - Notification Keys
+
+//extern const NSString* SignerNotificationSignerKey;
+
+extern const NSString* SignerNotificationNicknameKey;
+extern const NSString* SignerNotificationFormerNicknameKey;
+
+extern const NSString* SignerNotificationBalanceKey;
+extern const NSString* SignerNotificationFormerBalanceKey;
+
+extern const NSString* SignerNotificationTransactionKey;
+
+
+#pragma mark - Signer
+
 @interface Signer : NSObject
 
 - (instancetype)initWithCacheKey: (NSString*)cacheKey address: (Address*)address provider: (Provider*)provider;
 
 @property (nonatomic, readonly) NSString *cacheKey;
-@property (nonatomic, assign) NSInteger accountIndex;
+@property (nonatomic, assign) NSUInteger accountIndex;
 @property (nonatomic, copy) NSString *nickname;
 
 @property (nonatomic, readonly) Address *address;
 
 @property (nonatomic, readonly) Provider *provider;
 
+@property (nonatomic, readonly) NSUInteger blockNumber;
 
 #pragma Blockchain Data
 

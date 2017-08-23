@@ -70,6 +70,7 @@
 - (ConfigLabel*)addLabelTitle: (NSString*)title;
 
 - (ConfigTextField*)addTextFieldTitle: (NSString*)title;
+- (ConfigTextField*)addTextFieldTitle: (NSString*)title options: (NSUInteger)options;
 - (ConfigTextField*)addPasswordTitle: (NSString*)title;
 
 @end

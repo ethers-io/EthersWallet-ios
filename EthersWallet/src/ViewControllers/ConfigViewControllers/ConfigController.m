@@ -103,6 +103,10 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     return [super initWithNibName:nil bundle:nil];
 }
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (void)setTitle:(NSString *)title {
     [super setTitle:title];
     self.navigationItem.titleView = [Utilities navigationBarTitleWithString:title];
@@ -362,7 +366,6 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     return textField;
 }
 
-#pragma mark - Next Button
 
 #pragma mark - Next Title
 
@@ -461,6 +464,8 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 }
 
 - (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    
     if (!_configViews) { return; }
     
     CGFloat maximumX = 0;
@@ -484,6 +489,7 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     [self.view endEditing:YES];
 }
 
+
 #pragma mark - Keyboard notifications
 
 - (void)noticeWillShowKeyboard: (NSNotification*)note {
@@ -496,15 +502,11 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
         //            [_scrollView setNeedsDisplay];
     };
     
-    void (^complete)(BOOL) = ^(BOOL complete) {
-        
-    };
-    
     [UIView animateWithDuration:duration
                           delay:0.0f
                         options:UIViewAnimationOptionBeginFromCurrentState
                      animations:animations
-                     completion:complete];
+                     completion:nil];
 }
 
 - (void)noticeWillHideKeyboard: (NSNotification*)note {
@@ -516,19 +518,11 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
         _scrollView.scrollIndicatorInsets = _scrollView.contentInset;
     };
     
-    void (^complete)(BOOL) = ^(BOOL complete) {
-        
-    };
-    
     [UIView animateWithDuration:duration
                           delay:0.0f
                         options:UIViewAnimationOptionBeginFromCurrentState
                      animations:animations
-                     completion:complete];
-}
-
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+                     completion:nil];
 }
 
 @end

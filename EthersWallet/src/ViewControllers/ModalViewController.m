@@ -60,6 +60,7 @@ static NSMutableArray<ModalViewController*> *ModalViewControllers = nil;
     // Create our temporary window for this modal view controller
     UIWindow *window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     window.rootViewController = presentingViewController;
+    window.windowLevel = 1.1;
     [window makeKeyAndVisible];
 
     // Retain the window so it doesn't die

@@ -26,43 +26,134 @@
 #import "GasPriceKeyboardView.h"
 
 #import "CrossfadeLabel.h"
+#import "SignedRemoteDictionary.h"
 #import "UIColor+hex.h"
 #import "Utilities.h"
 
 
+static NSString *GasPriceDataUrl        = @"https://ethers.io/gas-prices.raw";
+static NSString *GasPriceDataAddress    = @"0xcf49182a885E87fD55f4215def0f56EC71bB7511";
+
+
 
 @implementation GasPriceKeyboardView {
-    NSArray<NSString*> *_estimateText, *_gasPriceNameText, *_gasPriceValueText;
-    NSArray<BigNumber*> *_gasPrices;
+    NSArray<NSString*> *_titles, *_subtitles, *_details;
+    NSMutableArray<BigNumber*> *_gasPrices;
 }
 
-- (instancetype) initWithFrame:(CGRect)frame {
-    self = [super initWithFrame:frame stopCount:3];
-    if (self) {
 
-        _estimateText = @[
-                          @"completes in about 14 minutes",
-                          @"completes in about 3 minutes",
-                          @"completes in about 48 seconds",
+NSArray<NSString*> *GasTierTitles = nil;
+NSArray<NSString*> *GasTierSubtitles = nil;
+
+NSArray<NSString*> *GasTierDetails = nil;
+NSArray<NSString*> *GasPrices = nil;
+
+
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        GasTierTitles = @[
+                          @"SAFE LOW",
+                          @"AVERAGE",
+                          @"URGENT",
                           ];
         
-        _gasPriceNameText = @[
-                              @"SAFE LOW",
-                              @"AVERAGE",
-                              @"URGENT",
-                              ];
+        GasTierSubtitles = @[
+                             @"completes in about 25 minutes",
+                             @"completes in about 6 minutes",
+                             @"completes in about 48 seconds",
+                             ];
         
-        _gasPriceValueText = @[
-                               @"2 GWei",
-                               @"4 Gwei",
-                               @"100 GWei",
-                               ];
         
-        _gasPrices = @[
-                       [BigNumber bigNumberWithDecimalString:@"2000000000"],
-                       [BigNumber bigNumberWithDecimalString:@"4000000000"],
-                       [BigNumber bigNumberWithDecimalString:@"100000000000"],
-                       ];
+        GasTierDetails = @[
+                           @"2 GWei",
+                           @"4 Gwei",
+                           @"100 GWei",
+                           ];
+        
+        GasPrices = @[
+                      @"2000000000",
+                      @"4000000000",
+                      @"100000000000",
+                      ];
+    });
+}
+
+
++ (Promise*)checkForUpdatedGasPrices {
+    SignedRemoteDictionary *gasPriceData = [self signedGasPricesDictionary];
+    [[gasPriceData data] onCompletion:^(DictionaryPromise *promise) {
+        if (promise.error) { return; }
+        
+        // Make sure each field is the same length and an array of strings
+        NSInteger count = -1;
+        for (NSString *key in promise.value) {
+            NSArray *values = [promise.value objectForKey:key];
+            if (![values isKindOfClass:[NSArray class]]) { return; }
+            for (NSString *key in values) {
+                if (![key isKindOfClass:[NSString class]]) { return; }
+            }
+            
+            if (count == -1) {
+                count = values.count;
+            } else if (count != values.count) {
+                return;
+            }
+        }
+        
+        // Makes sure each field is specified
+        if (![promise.value objectForKey:@"titles"]) { return; }
+        if (![promise.value objectForKey:@"subtitles"]) { return; }
+        if (![promise.value objectForKey:@"details"]) { return; }
+        if (![promise.value objectForKey:@"prices"]) { return; }
+        
+        BigNumber *tooExpensive = [BigNumber bigNumberWithDecimalString:@"200000000000"];
+
+        // Make sure each price is a valid decimal number
+        for (NSString *gasPriceString in [promise.value objectForKey:@"prices"]) {
+            BigNumber *gasPrice = [BigNumber bigNumberWithDecimalString:gasPriceString];
+            if (!gasPrice) { return; }
+            if ([gasPrice compare:tooExpensive] == NSOrderedDescending) { return; }
+        }
+        
+        // All good! Remember the values
+        
+        GasTierTitles = [promise.value objectForKey:@"titles"];
+        GasTierSubtitles = [promise.value objectForKey:@"subtitles"];
+        GasTierDetails = [promise.value objectForKey:@"details"];
+        GasPrices = [promise.value objectForKey:@"prices"];
+        
+        NSLog(@"Updated Prices: %@", GasPrices);
+    }];
+    return [gasPriceData data];
+}
+
++ (SignedRemoteDictionary*)signedGasPricesDictionary {
+    NSDictionary *defaults = @{
+                               @"titles": GasTierTitles,
+                               @"subtitles": GasTierSubtitles,
+                               @"details": GasTierDetails,
+                               @"prices": GasPrices
+                               };
+
+    return [SignedRemoteDictionary dictionaryWithUrl:GasPriceDataUrl
+                                             address:[Address addressWithString:GasPriceDataAddress]
+                                         defaultData:defaults];
+}
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame stopCount:GasPrices.count];
+    if (self) {
+        
+        _titles = GasTierTitles;
+        _subtitles = GasTierSubtitles;
+        _details = GasTierDetails;
+        
+        
+        _gasPrices = [NSMutableArray arrayWithCapacity:GasPrices.count];
+        for (NSString *gasPriceString in GasPrices) {
+            [_gasPrices addObject:[BigNumber bigNumberWithDecimalString:gasPriceString]];
+        }
         
         __weak GasPriceKeyboardView *weakSelf = self;
         self.didChange = ^(SliderKeyboardView *view) {
@@ -77,11 +168,9 @@
 }
 
 - (void)refreshAnimated:(BOOL)animated {
-    if (!_estimateText) { return ; }
-    
-    [self.titleLabel setText:[_gasPriceNameText objectAtIndex:self.selectedStopIndex] animated:animated];
-    [self.topInfo setText:[_estimateText objectAtIndex:self.selectedStopIndex] animated:animated];
-    [self.bottomInfo setText:[_gasPriceValueText objectAtIndex:self.selectedStopIndex] animated:animated];
+    [self.titleLabel setText:[_titles objectAtIndex:self.selectedStopIndex] animated:animated];
+    [self.topInfo setText:[_subtitles objectAtIndex:self.selectedStopIndex] animated:animated];
+    [self.bottomInfo setText:[_details objectAtIndex:self.selectedStopIndex] animated:animated];
 }
 
 - (BigNumber*)gasPrice {
