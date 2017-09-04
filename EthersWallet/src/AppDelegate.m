@@ -37,7 +37,7 @@
 #import "ModalViewController.h"
 #import "OptionsConfigController.h"
 #import "PanelViewController.h"
-#import "ScannerViewController.h"
+#import "ScannerConfigController.h"
 #import "SharedDefaults.h"
 #import "SignedRemoteDictionary.h"
 #import "UIColor+hex.h"
@@ -46,21 +46,21 @@
 #import "WalletViewController.h"
 
 
-//#import "LightClientProvider.h"
-
+// The Canary is a signed payload living on the ethers.io web server, which allows the
+// authors to notify users of critical issues with either the app or the Ethereum network
+// The scripts/tools directory contains the code that generates a signed payload.
 #define CANARY_ADDRESS    @"0x70C14080922f091fD7d0E891eB483C9f8464a527"
 
 static NSString *CanaryUrl = @"https://ethers.io/canary.raw";
 
-// Test URL
+// Test URL - This URL triggers the canaray for testing purposes
 //static NSString *CanaryUrl = @"https://ethers.io/canary-test.raw";
 
 static Address *CanaryAddress = nil;
 static NSString *CanaryVersion = nil;
 
-@interface AppDelegate () <PanelViewControllerDataSource, ScannerDelegate> {
+@interface AppDelegate () <PanelViewControllerDataSource> {
     UIWindow *_window;
-    Provider *_debugProvider;
     PanelViewController *_panelViewController;
     
     Wallet *_wallet;
@@ -92,8 +92,6 @@ static NSString *CanaryVersion = nil;
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-
-//    _lightClient = [[LightClientProvider alloc] initWithTestnet:NO];
     
     // Schedule us for background fetching
     [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
@@ -160,49 +158,6 @@ static NSString *CanaryVersion = nil;
     
     [self checkCanary];
     
-    // Debugging
-    [NSTimer scheduledTimerWithTimeInterval:1.0f repeats:NO block:^(NSTimer *timer) {
-        /*
-        [_wallet sendPayment:[Payment paymentWithURI:@"IBAN:0x06B5955A67D827CDF91823E3bB8F069e6c89c1D6?amount=1.234"] callback:^(Hash *hash, NSError *error) {
-            NSLog(@"Sent: %@ %@", hash, error);
-        }];
-         */
-        /*
-        OptionsConfigController *a = [OptionsConfigController configWithHeading:@"H" subheading:@"S" messages:@[] options:@[@"1"]];
-        a.onOption = ^(OptionsConfigController *a, NSUInteger i) {
-            NSLog(@"Option: %@", a);
-        };
-        a.onLoad = ^(ConfigController *a) {
-            NSLog(@"Load: %@", a);
-            
-        };
-        a.onNext = ^(ConfigController *a) {
-            NSLog(@"Next: %@", a);
-        };
-        ConfigNavigationController *b = [[ConfigNavigationController alloc] initWithRootViewController:a];
-        [ModalViewController presentViewController:b animated:YES completion:nil];
-        */
-        /*
-        Transaction *tx = [Transaction transaction];
-
-        // EOA
-        //tx.toAddress = [Address addressWithString:@"0x06B5955A67D827CDF91823E3bB8F069e6c89c1D6"];
-        // Contract
-        tx.toAddress = [Address addressWithString:@"0x6fc21092da55b392b045ed78f4732bff3c580e2c"];
-
-        tx.value = [Payment parseEther:@"0.0314"];
-        [_wallet sendTransaction:tx callback:^(Hash *hash, NSError *error) {
-            
-        }];
-        */
-        //[_wallet showDebuggingOptionsCallback:^() { }];
-        /*
-        [_wallet addAccountCallback:^(Address *address) {
-            NSLog(@"Address: %@", address);
-        }];
-         */
-    }];
-    
     return YES;
 }
 
@@ -231,77 +186,8 @@ static NSString *CanaryVersion = nil;
 
 // iban://0x05ABcF02682E2b3fB6e38840Cd57d2ea77edd41F
 // https://ethers.io/app-link/#!debug
-/*
- @TOOD: Create the new Scanner
-- (Payment*)checkPasteboard {
-    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    if ([pasteboard hasStrings]) {
-        for (NSString *string in [pasteboard strings]) {
-            NSLog(@"Pasteboard String: %@", string);
-            Payment *payment = [Payment paymentWithURI:string];
-            if (payment) {
-                NSLog(@"Paymnet: %@", payment);
-                return payment;
-            }
-        }
-    }
-    
-    if ([pasteboard hasURLs]) {
-        for (NSURL *url in [pasteboard URLs]) {
-            NSLog(@"Pasteboard URL: %@", url);
-            Payment *payment = [Payment paymentWithURI:[url absoluteString]];
-            if (payment) {
-                NSLog(@"Paymnet: %@", payment);
-                return payment;
-            }
-        }
-    }
 
-    return nil;
-}
-*/
-/*
-- (void)checkAndAlertPasteboard {
-    Payment *payment = [self checkPasteboard];
-    if (!payment || [payment.address isEqualToAddress:_wallet.activeAccount] || !_wallet.activeAccount) {
-        return;
-    }
-    
-    NSLog(@"Found: %@", payment);
-    
-    [ModalViewController dismissAllCompletionCallback:^() {
-        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Clipboard Payment"
-                                                                                 message:@"An Ethereum address was found in the clipboard."
-                                                                          preferredStyle:UIAlertControllerStyleAlert];
-        void (^preparePayment)(UIAlertAction*) = ^(UIAlertAction *action) {
-            [_wallet sendPayment:payment callback:^(Hash *hash, NSError *error) {
-                NSLog(@"Sent: %@ %@", hash, error);
-            }];
-        };
-        [alertController addAction:[UIAlertAction actionWithTitle:@"Prepare Payment"
-                                                            style:UIAlertActionStyleDefault
-                                                          handler:preparePayment]];
-        
-        void (^clearClipboard)(UIAlertAction*) = ^(UIAlertAction *action) {
-            [[UIPasteboard generalPasteboard] setString:@""];
-        };
-        [alertController addAction:[UIAlertAction actionWithTitle:@"Clear Clipboard"
-                                                            style:UIAlertActionStyleDestructive
-                                                          handler:clearClipboard]];
-        
-        void (^cancel)(UIAlertAction*) = ^(UIAlertAction *action) {
-            
-        };
-        [alertController addAction:[UIAlertAction actionWithTitle:@"Do Nothing"
-                                                            style:UIAlertActionStyleCancel
-                                                          handler:cancel]];
-        
-        alertController.preferredAction = [alertController.actions firstObject];
-        
-        [ModalViewController presentViewController:alertController animated:YES completion:nil];
-    }];
-}
- */
+
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
@@ -315,7 +201,6 @@ static NSString *CanaryVersion = nil;
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-//    [self checkAndAlertPasteboard];
     [self checkCanary];
 }
 
@@ -347,7 +232,7 @@ static NSString *CanaryVersion = nil;
     SignedRemoteDictionary *canary = [SignedRemoteDictionary dictionaryWithUrl:CanaryUrl address:CanaryAddress defaultData:@{}];
     [canary.data onCompletion:^(DictionaryPromise *promise) {
         
-        if (![[promise.value objectForKey:@"version"] isEqual:@"0.1"]) { return; }
+        if (![[promise.value objectForKey:@"version"] isEqual:@"0.2"]) { return; }
         
         NSArray *alerts = [promise.value objectForKey:@"alerts"];
         if (![alerts isKindOfClass:[NSArray class]]) { return; }
@@ -441,19 +326,15 @@ static NSString *CanaryVersion = nil;
 }
 
 
-#pragma mark - ScannerViewController
+#pragma mark - Scanner
 
 - (void)showScanner {
     [ModalViewController dismissAllCompletionCallback:^() {
-        if (_wallet.activeAccountIndex != AccountNotFound) {
-            ScannerViewController *scannerViewController = [[ScannerViewController alloc] init];
-            scannerViewController.delegate = self;
-            
-            [ModalViewController presentViewController:scannerViewController animated:NO completion:^() {
-                dispatch_async(dispatch_get_main_queue(), ^() {
-                    [scannerViewController startScanningAnimated:YES];
-                });
+        if (_wallet.activeAccountAddress) {
+            [_wallet scan:^() {
+                NSLog(@"Scan compelte");
             }];
+
         } else {
             UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"No Accounts"
                                                                            message:@"You must create an account before scanner QR codes."
@@ -462,21 +343,6 @@ static NSString *CanaryVersion = nil;
                                                       style:UIAlertActionStyleDefault
                                                     handler:nil]];
             [ModalViewController presentViewController:alert animated:NO completion:nil];
-        }
-    }];
-}
-
-- (BOOL)scannerViewController:(ScannerViewController *)scannerViewController shouldFinishWithMessages:(NSArray<NSString *> *)messages {
-    return messages.count > 0 && (([Payment paymentWithURI:[messages firstObject]]) != nil);
-}
-
-- (void)scannerViewController:(ScannerViewController *)scannerViewController didFinishWithMessages:(NSArray<NSString*> *)messages {
-    [scannerViewController.presentingViewController dismissViewControllerAnimated:YES completion:^() {
-        if (messages.count > 0) {
-            Payment *payment = [Payment paymentWithURI:[messages firstObject]];
-            [_wallet sendPayment:payment callback:^(Hash *transactionHash, NSError *error) {
-                NSLog(@"TXHASH: %@ %@", transactionHash, error);
-            }];
         }
     }];
 }

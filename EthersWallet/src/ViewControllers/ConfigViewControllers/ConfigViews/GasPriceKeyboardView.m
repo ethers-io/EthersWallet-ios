@@ -116,14 +116,14 @@ NSArray<NSString*> *GasPrices = nil;
             if ([gasPrice compare:tooExpensive] == NSOrderedDescending) { return; }
         }
         
-        // All good! Remember the values
+        // All good! Store the
         
         GasTierTitles = [promise.value objectForKey:@"titles"];
         GasTierSubtitles = [promise.value objectForKey:@"subtitles"];
         GasTierDetails = [promise.value objectForKey:@"details"];
         GasPrices = [promise.value objectForKey:@"prices"];
         
-        NSLog(@"Updated Prices: %@", GasPrices);
+        NSLog(@"GasPriceKeyboardView: Updated Prices - %@", GasPrices);
     }];
     return [gasPriceData data];
 }
