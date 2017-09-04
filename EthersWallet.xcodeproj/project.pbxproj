@@ -54,7 +54,6 @@
 		E2FA043C1E428E030013E5A7 /* InfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04311E428E020013E5A7 /* InfoViewController.m */; };
 		E2FA043D1E428E030013E5A7 /* ModalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04331E428E030013E5A7 /* ModalViewController.m */; };
 		E2FA043E1E428E030013E5A7 /* PanelViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04351E428E030013E5A7 /* PanelViewController.m */; };
-		E2FA043F1E428E030013E5A7 /* ScannerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04371E428E030013E5A7 /* ScannerViewController.m */; };
 		E2FA04401E428E030013E5A7 /* WalletViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04391E428E030013E5A7 /* WalletViewController.m */; };
 		E2FA044F1E428E0E0013E5A7 /* AsyncOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04421E428E0E0013E5A7 /* AsyncOperation.m */; };
 		E2FA04501E428E0E0013E5A7 /* CachedDataStore.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04441E428E0E0013E5A7 /* CachedDataStore.m */; };
@@ -218,8 +217,6 @@
 		E2FA04331E428E030013E5A7 /* ModalViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ModalViewController.m; path = src/ViewControllers/ModalViewController.m; sourceTree = "<group>"; };
 		E2FA04341E428E030013E5A7 /* PanelViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PanelViewController.h; path = src/ViewControllers/PanelViewController.h; sourceTree = "<group>"; };
 		E2FA04351E428E030013E5A7 /* PanelViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PanelViewController.m; path = src/ViewControllers/PanelViewController.m; sourceTree = "<group>"; };
-		E2FA04361E428E030013E5A7 /* ScannerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ScannerViewController.h; path = src/ViewControllers/ScannerViewController.h; sourceTree = "<group>"; };
-		E2FA04371E428E030013E5A7 /* ScannerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ScannerViewController.m; path = src/ViewControllers/ScannerViewController.m; sourceTree = "<group>"; };
 		E2FA04381E428E030013E5A7 /* WalletViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WalletViewController.h; path = src/ViewControllers/WalletViewController.h; sourceTree = "<group>"; };
 		E2FA04391E428E030013E5A7 /* WalletViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = WalletViewController.m; path = src/ViewControllers/WalletViewController.m; sourceTree = "<group>"; };
 		E2FA04411E428E0E0013E5A7 /* AsyncOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AsyncOperation.h; path = src/Utilities/AsyncOperation.h; sourceTree = "<group>"; };
@@ -466,8 +463,6 @@
 				E2FA04331E428E030013E5A7 /* ModalViewController.m */,
 				E2FA04341E428E030013E5A7 /* PanelViewController.h */,
 				E2FA04351E428E030013E5A7 /* PanelViewController.m */,
-				E2FA04361E428E030013E5A7 /* ScannerViewController.h */,
-				E2FA04371E428E030013E5A7 /* ScannerViewController.m */,
 				E2FA04381E428E030013E5A7 /* WalletViewController.h */,
 				E2FA04391E428E030013E5A7 /* WalletViewController.m */,
 			);
@@ -768,7 +763,6 @@
 				E2B6A32C1F3E35A400B315B6 /* ConfigView.m in Sources */,
 				E2B6A3291F3E358B00B315B6 /* ConfigTextField.m in Sources */,
 				E2FA04401E428E030013E5A7 /* WalletViewController.m in Sources */,
-				E2FA043F1E428E030013E5A7 /* ScannerViewController.m in Sources */,
 				E2FA04511E428E0E0013E5A7 /* IndexPathArray.m in Sources */,
 				E22A59E71EBA9D8500AEE894 /* Signer.m in Sources */,
 				E2FA04531E428E0E0013E5A7 /* UIColor+hex.m in Sources */,

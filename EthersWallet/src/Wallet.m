@@ -62,7 +62,6 @@
 #import "CachedDataStore.h"
 #import "CloudKeychainSigner.h"
 #import "ModalViewController.h"
-#import "ScannerViewController.h"
 #import "UIColor+hex.h"
 #import "Utilities.h"
 

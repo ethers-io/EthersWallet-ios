@@ -28,7 +28,6 @@
 
 #import "UIColor+hex.h"
 
-
 #pragma mark -
 #pragma mark - AnimatedTransaction
 
@@ -107,11 +106,11 @@
 @implementation ConfigNavigationController
 
 + (instancetype)configNavigationController: (ConfigController*)rootViewController {
-    return [[ConfigNavigationController alloc] initWithRootViewController:rootViewController];
+    return [[self alloc] initWithRootViewController:rootViewController];
 }
 
 - (instancetype)initWithRootViewController: (ConfigController*)rootViewController {
-
+    
     self = [super initWithRootViewController:rootViewController];
     if (self) {
         
