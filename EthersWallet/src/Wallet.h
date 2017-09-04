@@ -144,6 +144,8 @@ typedef enum WalletError {
 
 #pragma mark - Transactions (Modal UI)
 
+- (void)scan: (void (^)())callback;
+
 - (void)sendPayment: (Payment*)payment callback: (void (^)(Hash*, NSError*))callback;
 - (void)sendTransaction: (Transaction*)transaction callback:(void (^)(Hash*, NSError*))callback;
 

@@ -31,9 +31,10 @@
 
 @interface TransactionConfigController : ConfigController
 
-+ (instancetype)configWithSigner: (Signer*)signer transaction: (Transaction*)transaction;
++ (instancetype)configWithSigner: (Signer*)signer transaction: (Transaction*)transaction nameHint: (NSString*)nameHint;
 
 @property (nonatomic, readonly) Signer *signer;
+@property (nonatomic, readonly) NSString *nameHint;
 
 @property (nonatomic, copy) void (^onSign)(TransactionConfigController*, Transaction*);
 

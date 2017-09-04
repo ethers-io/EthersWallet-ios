@@ -32,4 +32,6 @@
 @property (nonatomic, copy) NSString *title;
 @property (nonatomic, copy) NSString *details;
 
+- (void)setDetails:(NSString *)details animated: (BOOL)animated;
+
 @end

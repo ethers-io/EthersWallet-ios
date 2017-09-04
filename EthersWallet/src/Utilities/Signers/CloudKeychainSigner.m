@@ -56,7 +56,29 @@ static NSString *getNickname(NSString *label) {
 
 #pragma mark - Keychain helpers
 
+/**
+ *  kSecAttrGeenric is not part of teh key (as the documentation and example code allude to).
+ *  As a result, to support the same address with multiple providers, we now use the service
+ *  to specify the per-account provider.
+ *
+ *  In the future, we will allow any string, so this class is flexible and can be used
+ *  by anyone. The caller will have to have the sharedWallet keys updated.
+ */
+static NSString *getServiceName(NSString *keychainKey) {
+    if ([keychainKey isEqualToString:@"io.ethers.sharedWallet"]) {
+        return @"ethers.io";
+    } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet-testnet"]) {
+        return @"ethers.io/ropsten";
+    }
+    
+    // @TODO: return keychainKey
+    return nil;
+}
+
 static NSString* getKeychainValue(NSString *keychainKey, Address *address) {
+    NSString *serviceName = getServiceName(keychainKey);
+    if (!serviceName) { return nil; }
+    
     NSDictionary *query = @{
                             (id)kSecClass: (id)kSecClassGenericPassword,
                             (id)kSecAttrGeneric: [keychainKey dataUsingEncoding:NSUTF8StringEncoding],
@@ -64,7 +86,7 @@ static NSString* getKeychainValue(NSString *keychainKey, Address *address) {
                             (id)kSecAttrSynchronizable: (id)kCFBooleanTrue,
                             
                             (id)kSecAttrAccount: address.checksumAddress,
-                            (id)kSecAttrService: @"ethers.io",
+                            (id)kSecAttrService: serviceName,
                             };
     
     NSString *value = nil;
@@ -87,7 +109,9 @@ static NSString* getKeychainValue(NSString *keychainKey, Address *address) {
 }
 
 static BOOL addKeychainVaue(NSString *keychainKey, Address *address, NSString *nickname, NSString *value) {
-    
+    NSString *serviceName = getServiceName(keychainKey);
+    if (!serviceName) { return NO; }
+
     NSDictionary *query = @{
                             (id)kSecClass: (id)kSecClassGenericPassword,
                             (id)kSecAttrGeneric: [keychainKey dataUsingEncoding:NSUTF8StringEncoding],
@@ -95,14 +119,14 @@ static BOOL addKeychainVaue(NSString *keychainKey, Address *address, NSString *n
                             (id)kSecAttrSynchronizable: (id)kCFBooleanTrue,
                             
                             (id)kSecAttrAccount: address.checksumAddress,
-                            (id)kSecAttrService: @"ethers.io",
+                            (id)kSecAttrService: serviceName,
                             };
     
     CFDictionaryRef existingEntry = nil;
     
     OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef*)&existingEntry);
     if (status == noErr) {
-        
+        NSLog(@"Update");
         NSMutableDictionary *updateQuery = [(__bridge NSDictionary *)existingEntry mutableCopy];
         [updateQuery setObject:(id)kSecClassGenericPassword forKey:(id)kSecClass];
         
@@ -110,7 +134,7 @@ static BOOL addKeychainVaue(NSString *keychainKey, Address *address, NSString *n
                                       (id)kSecAttrSynchronizable: (id)kCFBooleanTrue,
                                       
                                       (id)kSecAttrAccount: address.checksumAddress,
-                                      (id)kSecAttrService: @"ethers.io",
+                                      (id)kSecAttrService: serviceName,
                                       (id)kSecValueData: [value dataUsingEncoding:NSUTF8StringEncoding],
                                       
                                       (id)kSecAttrLabel: [NSString stringWithFormat:@"Ethers Account (%@)", nickname],
@@ -124,13 +148,14 @@ static BOOL addKeychainVaue(NSString *keychainKey, Address *address, NSString *n
         }
         
     } else {
+        NSLog(@"Add");
         NSDictionary *addEntry = @{
                                    (id)kSecClass: (id)kSecClassGenericPassword,
                                    (id)kSecAttrGeneric: [keychainKey dataUsingEncoding:NSUTF8StringEncoding],
                                    (id)kSecAttrSynchronizable: (id)kCFBooleanTrue,
                                    
                                    (id)kSecAttrAccount: address.checksumAddress,
-                                   (id)kSecAttrService: @"ethers.io",
+                                   (id)kSecAttrService: serviceName,
                                    (id)kSecValueData: [value dataUsingEncoding:NSUTF8StringEncoding],
                                    (id)kSecAttrLabel: [NSString stringWithFormat:@"Ethers Account (%@)", nickname],
                                    (id)kSecAttrDescription: @"Encrypted JSON Wallet",
@@ -150,6 +175,9 @@ static BOOL addKeychainVaue(NSString *keychainKey, Address *address, NSString *n
 }
 
 BOOL removeKeychainValue(NSString *keychainKey, Address *address) {
+    NSString *serviceName = getServiceName(keychainKey);
+    if (!serviceName) { return NO; }
+
     NSDictionary *query = @{
                             (id)kSecClass: (id)kSecClassGenericPassword,
                             (id)kSecAttrGeneric: [keychainKey dataUsingEncoding:NSUTF8StringEncoding],
@@ -157,7 +185,7 @@ BOOL removeKeychainValue(NSString *keychainKey, Address *address) {
                             (id)kSecAttrSynchronizable: (id)kCFBooleanTrue,
                             
                             (id)kSecAttrAccount: address.checksumAddress,
-                            (id)kSecAttrService: @"ethers.io",
+                            (id)kSecAttrService: serviceName,
                             };
     
     OSStatus status = SecItemDelete((__bridge CFDictionaryRef)query);
@@ -176,9 +204,12 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
 @implementation CloudKeychainSigner {
     Account *_account;
     Cancellable *_unlocking;
+    NSString *_serviceName;
 }
 
 + (NSArray<Address*>*)addressesForKeychainKey: (NSString*)keychainKey {
+    NSString *serviceName = getServiceName(keychainKey);
+    if (!serviceName) { return @[]; }
 
     NSString *cacheKey = [@"cloudkeychainsigner-" stringByAppendingString:keychainKey];
     CachedDataStore *dataStore = [CachedDataStore sharedCachedDataStoreWithKey:cacheKey];;
@@ -192,8 +223,8 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
                             
                             (id)kSecClass: (id)kSecClassGenericPassword,
                             (id)kSecAttrGeneric: [keychainKey dataUsingEncoding:NSUTF8StringEncoding],
+                            (id)kSecAttrService: serviceName,
                             (id)kSecReturnAttributes: (id)kCFBooleanTrue
-                            
                             };
     
     CFMutableArrayRef result = nil;
@@ -259,6 +290,9 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     if (self) {
         _keychainKey = keychainKey;
         
+        _serviceName = getServiceName(_keychainKey);
+        if (!_serviceName) { return nil; }
+        
         __weak CloudKeychainSigner *weakSelf = self;
         [NSTimer scheduledTimerWithTimeInterval:4.0f repeats:YES block:^(NSTimer *timer) {
             if (!weakSelf) {
@@ -286,7 +320,7 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
                             (id)kSecAttrSynchronizable: (id)kCFBooleanTrue,
                             
                             (id)kSecAttrAccount: self.address.checksumAddress,
-                            (id)kSecAttrService: @"ethers.io",
+                            (id)kSecAttrService: _serviceName,
                             };
     
     NSString *label = nil;
@@ -369,7 +403,8 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
 
 - (void)send:(Transaction *)transaction callback:(void (^)(Transaction *, NSError *))callback {
     transaction = [transaction copy];
-    NSLog(@"Sending: %@ %@", _account, transaction);
+    NSLog(@"CloudKeychainSigner: Sending - address=%@ transaction=%@", _account.address, transaction);
+
     if (!_account) {
         dispatch_async(dispatch_get_main_queue(), ^() {
             callback(nil, [NSError errorWithDomain:@"FOO" code:1 userInfo:@{}]);
@@ -379,28 +414,20 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     
     [_account sign:transaction];
     
-    [[self.provider sendTransaction:[transaction serialize]] onCompletion:^(HashPromise *promise) {
-        NSLog(@"Signed: %@ %@", transaction, promise);
+    __weak CloudKeychainSigner *weakSelf = self;
+    
+    NSData *signedTransaction = [transaction serialize];
+    [[self.provider sendTransaction:signedTransaction] onCompletion:^(HashPromise *promise) {
+        NSLog(@"CloudKeychainSigner: Sent - signed=%@ hash=%@ error=%@", signedTransaction, promise.value, promise.error);
+        
         if (promise.error) {
             callback(nil, promise.error);
         } else {
+            [weakSelf addTransaction:transaction];
             callback(transaction, nil);
         }
     }];
 }
-
-//- (void)sign: (Transaction*)transaction callback: (void (^)(Transaction*, NSError*))callback {
-//    if (!_account) {
-//        callback(nil, [NSError errorWithDomain:@"foo" code:123 userInfo:@{}]);
-//        return;
-//    }
-//    
-//    transaction = [transaction copy];
-//    [_account sign:transaction];
-//    dispatch_async(dispatch_get_main_queue(), ^() {
-//        callback(transaction, nil);
-//    });
-//}
 
 
 - (BOOL)hasPassword {

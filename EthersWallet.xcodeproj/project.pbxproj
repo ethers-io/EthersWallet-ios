@@ -18,6 +18,8 @@
 		E2491AB61F42642A007DB5A4 /* ConfigLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2491AB51F42642A007DB5A4 /* ConfigLabel.m */; };
 		E28B15331EAC3D6C00D79C52 /* BLECast.m in Sources */ = {isa = PBXBuildFile; fileRef = E28B15321EAC3D6C00D79C52 /* BLECast.m */; };
 		E29AB1091F4E199C0009FEF0 /* SignedRemoteDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB1081F4E199C0009FEF0 /* SignedRemoteDictionary.m */; };
+		E29AB10D1F4E4E1C0009FEF0 /* ScannerConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB10C1F4E4E1C0009FEF0 /* ScannerConfigController.m */; };
+		E29AB1101F5913B00009FEF0 /* BoxView.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB10F1F5913B00009FEF0 /* BoxView.m */; };
 		E2B3BE491F4165B400C5EC1C /* TransactionConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B3BE481F4165B400C5EC1C /* TransactionConfigController.m */; };
 		E2B6A30C1F3CF10300B315B6 /* ConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A30B1F3CF10300B315B6 /* ConfigController.m */; };
 		E2B6A30F1F3CF39B00B315B6 /* ConfigNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A30E1F3CF39B00B315B6 /* ConfigNavigationController.m */; };
@@ -143,6 +145,10 @@
 		E28B15321EAC3D6C00D79C52 /* BLECast.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BLECast.m; path = src/Utilities/BLECast.m; sourceTree = "<group>"; };
 		E29AB1071F4E199C0009FEF0 /* SignedRemoteDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SignedRemoteDictionary.h; path = src/Utilities/SignedRemoteDictionary.h; sourceTree = "<group>"; };
 		E29AB1081F4E199C0009FEF0 /* SignedRemoteDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SignedRemoteDictionary.m; path = src/Utilities/SignedRemoteDictionary.m; sourceTree = "<group>"; };
+		E29AB10B1F4E4E1C0009FEF0 /* ScannerConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ScannerConfigController.h; path = src/ViewControllers/ConfigViewControllers/ScannerConfigController.h; sourceTree = "<group>"; };
+		E29AB10C1F4E4E1C0009FEF0 /* ScannerConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ScannerConfigController.m; path = src/ViewControllers/ConfigViewControllers/ScannerConfigController.m; sourceTree = "<group>"; };
+		E29AB10E1F5913B00009FEF0 /* BoxView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BoxView.h; path = src/Views/BoxView.h; sourceTree = "<group>"; };
+		E29AB10F1F5913B00009FEF0 /* BoxView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BoxView.m; path = src/Views/BoxView.m; sourceTree = "<group>"; };
 		E2B3BE471F4165B400C5EC1C /* TransactionConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TransactionConfigController.h; path = src/ViewControllers/ConfigViewControllers/TransactionConfigController.h; sourceTree = "<group>"; };
 		E2B3BE481F4165B400C5EC1C /* TransactionConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TransactionConfigController.m; path = src/ViewControllers/ConfigViewControllers/TransactionConfigController.m; sourceTree = "<group>"; };
 		E2B6A30A1F3CF10300B315B6 /* ConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigController.h; path = src/ViewControllers/ConfigViewControllers/ConfigController.h; sourceTree = "<group>"; };
@@ -317,6 +323,8 @@
 				E2B6A3111F3CFB1B00B315B6 /* OptionsConfigController.m */,
 				E2B6A3231F3E2FA400B315B6 /* PasswordConfigController.h */,
 				E2B6A3241F3E2FA400B315B6 /* PasswordConfigController.m */,
+				E29AB10B1F4E4E1C0009FEF0 /* ScannerConfigController.h */,
+				E29AB10C1F4E4E1C0009FEF0 /* ScannerConfigController.m */,
 				E2B3BE471F4165B400C5EC1C /* TransactionConfigController.h */,
 				E2B3BE481F4165B400C5EC1C /* TransactionConfigController.m */,
 			);
@@ -438,6 +446,8 @@
 				E2FA04171E428DF50013E5A7 /* TransactionTableViewCell.m */,
 				E2FA04221E428DF50013E5A7 /* WalletView.h */,
 				E2FA04231E428DF50013E5A7 /* WalletView.m */,
+				E29AB10E1F5913B00009FEF0 /* BoxView.h */,
+				E29AB10F1F5913B00009FEF0 /* BoxView.m */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -762,7 +772,9 @@
 				E2FA04511E428E0E0013E5A7 /* IndexPathArray.m in Sources */,
 				E22A59E71EBA9D8500AEE894 /* Signer.m in Sources */,
 				E2FA04531E428E0E0013E5A7 /* UIColor+hex.m in Sources */,
+				E29AB10D1F4E4E1C0009FEF0 /* ScannerConfigController.m in Sources */,
 				E2FA04251E428DF50013E5A7 /* TransactionTableViewCell.m in Sources */,
+				E29AB1101F5913B00009FEF0 /* BoxView.m in Sources */,
 				E2FA042B1E428DF50013E5A7 /* WalletView.m in Sources */,
 				E2C167221F4AB5A2001B4A31 /* ConfigToggle.m in Sources */,
 				E2FA04121E428DDC0013E5A7 /* Wallet.m in Sources */,

@@ -56,6 +56,11 @@
 #define ICON_NAME_X                  @"X"
 #define ICON_NAME_AIRPLANE           @"Y"
 
+#define ICON_NAME_DEVCON_2           @"1"
+#define ICON_NAME_ORIGAMI            @"2"
+#define ICON_NAME_CLIPBOARD          @"3"
+#define ICON_NAME_ACCOUNT            @"4"
+
 //#define FONT_MONOSPACE               @"AmericanTypewriter"
 //#define FONT_MONOSPACE_SMALL         @"AmericanTypewriter-Condensed"
 #define FONT_MONOSPACE               @"Menlo-Bold"

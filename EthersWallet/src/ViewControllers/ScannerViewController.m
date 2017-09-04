@@ -26,7 +26,9 @@
 #import "ScannerViewController.h"
 
 #import <AVFoundation/AVFoundation.h>
+#import <ethers/Payment.h>
 #import <Photos/Photos.h>
+
 #import "UIImage+resize.h"
 #import "UIColor+hex.h"
 #import "Utilities.h"

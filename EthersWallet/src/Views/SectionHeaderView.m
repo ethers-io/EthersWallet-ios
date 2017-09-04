@@ -25,11 +25,12 @@
 
 #import "SectionHeaderView.h"
 
+#import "CrossfadeLabel.h"
 #import "UIColor+hex.h"
 #import "Utilities.h"
 
 @interface SectionHeaderView () {
-    UILabel *_titleLabel, *_detailsLabel;
+    CrossfadeLabel *_titleLabel, *_detailsLabel;
 }
 
 @end
@@ -50,15 +51,16 @@
         separator.backgroundColor = [UIColor colorWithHex:ColorHexLight];
         [self addSubview:separator];
 
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(15.0f, 0.0f, self.frame.size.width - 30.0f, self.frame.size.height)];
+        _titleLabel = [[CrossfadeLabel alloc] initWithFrame:CGRectMake(15.0f, 0.0f, self.frame.size.width - 30.0f, self.frame.size.height)];
         _titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         _titleLabel.font = [UIFont fontWithName:FONT_BOLD size:12.0f];
         _titleLabel.textAlignment = NSTextAlignmentLeft;
         _titleLabel.textColor = [UIColor colorWithHex:ColorHexToolbarIcon];
         [self addSubview:_titleLabel];
 
-        _detailsLabel = [[UILabel alloc] initWithFrame:_titleLabel.frame];
+        _detailsLabel = [[CrossfadeLabel alloc] initWithFrame:_titleLabel.frame];
         _detailsLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        _detailsLabel.duration = 1.0f;
         _detailsLabel.font = [UIFont fontWithName:FONT_ITALIC size:10.0f];
         _detailsLabel.textAlignment = NSTextAlignmentRight;
         _detailsLabel.textColor = [UIColor colorWithWhite:0.4f alpha:1.0f];
@@ -83,7 +85,11 @@
 }
 
 - (void)setDetails:(NSString *)details {
-    _detailsLabel.text = details;
+    [self setDetails:details animated:NO];
+}
+
+- (void)setDetails:(NSString *)details animated: (BOOL)animated {
+    [_detailsLabel setText:details animated:animated];
 }
 
 - (NSString*)details {

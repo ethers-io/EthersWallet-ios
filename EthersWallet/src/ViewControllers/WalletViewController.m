@@ -25,15 +25,10 @@
 
 #import "WalletViewController.h"
 
-//#import <ethers/NSString+Secure.h>
-#import <ethers/Payment.h>
-#import <ethers/Transaction.h>
-
 #import "AccountsViewController.h"
 #import "BalanceLabel.h"
+#import "CrossfadeLabel.h"
 #import "IndexPathArray.h"
-//#import "NSArray+LongestCommonSubsequences.h"
-#import "ScannerViewController.h"
 #import "SectionHeaderView.h"
 #import "TransactionTableViewCell.h"
 #import "UIColor+hex.h"
@@ -43,13 +38,14 @@
 
 #define CONFIRMED_COUNT        12
 
-@interface WalletViewController () <AccountsViewControllerDelegate, ScannerDelegate, UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate> {
+@interface WalletViewController () <AccountsViewControllerDelegate, UITableViewDataSource, UITableViewDelegate> {
     BigNumber *_amount;
     
     WalletView *_walletView;
     
     UIView *_noAccountView;
-    UIButton *_accountsButton, *_cameraButton;
+    
+    UIButton *_accountsButton, *_sendButton;
     
     UITableView *_tableView;
 
@@ -60,10 +56,10 @@
     
     NSInteger _selectedRow;
     
-    UILabel *_nicknameLabel, *_updatedLabel;
+    CrossfadeLabel *_nicknameLabel, *_updatedLabel;
     
     NSArray<NSArray*> *_sections;
-//    NSArray *_sectionTitles;
+
     SectionHeaderView *_headerConfirmed, *_headerInProgress, *_headerPending;
 }
 
@@ -115,6 +111,11 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
                                                    object:_wallet];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(noticeUpdateTransactions)
+                                                     name:WalletTransactionDidChangeNotification
+                                                   object:_wallet];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(noticeUpdateActiveAccount)
                                                      name:WalletActiveAccountDidChangeNotification
                                                    object:_wallet];
@@ -125,15 +126,9 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
                                                    object:_wallet];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(updateSyncDate)
+                                                 selector:@selector(notifyWalletDidSync:)
                                                      name:WalletDidSyncNotification
                                                    object:_wallet];
-//
-//        [[NSNotificationCenter defaultCenter] addObserver:self
-//                                                 selector:@selector(notifyUpdateNetwork:)
-//                                                     name:WalletDidChangeNetwork
-//                                                   object:_wallet];
-
     }
     return self;
 }
@@ -141,10 +136,6 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
-
-//- (void)notifyUpdateNetwork: (NSNotification*)note {
-//    [self reloadTableAnimated:NO];
-//}
 
 - (void)noticeUpdateActiveAccount {
     [self updatedActiveAccountAnimated:YES];
@@ -162,7 +153,8 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         _nicknameLabel.text = [_wallet nicknameForIndex:_wallet.activeAccountIndex];
 
         _accountsButton.enabled = YES;
-        _cameraButton.enabled = YES;
+        
+        _sendButton.enabled = YES;
         
         _updatedLabel.hidden = NO;
         _nicknameLabel.hidden = NO;
@@ -171,7 +163,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         targetNoAccountAlpha = 1.0f;
 
         _accountsButton.enabled = NO;
-        _cameraButton.enabled = NO;
+        _sendButton.enabled = NO;
 
         _updatedLabel.hidden = YES;
         _nicknameLabel.hidden = YES;
@@ -206,8 +198,12 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     [self reloadTableAnimated:YES];
 }
 
-- (void)updateSyncDate {
-    _updatedLabel.text = [@"Updated " stringByAppendingString:[Utilities timeAgo:_wallet.syncDate]];
+- (void)updateSyncDateAniamted: (BOOL)animated {
+    [_updatedLabel setText:[@"Updated " stringByAppendingString:[Utilities timeAgo:_wallet.syncDate]] animated:animated];
+}
+
+- (void)notifyWalletDidSync: (NSNotification*)note {
+    [self updateSyncDateAniamted:YES];
 }
 
 
@@ -329,15 +325,14 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     
     UIView *status = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 200.0f, 44.0f)];
     
-    _updatedLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, 4.0f, 200.0f, 18.0f)];
+    _updatedLabel = [[CrossfadeLabel alloc] initWithFrame:CGRectMake(0.0f, 4.0f, 200.0f, 18.0f)];
     _updatedLabel.font = [UIFont fontWithName:FONT_NORMAL size:12.0f];
     _updatedLabel.text = @"Syncing...";
     _updatedLabel.textAlignment = NSTextAlignmentCenter;
     [status addSubview:_updatedLabel];
 
-    _nicknameLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, 22.0f, 200.0f, 18.0f)];
+    _nicknameLabel = [[CrossfadeLabel alloc] initWithFrame:CGRectMake(0.0f, 22.0f, 200.0f, 18.0f)];
     _nicknameLabel.font = [UIFont fontWithName:FONT_NORMAL size:12.0f];
-    _nicknameLabel.text = @"ethers.io";
     _nicknameLabel.textAlignment = NSTextAlignmentCenter;
     _nicknameLabel.textColor = [UIColor colorWithWhite:0.4f alpha:1.0f];
     [status addSubview:_nicknameLabel];
@@ -346,9 +341,9 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     [_accountsButton addTarget:self action:@selector(tapAccounts) forControlEvents:UIControlEventTouchUpInside];
     UIBarButtonItem *accounts = [[UIBarButtonItem alloc] initWithCustomView:_accountsButton];
 
-    _cameraButton = [Utilities ethersButton:ICON_NAME_AIRPLANE fontSize:36.0f color:ColorHexToolbarIcon];
-    [_cameraButton addTarget:self action:@selector(tapCamera) forControlEvents:UIControlEventTouchUpInside];
-    UIBarButtonItem *camera = [[UIBarButtonItem alloc] initWithCustomView:_cameraButton];
+    _sendButton = [Utilities ethersButton:ICON_NAME_AIRPLANE fontSize:36.0f color:ColorHexToolbarIcon];
+    [_sendButton addTarget:self action:@selector(tapCamera) forControlEvents:UIControlEventTouchUpInside];
+    UIBarButtonItem *send = [[UIBarButtonItem alloc] initWithCustomView:_sendButton];
     
     [toolbar setItems:@[
                         accounts,
@@ -359,11 +354,21 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
                         [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                                                                       target:nil
                                                                       action:nil],
-                        camera,
+                        send,
                         ]];
     
     [self updatedActiveAccountAnimated:NO];
-    [self updateSyncDate];
+    [self updateSyncDateAniamted:NO];
+    
+    // Updte the sync date label every 10 seconds
+    __weak WalletViewController *weakSelf = self;
+    [NSTimer scheduledTimerWithTimeInterval:10.0f repeats:YES block:^(NSTimer *timer) {
+        if (!weakSelf) {
+            [timer invalidate];
+            return;
+        }
+        [weakSelf updateSyncDateAniamted:YES];
+    }];
 }
 
 
@@ -390,9 +395,6 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     
     //NSUInteger transactionCount = [transactions];
     for (TransactionInfo *transaction in transactions) {
-    //for (NSUInteger i = 0; i < transactions.count; i++) {
-        //TransactionInfo *transactionInfo = [_wallet transactionForAddress:activeAccount index:i];
-
         if (transaction.blockNumber == -1) {
             [pending addObject:transaction];
             
@@ -427,13 +429,14 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         _headerConfirmed.alpha = ([_sections objectAtIndex:2].count ? 1.0: 0.0f);
     };
     
+    NSString *details = nil;
     if (minInProgressConfirmations == maxInProgressConfirmations) {
-        _headerInProgress.details = [NSString stringWithFormat:@"%d confirmation%@",
-                                     minInProgressConfirmations, (minInProgressConfirmations == 1) ? @"": @"s"];
+        NSString *plural = (minInProgressConfirmations == 1) ? @"": @"s";
+        details = [NSString stringWithFormat:@"%d confirmation%@", minInProgressConfirmations, plural];
     } else {
-        _headerInProgress.details = [NSString stringWithFormat:@"%d \u2013 %d confirmations",
-                                     minInProgressConfirmations, maxInProgressConfirmations];
+        details = [NSString stringWithFormat:@"%d \u2013 %d confirmations", minInProgressConfirmations, maxInProgressConfirmations];
     }
+    [_headerInProgress setDetails:details animated:animated];
     
     if (animated) {
 
@@ -553,7 +556,6 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     //if (indexPath.row == 0) { return; }
     
-    return;
     /*
      @TODO: When enhanced version of the cells is ready
      
@@ -566,6 +568,8 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     [tableView beginUpdates];
     [tableView endUpdates];
      */
+    
+    return;
 }
 
 #pragma mark - AccountsViewControllerDelegate
@@ -587,241 +591,13 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 }
 
 - (void)tapCamera {
-    ScannerViewController *scannerViewController = [[ScannerViewController alloc] init];
-    scannerViewController.delegate = self;
-    [self presentViewController:scannerViewController animated:YES completion:nil];
-    dispatch_async(dispatch_get_main_queue(), ^() {
-        [scannerViewController startScanningAnimated:YES];
-    });
+    [_wallet scan:nil];
 }
 
 - (void)tapAddAccount {
     [_wallet addAccountCallback:^(Address *address) {
         NSLog(@"Created Address: %@", address);
     }];
-}
-
-#pragma mark - Long Press Address Copy
-
-// http://stackoverflow.com/questions/1146587/how-to-get-uimenucontroller-work-for-a-custom-view
-/*
-- (void)animateAddressLabel {
-    __weak UILabel *addressLabel = _addressLabel;
-    UIViewAnimationOptions options = UIViewAnimationOptionTransitionCrossDissolve | UIViewAnimationOptionCurveEaseOut;
-    [UIView transitionWithView:addressLabel duration:0.9f options:options animations:^() {
-        addressLabel.textColor = [UIColor colorWithHex:0x5f95be];
-    } completion:nil];
-}
-*/
-- (void)share: (id)sender {
-    
-}
-
-#pragma mark - UITextFieldDelegate
-
-- (void)configureTextField: (UITextField*)textField {
-    textField.delegate = self;
-    textField.keyboardType = UIKeyboardTypeDecimalPad;
-}
-
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
-    return NO;
-}
-
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-    NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
-    
-    NSArray *components = [newString componentsSeparatedByString:@"."];
-    if ([components count] > 2) { return NO; }
-    
-    NSString *whole = [components objectAtIndex:0];
-//    whole = [whole stringByReplacingOccurrencesOfString:@"," withString:@""];
-    
-    NSString *decimal = (([components count] == 2) ? [components objectAtIndex:1]: @"0");
-    
-    // Make sure everything is a number
-    if (![RegExOnlyNumbers numberOfMatchesInString:whole options:0 range:NSMakeRange(0, whole.length)]) {
-        return NO;
-    }
-    if (![RegExOnlyNumbers numberOfMatchesInString:decimal options:0 range:NSMakeRange(0, decimal.length)]) {
-        return NO;
-    }
-    
-    /*
-    NSMutableString *commifyWhole = [NSMutableString stringWithString:whole];
-    for (NSInteger i = whole.length - 3; i > 0; i -= 3) {
-        [commifyWhole insertString:@"," atIndex:i];
-    }
-    
-    textField.text = [NSString stringWithFormat:@"%@.%@", ];
-    
-    NSLog(@"FOO: %@ %@", string, newString);
-    return NO;
-     */
-    return YES;
-}
-
-#pragma mark - Scanner Delegate
-/*
-- (void)showScannerAnimated:(BOOL)animated {
-    NSLog(@"Show: %@ %d", self.presentedViewController, animated);
-    
-    void (^presentScannerViewController)() = ^() {
-        ScannerViewController *scannerViewController = [[ScannerViewController alloc] init];
-        scannerViewController.delegate = self;
-        [self presentViewController:scannerViewController animated:animated completion:^() {
-            dispatch_async(dispatch_get_main_queue(), ^() {
-//                scannerViewController.scanning = YES;
-                [scannerViewController setScanning:YES animated:YES];
-            });
-        }];
-    };
-    
-    if (self.presentedViewController) {
-        [self dismissViewControllerAnimated:NO completion:presentScannerViewController];
-    } else {
-        presentScannerViewController();
-    }
-}
-*/
-
-- (void)scannerViewController:(ScannerViewController *)scannerViewController didFinishWithMessages:(NSArray<NSString *> *)messages {
-    [self dismissViewControllerAnimated:YES completion:^() {
-        if (messages.count > 0) {
-            Payment *payment = [Payment paymentWithURI:[messages firstObject]];
-            [_wallet sendPayment:payment callback:^(Hash *transactionHash, NSError *error) {
-                NSLog(@"TXHASH: %@ %@", transactionHash, error);
-            }];
-        }
-    }];
-}
-
-- (BOOL)scannerViewController: (ScannerViewController*)scannerViewController shouldFinishWithMessages: (NSArray<NSString*>*)messages {
-    return (messages.count > 0 && ([Payment paymentWithURI:[messages firstObject]]) != nil);
-}
-
-- (void)getSendAmount: (void (^)(BigNumber *wei))callback {
-
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Transaction Amount" message:@"How much ether do you wish to send?" preferredStyle:UIAlertControllerStyleAlert];
-    
-    UIAlertAction* actionSend = [UIAlertAction actionWithTitle:@"Continue..." style:UIAlertActionStyleDefault
-                                                       handler:^(UIAlertAction * action) {
-                                                           callback([Payment parseEther:[alert.textFields objectAtIndex:0].text]);
-                                                       }];
-    [alert addAction:actionSend];
-
-    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        [self configureTextField:textField];
-    }];
-
-    UIAlertAction* actionCancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel
-                                                         handler:^(UIAlertAction * action) {
-                                                             callback(nil);
-                                                         }];
-    [alert addAction:actionCancel];
-
-    [self presentViewController:alert animated:YES completion:nil];
-}
-
-- (BOOL)send: (NSString*)address amount: (BigNumber*)amount firm: (BOOL)firm callback: (void (^)(NSData *hash, NSError *error)) callback {
-    
-    if (!amount) {
-        __weak WalletViewController *weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^() {
-            [weakSelf getSendAmount:^(BigNumber *amount) {
-                if (!amount) {
-                    callback(nil, [NSError errorWithDomain:@"cancelled" code:0 userInfo:nil]);
-                    return;
-                }
-                [weakSelf send:address amount:amount firm:NO callback:callback];
-            }];
-        });
-        return YES;
-    }
-    
-    NSString *shortAddress = [NSString stringWithFormat:@"%@...%@",
-                              [address substringToIndex:9],
-                              [address substringFromIndex:address.length - 7]];
-    NSString *etherAmount = [Payment formatEther:amount options:EtherFormatOptionCommify];
-    
-    NSString *messageFormat = @"To: %@\nAmount: \u039E\u2009%@\nFee: %@\n\nTransactions on the Ethereum network cannot be reversed.";
-    NSString *messageFeeEstimatedFormat = @"Ξ\u2009%@ (estimated)";
-    NSString *message = [NSString stringWithFormat:messageFormat, shortAddress, etherAmount, @"(estimating...)"];
-    
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Confirm Transaction"
-                                                                   message:message
-                                                            preferredStyle:UIAlertControllerStyleActionSheet];
-    
-    NSString *textSend = [NSString stringWithFormat:@"Send \u039E\u2009%@", etherAmount];
-    UIAlertAction* actionSend = [UIAlertAction actionWithTitle:textSend
-                                                         style:UIAlertActionStyleDefault
-                                                       handler:^(UIAlertAction * action) {
-                                                       }];
-    actionSend.enabled = NO;
-    [alert addAction:actionSend];
-
-    NSTimer *populateFee = [NSTimer scheduledTimerWithTimeInterval:4.0f repeats:NO block:^(NSTimer *timer) {
-        NSString *etherFeeAmount = [Payment formatEther:[BigNumber bigNumberWithDecimalString:@"10500000000000000"]
-                                               options:(EtherFormatOptionCommify | EtherFormatOptionApproximate)];
-        NSString *feeMessage = [NSString stringWithFormat:messageFeeEstimatedFormat, etherFeeAmount];
-        NSString *message = [NSString stringWithFormat:messageFormat, shortAddress, etherAmount, feeMessage];
-        alert.message = message;
-        actionSend.enabled = YES;
-    }];
-
-    if (!firm) {
-        __weak WalletViewController *weakSelf = self;
-        void (^changeAmountFunc)(UIAlertAction*) = ^(UIAlertAction *action) {
-            [populateFee invalidate];
-            
-            dispatch_async(dispatch_get_main_queue(), ^() {
-                [weakSelf getSendAmount:^(BigNumber *amount) {
-                    [weakSelf send:address amount:amount firm:NO callback:callback];
-                }];
-            });
-            
-        };
-        UIAlertAction* actionChange = [UIAlertAction actionWithTitle:@"Change Amount" style:UIAlertActionStyleDefault
-                                                             handler:changeAmountFunc];
-        [alert addAction:actionChange];
-    }
-    
-    
-    {
-        void (^cancelFunc)(UIAlertAction*) = ^(UIAlertAction *action) {
-            callback(nil, [NSError errorWithDomain:@"cancelled" code:0 userInfo:nil]);
-        };
-
-        UIAlertAction* actionCancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel
-                                                             handler:cancelFunc];
-        [alert addAction:actionCancel];
-    }
-    
-    [self presentViewController:alert animated:YES completion:nil];
-    
-    return YES;
-}
-
-- (void)sendTransaction: (Transaction*)transaction {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Send ether to 0x0b7FC9...99528?" message:@"Are you sure you want to send XXX? Transactions on Ethereum cannot be reversed." preferredStyle:UIAlertControllerStyleActionSheet];
-    
-    UIAlertAction* actionSend = [UIAlertAction actionWithTitle:@"Send Ξ 1.34563" style:UIAlertActionStyleDefault
-                                                          handler:^(UIAlertAction * action) {
-                                                          }];
-
-    UIAlertAction* actionChange = [UIAlertAction actionWithTitle:@"Change Amount" style:UIAlertActionStyleDefault
-                                                         handler:^(UIAlertAction * action) {
-                                                       }];
-
-    UIAlertAction* actionCancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel
-                                                          handler:^(UIAlertAction * action) {
-                                                          }];
-
-    [alert addAction:actionSend];
-    [alert addAction:actionChange];
-    [alert addAction:actionCancel];
-    
-    [self presentViewController:alert animated:YES completion:nil];
 }
 
 @end

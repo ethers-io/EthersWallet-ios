@@ -56,6 +56,7 @@
 #import "MnemonicConfigController.h"
 #import "OptionsConfigController.h"
 #import "PasswordConfigController.h"
+#import "ScannerConfigController.h"
 #import "TransactionConfigController.h"
 
 #import "CachedDataStore.h"
@@ -108,11 +109,7 @@ const NSString* WalletNotificationSyncDateKey                            = @"Wal
 
 #pragma mark - Data Store keys
 
-static NSString *DataStoreKeyNetworkBlockNumber           = @"NETWORK_BLOCK_NUMBER";
-
-static NSString *DataStoreKeyNetworkEtherPrice            = @"NETWORK_ETHER_PRICE";
-
-static NSString *DataStoreKeyNetworkSyncDate              = @"NETWORK_SYNC_DATE";
+static NSString *DataStoreKeyNetworkEtherPrice            = @"ETHER_PRICE";
 
 static NSString *DataStoreKeyActiveAccountAddress         = @"ACTIVE_ACCOUNT_ADDRESS";
 static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHAINID";
@@ -433,6 +430,12 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                                                    object:signer];
         
         [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(notifySignerDidSync:)
+                                                     name:SignerSyncDateDidChangeNotification
+                                                   object:signer];
+
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(notifySignerHistoryUpdated:)
                                                      name:SignerHistoryUpdatedNotification
                                                    object:signer];
@@ -544,7 +547,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 }
 
 - (void)notifyBlockNumber: (NSNotification*)note {
-    [self refresh:nil];
+    [self doNotify:WalletTransactionDidChangeNotification signer:nil userInfo:nil transform:nil];
 }
 
 - (void)notifyApplicationActive: (NSNotification*)note {
@@ -611,6 +614,10 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
 - (void)notifySignerHistoryUpdated: (NSNotification*)note {
     [self doNotify:WalletAccountHistoryUpdatedNotification signer:note.object userInfo:note.userInfo transform:nil];
+}
+
+- (void)notifySignerDidSync: (NSNotification*)note {
+    [self doNotify:WalletDidSyncNotification signer:note.object userInfo:nil transform:nil];
 }
 
 - (void)notifySignerTransactionDidChange: (NSNotification*)note {
@@ -743,6 +750,8 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
         config.onNext = ^(ConfigController *config) {
             NSString *json = ((DoneConfigController*)config).json;
             Signer *signer = nil;
+            
+            NSLog(@"Test: %d", testnet);
             
             if (testnet) {
                 NSString *testnetKeychainKey = [weakSelf.keychainKey stringByAppendingString:@"-testnet"];
@@ -939,6 +948,8 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
             // ***************************
             // STEP 2 - Get the backup phrase
             void (^getBackupPhrase)(ConfigController*) = ^(ConfigController *configController) {
+                NSLog(@"Testnet: %d", testnet);
+                
                 NSString *title = @"Enter Phrase";
                 NSString *message = @"Please enter your //backup phrase//.";
                 
@@ -1265,6 +1276,36 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
 #pragma mark - Transactions
 
+- (void)scan:(void (^)())callback {
+    
+    if (!self.activeAccountAddress) {
+        dispatch_async(dispatch_get_main_queue(), ^() {
+            if (callback) { callback(); }
+        });
+        return;
+    }
+    
+    ScannerConfigController *scanner = [ScannerConfigController configWithSigner:[_accounts objectAtIndex:_activeAccountIndex]];
+    
+    __weak ScannerConfigController *weakScanner = scanner;
+    void (^onComplete)() = ^() {
+        dispatch_async(dispatch_get_main_queue(), ^() {
+            [weakScanner startScanningAnimated:YES];
+        });
+    };
+    
+    ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:scanner];
+    navigationController.onDismiss = ^(NSObject *result) {
+        // @TOOD: This should be nil or a Transaction; if a tx add it to the
+        NSLog(@"Scan Result: %@", result);
+        if (callback) { callback(); }
+    };
+
+    [ModalViewController presentViewController:navigationController
+                                      animated:YES
+                                    completion:onComplete];
+}
+
 - (void)sendPayment:(Payment *)payment callback:(void (^)(Hash*, NSError*))callback {
     Transaction *transaction = [Transaction transaction];
     transaction.toAddress = payment.address;
@@ -1290,7 +1331,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
     Signer *signer = [_accounts objectAtIndex:_activeAccountIndex];
     
-    TransactionConfigController *config = [TransactionConfigController configWithSigner:signer transaction:transaction];
+    TransactionConfigController *config = [TransactionConfigController configWithSigner:signer transaction:transaction nameHint:nil];
     config.etherPrice = [self etherPrice];
     
     config.onSign = ^(TransactionConfigController *configController, Transaction *transaction) {
@@ -1327,17 +1368,17 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
 #pragma mark - Blockchain
 
-/*
-- (void)setSyncDate: (NSTimeInterval)syncDate {
-    BOOL changed = [_dataStore setTimeInterval:syncDate forKey:DataStoreKeyNetworkSyncDate];
-    if (changed) {
-        NSDictionary *userInfo = @{@"syncDate": @(syncDate)};
-        [self doNotify:WalletDidSyncNotification userInfo:userInfo transform:nil];
-    }
-}
-*/
 - (NSTimeInterval)syncDate {
-    return [_dataStore timeIntervalForKey:DataStoreKeyNetworkSyncDate];
+    BOOL found = NO;
+    NSTimeInterval syncDate = 0.0f;
+    for (Signer *signer in _accounts) {
+        NSTimeInterval signerSyncDate = signer.syncDate;
+        if (!found || signerSyncDate < syncDate) {
+            syncDate = signerSyncDate;
+            found = YES;
+        }
+    }
+    return syncDate;
 }
 
 - (float)etherPrice {
@@ -1347,68 +1388,6 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 - (void)refresh:(void (^)(BOOL))callback {
     @synchronized (self) {
         
-        if (!_refreshPromise) {
-            //Provider *currentProvider = _provider;
-
-            NSMutableArray *promises = [NSMutableArray array];
-            
-            /*
-            [promises addObject:[IntegerPromise promiseWithSetup:^(Promise *promise) {
-                [[currentProvider getBlockNumber] onCompletion:^(IntegerPromise *blockNumberPromise) {
-                    if (blockNumberPromise.result && currentProvider == _provider) {
-                        [self setBlockNumber:blockNumberPromise.value];
-                    }
-                    [promise resolve:@(NO)];
-                }];
-            }]];
-             */
-            
-            /*
-            [promises addObject:[IntegerPromise promiseWithSetup:^(Promise *promise) {
-                [[currentProvider getEtherPrice] onCompletion:^(FloatPromise *etherPricePromise) {
-                    BOOL changed = NO;
-                    if (etherPricePromise.result && currentProvider == _provider) {
-                        changed = [self setEtherPrice:etherPricePromise.value];
-                    }
-                    [promise resolve:@(changed)];
-                }];
-            }]];
-             */
-
-            _refreshPromise = [IntegerPromise promiseWithSetup:^(Promise *promise) {
-                [[Promise all:promises] onCompletion:^(ArrayPromise *allPromises) {
-                    
-                    if (allPromises.error) {
-                        [promise reject:allPromises.error];
-                        return;
-                    }
-                    
-                    BOOL changed = NO;
-                    for (NSNumber *updated in allPromises.value) {
-                        if ([updated boolValue]) {
-                            changed = YES;
-                            break;
-                        }
-                    }
-                    
-                    [promise resolve:@(changed)];
-                }];
-            }];
-            
-            [_refreshPromise onCompletion:^(Promise *promise) {
-                _refreshPromise = nil;
-            }];
-        }
-        
-        [_refreshPromise onCompletion:^(IntegerPromise *promise) {
-            if (!callback) { return; }
-            
-            if (promise.result) {
-                callback(promise.value);
-            } else {
-                callback(NO);
-            }
-        }];
     }
 }
 

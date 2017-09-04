@@ -23,10 +23,10 @@ extern const NSNotificationName SignerBalanceDidChangeNotification;
 extern const NSNotificationName SignerHistoryUpdatedNotification;
 extern const NSNotificationName SignerTransactionDidChangeNotification;
 
+extern const NSNotificationName SignerSyncDateDidChangeNotification;
+
 
 #pragma mark - Notification Keys
-
-//extern const NSString* SignerNotificationSignerKey;
 
 extern const NSString* SignerNotificationNicknameKey;
 extern const NSString* SignerNotificationFormerNicknameKey;
@@ -35,6 +35,8 @@ extern const NSString* SignerNotificationBalanceKey;
 extern const NSString* SignerNotificationFormerBalanceKey;
 
 extern const NSString* SignerNotificationTransactionKey;
+
+extern const NSString* SignerNotificationSyncDateKey;
 
 
 #pragma mark - Signer
@@ -52,6 +54,10 @@ extern const NSString* SignerNotificationTransactionKey;
 @property (nonatomic, readonly) Provider *provider;
 
 @property (nonatomic, readonly) NSUInteger blockNumber;
+
+@property (nonatomic, readonly) NSTimeInterval syncDate;
+
+
 
 #pragma Blockchain Data
 
@@ -76,7 +82,6 @@ extern const NSString* SignerNotificationTransactionKey;
 //  - Signing on Firefly hardware wallets opens a BLECast controller and a QR code scanner
 //  - Secret Storage JSON wallets support signing with unlocked signers
 @property (nonatomic, readonly) BOOL supportsSign;
-//- (void)sign: (Transaction*)transaction callback: (void (^)(Transaction*, NSError*))callback;;
 
 - (void)send: (Transaction*)transaction callback: (void (^)(Transaction*, NSError*))callback;
 
@@ -88,16 +93,23 @@ extern const NSString* SignerNotificationTransactionKey;
 @property (nonatomic, readonly) BOOL hasPassword;
 @property (nonatomic, readonly) BOOL unlocked;
 
+
 // Mnemonic Phrase
 //   - Watch-only wallets (just an address) do not have (known) mnemonic phrases
 //   - Secret storage JSON wallets created by ethers do
 @property (nonatomic, readonly) BOOL supportsMnemonicPhrase;
 
+
 // This is only available if the signer is unlocked
 @property (nonatomic, readonly) NSString *mnemonicPhrase;
+
 
 - (void)lock;
 - (void)cancelUnlock;
 - (void)unlock: (NSString*)password callback: (void (^)(Signer*, NSError*))callback;
+
+
+// Sub-classes can use these to update the cached state
+- (void)addTransaction: (Transaction*)transaction;
 
 @end

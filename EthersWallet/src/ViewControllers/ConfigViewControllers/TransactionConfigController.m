@@ -31,6 +31,7 @@
 
 #import "GasLimitKeyboardView.h"
 #import "GasPriceKeyboardView.h"
+#import "ConfigNavigationController.h"
 #import "UIColor+hex.h"
 #import "Utilities.h"
 
@@ -102,11 +103,11 @@
     KeyboardView *_feeKeyboardPrice, *_feeKeyboardLimit;
 }
 
-+ (instancetype)configWithSigner: (Signer*)signer transaction: (Transaction*)transaction {
-    return [[TransactionConfigController alloc] initWithSigner:signer transaction:transaction];
++ (instancetype)configWithSigner: (Signer*)signer transaction: (Transaction*)transaction nameHint: (NSString*)nameHint {
+    return [[TransactionConfigController alloc] initWithSigner:signer transaction:transaction nameHint:nameHint];
 }
 
-- (instancetype)initWithSigner: (Signer*)signer transaction: (Transaction*)transaction {
+- (instancetype)initWithSigner: (Signer*)signer transaction: (Transaction*)transaction nameHint: (NSString*)nameHint {
     self = [super init];
     if (self) {
         self.navigationItem.titleView = [Utilities navigationBarLogoTitle];
@@ -115,6 +116,7 @@
         [signer lock];
         
         _signer = signer;
+        _nameHint = nameHint;
         _transaction = [transaction copy];
         
         _transaction.chainId = _signer.provider.testnet ? ChainIdRopsten: ChainIdHomestead;
@@ -125,6 +127,8 @@
                               [_signer.provider estimateGas:_transaction],
                               [GasPriceKeyboardView checkForUpdatedGasPrices]
                               ];
+        
+        NSLog(@"TX: %@", transaction);
         
         _addressInspectionPromise = [Promise all:promises];
     }
@@ -407,14 +411,28 @@
     toLabel.label.lineBreakMode = NSLineBreakByTruncatingMiddle;
     //toLabel.holdIncludesContentView = YES;
 
-    [[_signer.provider lookupAddress:_transaction.toAddress] onCompletion:^(StringPromise *promise) {
-        if (promise.error) { return; }
-        [toLabel.label setText:promise.value animated:YES];
-        toLabel.onHold = ^(ConfigView *view, ConfigViewHold holding) {
-            BOOL on = (holding != ConfigViewHoldNone);
-            [((ConfigLabel*)view).label setText:(on ? _transaction.toAddress.checksumAddress: promise.value) animated:YES];
-        };
-    }];
+    if (_nameHint) {
+        [[_signer.provider lookupName:_nameHint] onCompletion:^(AddressPromise *promise) {
+            if (promise.error) { return; }
+            [toLabel.label setText:weakSelf.nameHint animated:YES];
+            toLabel.onHold = ^(ConfigView *view, ConfigViewHold holding) {
+                BOOL on = (holding != ConfigViewHoldNone);
+                [((ConfigLabel*)view).label setText:(on ? weakSelf.transaction.toAddress.checksumAddress: weakSelf.nameHint)
+                                           animated:YES];
+            };
+        }];
+        
+    } else {
+        [[_signer.provider lookupAddress:_transaction.toAddress] onCompletion:^(StringPromise *promise) {
+            if (promise.error) { return; }
+            [toLabel.label setText:promise.value animated:YES];
+            toLabel.onHold = ^(ConfigView *view, ConfigViewHold holding) {
+                BOOL on = (holding != ConfigViewHoldNone);
+                [((ConfigLabel*)view).label setText:(on ? weakSelf.transaction.toAddress.checksumAddress: promise.value)
+                                           animated:YES];
+            };
+        }];
+    }
     
     [self addSeparator];
     
@@ -535,12 +553,16 @@
                 weakSelf.warningTextView.text = [error localizedDescription];
                 [weakSelf updateButton];
             
-            } else if (weakSelf.onSign) {
+            } else {
+                if (weakSelf.onSign) {
+                    // Notify the owner we are done
+                    weakSelf.onSign(weakSelf, transaction);
+                }
+
                 // Lock the signer
                 [weakSelf.signer lock];
 
-                // Notify the owner we are done
-                weakSelf.onSign(weakSelf, transaction);
+                [(ConfigNavigationController*)(weakSelf.navigationController) dismissWithResult:transaction];
             }
         }];
     }];
@@ -554,7 +576,7 @@
         NSData *code = [promise.value objectAtIndex:0];
         BigNumber *gasEstimate = [promise.value objectAtIndex:1];
         
-        [weakSelf setupFeeKeyboardTransfer:(code.length == 0) gasEstimate:gasEstimate];
+        [weakSelf setupFeeKeyboardTransfer:(code.length == 0 && weakSelf.transaction.data.length == 0) gasEstimate:gasEstimate];
     }];
     
     //[self addGap:44.0f];
