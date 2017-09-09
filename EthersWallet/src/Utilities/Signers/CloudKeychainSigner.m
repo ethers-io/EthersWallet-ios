@@ -112,7 +112,7 @@ static NSString *getNickname(NSString *label) {
 static NSString *getServiceName(NSString *keychainKey) {
     if ([keychainKey isEqualToString:@"io.ethers.sharedWallet"]) {
         return @"ethers.io";
-    } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet/ropsten"]) { // -testnet
+    } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet/ropsten"]) {
         return @"ethers.io/ropsten";
     }
     
