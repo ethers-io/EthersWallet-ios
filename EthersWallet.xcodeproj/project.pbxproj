@@ -425,6 +425,8 @@
 				E2FA041B1E428DF50013E5A7 /* BalanceLabel.m */,
 				E2B6A3171F3D113000B315B6 /* BlockButton.h */,
 				E2B6A3181F3D113000B315B6 /* BlockButton.m */,
+				E29AB10E1F5913B00009FEF0 /* BoxView.h */,
+				E29AB10F1F5913B00009FEF0 /* BoxView.m */,
 				E2FA041C1E428DF50013E5A7 /* CloudView.h */,
 				E2FA041D1E428DF50013E5A7 /* CloudView.m */,
 				E2FF6A141F46AFC100544B0B /* CrossfadeLabel.h */,
@@ -443,8 +445,6 @@
 				E2FA04171E428DF50013E5A7 /* TransactionTableViewCell.m */,
 				E2FA04221E428DF50013E5A7 /* WalletView.h */,
 				E2FA04231E428DF50013E5A7 /* WalletView.m */,
-				E29AB10E1F5913B00009FEF0 /* BoxView.h */,
-				E29AB10F1F5913B00009FEF0 /* BoxView.m */,
 			);
 			name = Views;
 			sourceTree = "<group>";
