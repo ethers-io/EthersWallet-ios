@@ -591,7 +591,9 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 }
 
 - (void)tapCamera {
-    [_wallet scan:nil];
+    [_wallet scan:^(Hash *hash, NSError *error) {
+        NSLog(@"WalletViewController: Scanned Transaction - hash=%@ error=%@", hash, error);
+    }];
 }
 
 - (void)tapAddAccount {

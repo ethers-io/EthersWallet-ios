@@ -79,8 +79,10 @@
 
 @property (nonatomic, readonly) ConfigTextField *valueTextField;
 @property (nonatomic, readonly) ConfigTextField *passwordTextField;
-@property (nonatomic, readonly) UITextView *warningTextView;
+@property (nonatomic, readonly) UITextView *feeWarningTextView;
+@property (nonatomic, readonly) UITextView *passwordWarningTextView;
 @property (nonatomic, readonly) UIButton *sendButton;
+@property (nonatomic, readonly) UIButton *fingerprintButton;
 
 @property (nonatomic, assign) BOOL sending;
 
@@ -101,6 +103,7 @@
     
     UIView *_feeKeyboard;
     KeyboardView *_feeKeyboardPrice, *_feeKeyboardLimit;
+    
 }
 
 + (instancetype)configWithSigner: (Signer*)signer transaction: (Transaction*)transaction nameHint: (NSString*)nameHint {
@@ -128,11 +131,46 @@
                               [GasPriceKeyboardView checkForUpdatedGasPrices]
                               ];
         
-        NSLog(@"TX: %@", transaction);
+        NSLog(@"TransactionViewController: signer=%@ transaction=%@", signer, transaction);
         
         _addressInspectionPromise = [Promise all:promises];
     }
     return self;
+}
+
+- (void)tapFingerprint: (UIButton*)sender {
+    __weak TransactionConfigController *weakSelf = self;
+    [_signer unlockBiometricCallback:^(Signer *signer, NSError *error) {
+        if (signer.unlocked) {
+            weakSelf.passwordTextField.status = ConfigTextFieldStatusGood;
+            
+            [weakSelf updateButton];
+            
+            if ([weakSelf.passwordTextField.textField isFirstResponder]) {
+                [weakSelf.passwordTextField.textField resignFirstResponder];
+            }
+            
+            weakSelf.passwordTextField.textField.text = @"DummyPasswordText";
+            weakSelf.passwordTextField.userInteractionEnabled = NO;
+            
+            weakSelf.fingerprintButton.enabled = NO;
+            
+            weakSelf.passwordWarningTextView.text = @"";
+        
+        } else {
+            if (![signer supportsBiometricUnlock]) {
+                weakSelf.fingerprintButton.enabled = NO;
+            }
+            
+            if (error && [error.domain isEqualToString:SignerErrorDomain]) {
+                if (error.code == SignerErrorFailed) {
+                    weakSelf.passwordWarningTextView.text = @"Please verify your password.";
+                } else {
+                    weakSelf.passwordWarningTextView.text = @"";
+                }
+            }
+        }
+    }];
 }
 
 - (void)addDoneButton: (UIView*)view {
@@ -269,23 +307,23 @@
 
 - (void)checkFunds {
     if (!_feeReady) {
-        _warningTextView.font = [UIFont fontWithName:FONT_ITALIC size:14.0f];
-        _warningTextView.text = @"estimating fee...";
-        _warningTextView.textColor = [UIColor whiteColor];
+        _feeWarningTextView.font = [UIFont fontWithName:FONT_ITALIC size:14.0f];
+        _feeWarningTextView.text = @"estimating fee...";
+        _feeWarningTextView.textColor = [UIColor whiteColor];
     
     } else if ([[self totalValue] compare:_signer.balance] != NSOrderedDescending) {
         if ([_feeKeyboardLimit isKindOfClass:[GasLimitKeyboardView class]] && !((GasLimitKeyboardView*)_feeKeyboardLimit).safeGasLimit) {
-            _warningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
-            _warningTextView.text = @"Gas Limit is too low and may burn fee.";
-            _warningTextView.textColor = [UIColor colorWithHex:0xf9674f];
+            _feeWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
+            _feeWarningTextView.text = @"Gas Limit is too low and may burn fee.";
+            _feeWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];
         } else {
-            _warningTextView.text = @"";
+            _feeWarningTextView.text = @"";
         }
         
     } else {
-        _warningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
-        _warningTextView.text = @"Your balance is too low.";
-        _warningTextView.textColor = [UIColor colorWithHex:0xf9674f];
+        _feeWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
+        _feeWarningTextView.text = @"Your balance is too low.";
+        _feeWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];
     }
 }
 
@@ -299,6 +337,7 @@
         _sendButton.enabled = NO;
         
         self.navigationItem.leftBarButtonItem.enabled = NO;
+
     } else {
 
         _valueTextField.button.enabled = ![totalValue isEqual:_signer.balance];
@@ -309,12 +348,14 @@
 
         self.navigationItem.leftBarButtonItem.enabled = YES;
     }
+    
+    _valueTextField.button.hidden = !_valueTextField.button.enabled;
 }
 
 - (void)updateFee: (BOOL)fiat {
     BigNumber *cost = [_transaction.gasLimit mul:_transaction.gasPrice];
     
-    if (fiat) {
+    if (fiat && _etherPrice) {
         [_feeLabel.label setText:[self getFiatValue:cost] animated:YES];
     } else {
         [_feeLabel.label setText:[NSString stringWithFormat:@"Ξ\u2009%@", [Payment formatEther:cost]] animated:YES];
@@ -325,7 +366,7 @@
 }
 
 - (void)updateValue: (BOOL)fiat {
-    if (fiat) {
+    if (fiat && _etherPrice) {
         _valueTextField.textField.text = [self getFiatValue:_transaction.value];
     } else {
         [_valueTextField setEther:_transaction.value];
@@ -381,6 +422,8 @@
         
         _etherPriceLabel.text = [NSString stringWithFormat:@"$%.02f\u2009/\u2009ether", _etherPrice];
         
+        if (_etherPrice == 0.0f) { _etherPriceLabel.alpha = 0.0f; }
+        
         [valueAccessoryView addSubview:_etherPriceLabel];
     }
     
@@ -395,6 +438,12 @@
         [self.scrollView addSubview:networkLabel];
     }
     
+    _fingerprintButton = [Utilities ethersButton:ICON_NAME_FINGERPRINT fontSize:30.0f color:ColorHexToolbarIcon];
+    [_fingerprintButton addTarget:self action:@selector(tapFingerprint:) forControlEvents:UIControlEventTouchUpInside];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:_fingerprintButton];
+
+    // This must be set after assiging to the rightBarButtonItem (which automatically enables it)
+    _fingerprintButton.enabled = [_signer supportsBiometricUnlock];
 
     [self addGap:44.0f];
     
@@ -492,7 +541,7 @@
     
     [self addSeparator];
     
-    _warningTextView = [self addText:@"estimating fee..." font:[UIFont fontWithName:FONT_ITALIC size:14.0f]];
+    _feeWarningTextView = [self addText:@"estimating fee..." font:[UIFont fontWithName:FONT_ITALIC size:14.0f]];
     
     [self addFlexibleGap];
     
@@ -506,16 +555,19 @@
     
     _passwordTextField.didChange = ^(ConfigTextField *configTextField) {
         [weakSelf.signer cancelUnlock];
+        
         configTextField.status = ConfigTextFieldStatusSpinning;
+        
+        weakSelf.passwordWarningTextView.text = @"";
+        
         NSString *password = configTextField.textField.text;
-        [weakSelf.signer unlock:configTextField.textField.text callback:^(Signer *signer, NSError *error) {
+        [weakSelf.signer unlockPassword:configTextField.textField.text callback:^(Signer *signer, NSError *error) {
             
             // Expired unlock request
             if (![configTextField.textField.text isEqualToString:password]) {
                 return;
             }
             
-            NSLog(@"Unlock: %@ %@", signer, error);
             if (error) {
                 configTextField.status = ConfigTextFieldStatusBad;
                 
@@ -529,6 +581,8 @@
                 }
                 
                 configTextField.userInteractionEnabled = NO;
+                
+                weakSelf.fingerprintButton.enabled = NO;
             }
         }];
     };
@@ -540,17 +594,20 @@
     };
     
     [self addSeparator];
-    
+    _passwordWarningTextView = [self addText:@"" font:[UIFont fontWithName:FONT_BOLD size:14.0f]];
+    _passwordWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
+    _passwordWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];
+
     [self addFlexibleGap];
     
     _sendButton = [self addButton:@"Send Payment" action:^(UIButton *button) {
         weakSelf.sending = YES;
-        weakSelf.warningTextView.text = @"";
+        weakSelf.feeWarningTextView.text = @"";
         [weakSelf updateButton];
         [weakSelf.signer send:weakSelf.transaction callback:^(Transaction *transaction, NSError *error) {
             if (error) {
                 weakSelf.sending = NO;
-                weakSelf.warningTextView.text = [error localizedDescription];
+                weakSelf.feeWarningTextView.text = [error localizedDescription];
                 [weakSelf updateButton];
             
             } else {
@@ -569,7 +626,7 @@
     
     [_addressInspectionPromise onCompletion:^(ArrayPromise *promise) {
         if (promise.error) {
-            weakSelf.warningTextView.text = [promise.error localizedDescription];
+            weakSelf.feeWarningTextView.text = [promise.error localizedDescription];
             return;
         }
         
@@ -579,7 +636,6 @@
         [weakSelf setupFeeKeyboardTransfer:(code.length == 0 && weakSelf.transaction.data.length == 0) gasEstimate:gasEstimate];
     }];
     
-    //[self addGap:44.0f];
     [self addFlexibleGap];
 
     [self updateValue:NO];
@@ -631,108 +687,3 @@
 }
 
 @end
-
-/*
- Account *account = [_accounts objectForKey:activeAccount];
- if (account) {
- LAContext *context = [[LAContext alloc] init];
- NSError *error = nil;
- 
- BOOL fingerprintReady = [context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error];
- 
- if (error) {
- NSLog(@"Error: %@", error);
- fingerprintReady = NO;
- }
- 
- if (fingerprintReady) {
- void (^acceptFingerprint)() = ^() {
- info.nextEnabled = NO;
- passwordTextField.userInteractionEnabled = NO;
- 
- //passwordTextField.text = @"password";
- //passwordTextField.status = InfoTextFieldStatusGood;
- 
- buttonSend.enabled = YES;
- 
- };
- 
- void (^rejectFingerprint)() = ^() {
- info.nextEnabled = NO;
- [passwordTextField pulse];
- };
- 
- [info setNextIcon:ICON_NAME_FINGERPRINT action:^() {
- if (amountTextField.isFirstResponder) { [amountTextField resignFirstResponder]; }
- if (passwordTextField.isFirstResponder) { [passwordTextField resignFirstResponder]; }
- 
- void (^handleFingerprintReply)(BOOL, NSError*) = ^(BOOL success, NSError *error) {
- // Fingerprint was good
- if (success) {
- dispatch_async(dispatch_get_main_queue(), ^() {
- acceptFingerprint();
- });
- 
- } else {
- NSLog(@"Error1: %@", error);
- 
- switch (error.code) {
- // Cases we need to verify by asking the user
- case kLAErrorTouchIDNotEnrolled:
- case kLAErrorPasscodeNotSet:
- case kLAErrorTouchIDNotAvailable:
- case kLAErrorTouchIDLockout:
- case kLAErrorUserFallback: {
- dispatch_async(dispatch_get_main_queue(), ^() {
- rejectFingerprint();
- });
- break;
- }
- 
- // Cases where we have failed outright, but acceptably so
- case kLAErrorSystemCancel:
- case kLAErrorUserCancel: {
- 
- //                                    dispatch_async(dispatch_get_main_queue(), ^() {
- //                                        callback(nil);
- //                                    });
- break;
- }
- 
- // Cases where we have failed, but maybe for not a happy reason
- case kLAErrorAuthenticationFailed:
- default: {
- // @TODO: Show an error
- dispatch_async(dispatch_get_main_queue(), ^() {
- rejectFingerprint();
- });
- break;
- }
- }
- 
- }
- };
- NSString *reason = [NSString stringWithFormat:@"Unlock account:\n%@", [self nicknameForAccount:activeAccount]];
- [context evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics
- localizedReason:reason
- reply:handleFingerprintReply];
- }];
- info.nextEnabled = YES;
- }
- }
- */
-/*
- info.navigationItem.titleView = [Utilities navigationBarLogoTitle];
- 
- toLabel.font = [UIFont fontWithName:FONT_MONOSPACE_SMALL size:14.0f];
- toLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
- 
- 
- 
- if (firm) {
- amountTextField.userInteractionEnabled = NO;
- }
- 
- // @TODO: Make it so when you click next on value, it takes you to the next field.
- };
- */

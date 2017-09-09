@@ -368,19 +368,7 @@ typedef enum PromptType {
         }
         
         self.navigationItem.prompt = @" ";
-        
-        self.onNext = ^(ConfigController *configController) {
-            Transaction *transaction = [Transaction transaction];
-            transaction.toAddress = weakSelf.foundAddress;
-            if (weakSelf.foundAmount) {
-                transaction.value = weakSelf.foundAmount;
-            }
-            TransactionConfigController *config = [TransactionConfigController configWithSigner:weakSelf.signer
-                                                                                    transaction:transaction
-                                                                                       nameHint:weakSelf.foundName];
-            [configController.navigationController pushViewController:config animated:YES];
-        };
-        
+                
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         [NSTimer scheduledTimerWithTimeInterval:1.0f repeats:YES block:^(NSTimer *timer) {
             

@@ -19,6 +19,8 @@
 
 - (void)startScanningAnimated:(BOOL)animated;
 
-//- (void)setFoundAddress: (Address*)address nameHint: (NSString*)nameHint;
+@property (nonatomic, readonly) NSString *foundName;
+@property (nonatomic, readonly) Address *foundAddress;
+@property (nonatomic, readonly) BigNumber *foundAmount;
 
 @end
