@@ -60,16 +60,15 @@ static Address *CanaryAddress = nil;
 static NSString *CanaryVersion = nil;
 
 @interface AppDelegate () <PanelViewControllerDataSource> {
-    UIWindow *_window;
-    PanelViewController *_panelViewController;
-    
-    Wallet *_wallet;
-    
-    WalletViewController *_walletViewController;
     
     NSArray<NSString*> *_applicationTitles;
     NSArray<NSString*> *_applicationUrls;
 }
+
+@property (nonatomic, readonly) PanelViewController *panelViewController;
+@property (nonatomic, readonly) WalletViewController *walletViewController;
+
+@property (nonatomic, readonly) Wallet *wallet;
 
 @end
 
@@ -122,6 +121,12 @@ static NSString *CanaryVersion = nil;
     
     [_window makeKeyAndVisible];
     
+    // If the active account changed, we need to update the applications (e.g. testnet faucet for testnet accounts only)
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(notifyActiveAccountDidChange:)
+                                                 name:WalletActiveAccountDidChangeNotification
+                                               object:_wallet];
+
     
     // If an account was added, we may now have a different primary account
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -165,24 +170,6 @@ static NSString *CanaryVersion = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (void)setupApplications {
-//    if (_wallet.provider.testnet) {
-        _applicationTitles = @[@"Welcome", @"Testnet Faucet", @"DevCon2 PoA"];
-        _applicationUrls = @[
-                             @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
-                             @"https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/",
-                             @"https://0x2f2ab85f856ec137699cbe5d8038110dd7ce9cbe.ethers.space/"
-                             ];
-//    } else {
-//        _applicationTitles = @[@"Welcome", @"DevCon2 PoA"];
-//        _applicationUrls = @[
-//                             @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
-//                             ];
-//    }
-//    
-    [_panelViewController reloadData];
-}
-
 
 // iban://0x05ABcF02682E2b3fB6e38840Cd57d2ea77edd41F
 // https://ethers.io/app-link/#!debug
@@ -213,6 +200,31 @@ static NSString *CanaryVersion = nil;
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+}
+
+
+#pragma mark - Applications
+
+- (void)notifyActiveAccountDidChange: (NSNotification*)note {
+    [self setupApplications];
+}
+
+- (void)setupApplications {
+    if (_wallet.activeAccountProvider.testnet) {
+        _applicationTitles = @[@"Welcome", @"Testnet Faucet"];
+        _applicationUrls = @[
+                             @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
+                             @"https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/",
+                             ];
+    } else {
+        _applicationTitles = @[@"Welcome", @"DevCon2 PoA"];
+        _applicationUrls = @[
+                             @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
+                             @"https://0x2f2ab85f856ec137699cbe5d8038110dd7ce9cbe.ethers.space/"
+                             ];
+    }
+    
+    [_panelViewController reloadData];
 }
 
 
@@ -331,8 +343,8 @@ static NSString *CanaryVersion = nil;
 - (void)showScanner {
     [ModalViewController dismissAllCompletionCallback:^() {
         if (_wallet.activeAccountAddress) {
-            [_wallet scan:^() {
-                NSLog(@"Scan compelte");
+            [_wallet scan:^(Hash *hash, NSError *error) {
+                NSLog(@"Scan compelte: %@ %@", hash, error);
             }];
 
         } else {
@@ -350,22 +362,66 @@ static NSString *CanaryVersion = nil;
 
 #pragma mark - External launching
 
-- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {
-    BOOL handled = NO;
-    
-    if ([url.host isEqualToString:@"scan"]) {
-        [self showScanner];
-        handled = YES;
+typedef enum ExternalAction {
+    ExternalActionNone = 0,
+    ExternalActionScan,
+    ExternalActionWallet,
+    ExternalActionSend,
+    ExternalActionConfig,
+} ExternalAction;
 
-    } else if ([url.host isEqualToString:@"wallet"]) {
-        [ModalViewController dismissAll];
-        [_panelViewController setViewControllerIndex:0 animated:NO];
-        [_panelViewController focusPanel:YES animated:NO];
-        [_walletViewController scrollToTopAnimated:NO];
-        handled = YES;
+- (BOOL)handleAction: (ExternalAction)action payment: (Payment*)payment {
+    if (action == ExternalActionNone) { return NO; }
+    
+    [self.walletViewController scrollToTopAnimated:NO];
+    
+    if (action == ExternalActionWallet) {
+        [self.panelViewController setViewControllerIndex:0 animated:NO];
+        [self.panelViewController focusPanel:YES animated:NO];
     }
     
-    return handled;
+    __weak AppDelegate *weakSelf = self;
+    [ModalViewController dismissAllCompletionCallback:^() {
+        if (action == ExternalActionScan) {
+            [weakSelf showScanner];
+        
+        } else if (action == ExternalActionSend) {
+            [weakSelf.wallet sendPayment:payment callback:^(Hash *hash, NSError *error) {
+                NSLog(@"AppDelegate: Sent hash=%@ error=%@", hash, error);
+            }];
+        
+        } else if (action == ExternalActionConfig) {
+            [weakSelf.wallet showDebuggingOptionsCallback:^() {
+                NSLog(@"AppDelegate: Done config");
+            }];
+        }
+    }];
+    
+    return YES;
+}
+
+- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {
+
+    ExternalAction action = ExternalActionNone;
+    Payment *payment = nil;
+    
+    if ([url.host isEqualToString:@"scan"]) {
+        action = ExternalActionScan;
+
+    } else if ([url.host isEqualToString:@"wallet"]) {
+        action = ExternalActionWallet;
+
+    } else if ([url.host isEqualToString:@"config"]) {
+        action = ExternalActionConfig;
+
+    } else {
+        payment = [Payment paymentWithURI:[url absoluteString]];
+        if (payment) {
+            action = ExternalActionSend;
+        }
+    }
+    
+    return [self handleAction:action payment:payment];
 }
 
 - (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler {
@@ -373,20 +429,41 @@ static NSString *CanaryVersion = nil;
     BOOL handled = NO;
     
     if ([shortcutItem.type isEqualToString:@"io.ethers.scan"]) {
-        [_walletViewController scrollToTopAnimated:NO];
-        [self showScanner];
-        handled = YES;
-        
+        handled = [self handleAction:ExternalActionScan payment:nil];
     } else if ([shortcutItem.type isEqualToString:@"io.ethers.wallet"]) {
-        [ModalViewController dismissAll];
-        [_panelViewController setViewControllerIndex:0 animated:NO];
-        [_panelViewController focusPanel:YES animated:NO];
-        [_walletViewController scrollToTopAnimated:NO];
-        handled = YES;
+        handled = [self handleAction:ExternalActionWallet payment:nil];
     }
     
     completionHandler(handled);
 }
+
+- (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray * _Nullable))restorationHandler {
+    
+    BOOL handled = NO;
+    
+    if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb]) {
+        
+        // Make sure we are at a URL we expect
+        if (![userActivity.webpageURL.scheme isEqualToString:@"https"]) { return NO; }
+        if (![userActivity.webpageURL.host isEqualToString:@"ethers.io"]) { return NO; }
+        if (![userActivity.webpageURL.path hasPrefix:@"/app-link"]) { return NO; }
+        
+        if ([userActivity.webpageURL.fragment hasPrefix:@"!debug"] || [userActivity.webpageURL.fragment hasPrefix:@"!config"]) {
+            handled = [self handleAction:ExternalActionConfig payment:nil];
+
+        } else if ([userActivity.webpageURL.fragment hasPrefix:@"!scan"]) {
+            handled = [self handleAction:ExternalActionScan payment:nil];
+
+        } else if ([userActivity.webpageURL.fragment hasPrefix:@"!wallet"]) {
+            handled = [self handleAction:ExternalActionWallet payment:nil];
+        }
+    }
+    
+    return handled;
+}
+
+
+#pragma mark - Background fetching
 
 - (void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
     [_wallet refresh:^(BOOL updated) {
@@ -399,41 +476,6 @@ static NSString *CanaryVersion = nil;
     }];
 }
 
-- (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray * _Nullable))restorationHandler {
-    
-    NSLog(@"Continue: %@", userActivity.activityType);
-    
-    if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb]) {
-        if (![userActivity.webpageURL.scheme isEqualToString:@"https"]) { return NO; }
-        if (![userActivity.webpageURL.host isEqualToString:@"ethers.io"]) { return NO; }
-        if (![userActivity.webpageURL.path hasPrefix:@"/app-link"]) { return NO; }
-        
-        if ([userActivity.webpageURL.fragment hasPrefix:@"!debug"]) {
-            [ModalViewController dismissAllCompletionCallback:^() {
-                [_wallet showDebuggingOptionsCallback:nil];
-            }];
-            
-
-        } else if ([userActivity.webpageURL.fragment hasPrefix:@"!scan"]) {
-            [_walletViewController scrollToTopAnimated:NO];
-            [self showScanner];
-
-        } else if ([userActivity.webpageURL.fragment hasPrefix:@"!wallet"]) {
-            [ModalViewController dismissAll];
-            [_panelViewController setViewControllerIndex:0 animated:NO];
-            [_panelViewController focusPanel:YES animated:NO];
-            [_walletViewController scrollToTopAnimated:NO];
-
-        } else {
-            return NO;
-        }
-        
-        return YES;
-    }
-    
-    return YES;
-}
-
 
 #pragma mark - Extensions
 
@@ -442,43 +484,49 @@ static NSString *CanaryVersion = nil;
     
     BigNumber *totalBalance = [BigNumber constantZero];
     
-    BOOL changed = NO, hasContent = NO;
+    BOOL hasContent = NO;
     if (_wallet.numberOfAccounts == 0) {
         hasContent = YES;
 
         if (sharedDefaults.address) {
             sharedDefaults.address = nil;
-            changed = YES;
         }
     
+        NSLog(@"AppDelegate: Disable extension");
+              
     } else {
         hasContent = YES;
         
+        // Address of first account
         Address *address = [_wallet addressForIndex:0];
         if (![sharedDefaults.address isEqualToAddress:address]) {
             sharedDefaults.address = address;
-            changed = YES;
         }
         
+        // Balance for first account
         BigNumber *balance = [_wallet balanceForIndex:0];
         if (![sharedDefaults.balance isEqual:balance]) {
             sharedDefaults.balance = balance;
-            changed = YES;
         }
         
+        // Sum total balance of all (mainnet) accounts
         for (NSUInteger i = 0; i < _wallet.numberOfAccounts; i++) {
+            if ([_wallet chainIdForIndex:i] != ChainIdHomestead) { continue; }
             totalBalance = [totalBalance add:[_wallet balanceForIndex:i]];
         }
+        
+        NSLog(@"AppDelegate: Update extension - address=%@ totalBalance=%@ price=%.02f", address.checksumAddress, [Payment formatEther:totalBalance], _wallet.etherPrice);
     }
     
+    // Total balance
     sharedDefaults.totalBalance = totalBalance;
     
+    // Ether price
     sharedDefaults.etherPrice = _wallet.etherPrice;
     
-//    if (changed) {
-        [[NCWidgetController widgetController] setHasContent:hasContent
-                               forWidgetWithBundleIdentifier:@"io.ethers.app.TodayExtension"];
-//    }
+    
+    [[NCWidgetController widgetController] setHasContent:hasContent
+                           forWidgetWithBundleIdentifier:@"io.ethers.app.TodayExtension"];
 }
 
 
