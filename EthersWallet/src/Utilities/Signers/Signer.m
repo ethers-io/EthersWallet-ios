@@ -36,17 +36,25 @@ const NSString* SignerNotificationTransactionKey                  = @"SignerNoti
 const NSString* SignerNotificationSyncDateKey                     = @"SignerNotificationSyncDateKey";
 
 
+#pragma mark - Errors
+
+NSErrorDomain SignerErrorDomain = @"SignerErrorDomain";
+
+
 #pragma mark - Data Store Keys
 
 static NSString *DataStoreKeyAccountIndexPrefix                   = @"ACCOUNT_INDEX_";
 static NSString *DataStoreKeyBalancePrefix                        = @"BALANCE_";
 static NSString *DataStoreKeyBlockNumberPrefix                    = @"BLOCK_NUMBER_";
+static NSString *DataStoreKeyGenericPrefix                        = @"GENERIC_";
 static NSString *DataStoreKeyNicknamePrefix                       = @"NICKNAME_";
 static NSString *DataStoreKeyNoncePrefix                          = @"NONCE_";
 static NSString *DataStoreKeyPendingTransactionHistoryPrefix      = @"PENDING_TRANSACTION_HISTORY_";
 static NSString *DataStoreKeySyncDate                             = @"SYNC_DATE_";
 static NSString *DataStoreKeyTransactionHistoryPrefix             = @"TRANSACTION_HISTORY_";
 static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTION_HISTORY_TRUNCATED_";
+
+
 
 // Transactions which have been sent explicitly
 static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_SENT_";
@@ -85,9 +93,18 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
 
 #pragma mark - UI State
 
+- (NSString*)dataStoreValueForKey: (NSString*)key {
+    NSString *dataKey = [NSString stringWithFormat:@"%@_%@_%@", DataStoreKeyGenericPrefix, _address.checksumAddress, key];
+    return [_dataStore stringForKey:dataKey];
+}
+
+- (void)setDataStoreValue: (NSString*)value forKey: (NSString*)key {
+    NSString *dataKey = [NSString stringWithFormat:@"%@_%@_%@", DataStoreKeyGenericPrefix, _address.checksumAddress, key];
+    [_dataStore setString:value forKey:dataKey];
+}
+
 - (void)setAccountIndex:(NSUInteger)accountIndex {
     NSString *key = [DataStoreKeyAccountIndexPrefix stringByAppendingString:self.address.checksumAddress];
-    NSLog(@"SetAccountIndex: %@ %d", self.address, (int)accountIndex);
     [_dataStore setInteger:accountIndex forKey:key];
 }
 
@@ -125,7 +142,7 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
 
 #pragma mark - Blockchain Data
 
-- (void)updateBlockchainData {
+- (ArrayPromise*)updateBlockchainData {
     __weak Signer *weakSelf = self;
 
     BigNumberPromise *balancePromise = [_provider getBalance:self.address];
@@ -157,10 +174,19 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
         //[self setTxBlock:highestBlock forAddress:address];
     }];
     
-    NSArray *allPromises = @[ balancePromise, noncePromise, transactionPromise ];
-    [[Promise all:allPromises] onCompletion:^(ArrayPromise *promise) {
+    ArrayPromise *allPromises = [Promise all:@[ balancePromise, noncePromise, transactionPromise ]];
+    [allPromises onCompletion:^(ArrayPromise *promise) {
         if (promise.error) { return; }
         [weakSelf _setSyncDate:[NSDate timeIntervalSinceReferenceDate]];
+    }];
+    
+    return allPromises;
+}
+
+- (void)refresh:(void (^)(BOOL))callback {
+    [[self updateBlockchainData] onCompletion:^(ArrayPromise *promise) {
+        // @TODO: Should properly decide if anything changed
+        if (callback) { callback(YES); }
     }];
 }
 
@@ -177,6 +203,7 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
     [self _setTransactionCount:0];
     [self _setTransactionHistory:@[]];
     [self _setSyncDate:0];
+    [_dataStore setObject:nil forKey:[DataStoreKeyPendingTransactionHistoryPrefix stringByAppendingString:_address.checksumAddress]];
 }
 
 - (void)_setSyncDate: (NSTimeInterval)syncDate {
@@ -247,7 +274,19 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
 
 - (NSUInteger)transactionCount {
     NSString *transactionCountKey = [DataStoreKeyNoncePrefix stringByAppendingString:self.address.checksumAddress];
-    return [_dataStore integerForKey:transactionCountKey];
+    NSInteger transactionCount = [_dataStore integerForKey:transactionCountKey];
+    
+    // Check pending transactions for more recent nonce (the network doesn't recognize it yet...)
+    NSString *key = [DataStoreKeyPendingTransactionHistoryPrefix stringByAppendingString:self.address.checksumAddress];
+    for (NSDictionary *info in [_dataStore arrayForKey:key]) {
+        TransactionInfo *transaction = [TransactionInfo transactionInfoFromDictionary:info];
+        if (!transaction) { continue; }
+        if (transaction.nonce + 1 > transactionCount) {
+            transactionCount = transaction.nonce + 1;
+        }
+    }
+    
+    return transactionCount;
 }
 
 
@@ -273,6 +312,7 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
     });
 }
 
+// Sets the list of committed transactions
 - (void)_setTransactionHistory: (NSArray<TransactionInfo*>*)transactionHistory {
     
     // Sort the transactions by blocktime and fallback onto hash (@TODO: Maybe from + nonce makes more sense?)
@@ -333,6 +373,7 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
     }
 }
 
+// Returns a list of all committed and pending transactions
 - (NSArray<TransactionInfo*>*)transactionHistory {
     NSString *key = [DataStoreKeyTransactionHistoryPrefix stringByAppendingString:self.address.checksumAddress];
     NSArray<NSDictionary*> *serialized = [_dataStore arrayForKey:key];
@@ -362,8 +403,11 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
     return transactionHistory;
 }
 
+// Add a pending transaction. Once committed, a transaction is removed from this cache.
 - (void)addTransaction:(Transaction *)transaction {
 
+    Hash *newTransactionHash = transaction.transactionHash;
+    
     // Get a set of all transaction hashes in our history
     NSMutableSet *hashes = [NSMutableSet setWithCapacity:64];
     {
@@ -371,6 +415,10 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
         for (NSDictionary *info in [_dataStore arrayForKey:key]) {
             TransactionInfo *txInfo = [TransactionInfo transactionInfoFromDictionary:info];
             if (!txInfo) { continue; }
+            if ([newTransactionHash isEqualToHash:txInfo.transactionHash]) {
+                NSLog(@"Signer: Transaction already exists");
+                return;
+            }
             [hashes addObject:txInfo.transactionHash];
         }
     }
@@ -406,61 +454,65 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
 
 #pragma mark - Signing
 
-- (BOOL)supportsFingerprintUnlock {
+- (BOOL)supportsBiometricUnlock {
     return NO;
 }
 
-- (void)fingerprintUnlockCallback: (void (^)(Signer*, NSError*))callback {
+- (void)unlockBiometricCallback:(void (^)(Signer *, NSError *))callback {
     __weak Signer *weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^() {
-        callback(weakSelf, [NSError errorWithDomain:@"foo" code:234 userInfo:@{}]);
+        callback(weakSelf, [NSError errorWithDomain:SignerErrorDomain code:SignerErrorUnsupported userInfo:@{}]);
     });
 }
 
-- (BOOL)supportsSign {
+- (BOOL)supportsPasswordUnlock {
     return NO;
 }
 
-//- (void)sign: (Transaction*)transaction callback: (void (^)(Transaction*, NSError*))callback {
-//    dispatch_async(dispatch_get_main_queue(), ^() {
-//        callback(transaction, [NSError errorWithDomain:@"foo" code:234 userInfo:@{}]);
-//    });
-//}
+- (void)unlockPassword:(NSString *)password callback:(void (^)(Signer *, NSError *))callback {
+    __weak Signer *weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^() {
+        callback(weakSelf, [NSError errorWithDomain:SignerErrorDomain code:SignerErrorUnsupported userInfo:@{}]);
+    });
+}
 
 - (void)send:(Transaction *)transaction callback:(void (^)(Transaction *, NSError *))callback {
     dispatch_async(dispatch_get_main_queue(), ^() {
-        callback(nil, [NSError errorWithDomain:PromiseErrorDomain code:1 userInfo:@{@"a": @"B"}]);
+        callback(nil, [NSError errorWithDomain:SignerErrorDomain code:SignerErrorNotImplemented userInfo:@{}]);
     });
 }
 
-- (BOOL)hasPassword {
+
+- (BOOL)supportsMnemonicPhrase {
     return NO;
 }
 
-- (BOOL)isUnlocked {
+- (NSString*)mnemonicPhrase {
+    return nil;
+}
+
+
+- (BOOL)unlocked {
     return NO;
 }
 
 - (void)lock {
+    [self cancelUnlock];
 }
 
 - (void)cancelUnlock {
 }
 
-- (void)unlock: (NSString*)password callback: (void (^)(Signer*, NSError*))callback {
-    __weak Signer *weakSelf = self;
-    dispatch_async(dispatch_get_main_queue(), ^() {
-        callback(weakSelf, [NSError errorWithDomain:@"foo" code:234 userInfo:@{}]);
-    });
-}
 
 
 #pragma mark - NSObject
 
 - (NSString*)description {
-    return [NSString stringWithFormat:@"<%@ index=%d address=%@ nickname='%@' balance=%@ nonce=%d chainId=%d>",
-            NSStringFromClass([self class]), (int)self.accountIndex, self.address, self.nickname,
-            [Payment formatEther:self.balance], (int)self.transactionCount, (self.provider.testnet ? ChainIdRopsten: ChainIdHomestead)];
+    return [NSString stringWithFormat:@"<%@ index=%d address=%@ nickname='%@' balance=%@ nonce=%d chainId=%d biometrics=%@>",
+            NSStringFromClass([self class]), (int)self.accountIndex, self.address,
+            self.nickname, [Payment formatEther:self.balance], (int)self.transactionCount,
+            (self.provider.testnet ? ChainIdRopsten: ChainIdHomestead),
+            (self.supportsBiometricUnlock ? @"YES": @"NO")];
 }
 
 @end

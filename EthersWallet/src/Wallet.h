@@ -96,6 +96,7 @@ typedef enum WalletError {
     WalletErrorUnknown                   =  -5,
     WalletErrorSendCancelled             = -11,
     WalletErrorSendInsufficientFunds     = -12,
+    WalletErrorNoAccount                 = -40,
 } WalletError;
 
 
@@ -144,7 +145,7 @@ typedef enum WalletError {
 
 #pragma mark - Transactions (Modal UI)
 
-- (void)scan: (void (^)())callback;
+- (void)scan: (void (^)(Hash*, NSError*))callback;
 
 - (void)sendPayment: (Payment*)payment callback: (void (^)(Hash*, NSError*))callback;
 - (void)sendTransaction: (Transaction*)transaction callback:(void (^)(Hash*, NSError*))callback;

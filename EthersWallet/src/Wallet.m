@@ -108,7 +108,7 @@ const NSString* WalletNotificationSyncDateKey                            = @"Wal
 
 #pragma mark - Data Store keys
 
-static NSString *DataStoreKeyNetworkEtherPrice            = @"ETHER_PRICE";
+static NSString *DataStoreKeyEtherPrice                   = @"ETHER_PRICE";
 
 static NSString *DataStoreKeyActiveAccountAddress         = @"ACTIVE_ACCOUNT_ADDRESS";
 static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHAINID";
@@ -386,7 +386,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
         if (chainId == ChainIdHomestead) {
             [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(notifyEtherPrice:)
+                                                     selector:@selector(notifyEtherPriceChanged:)
                                                          name:ProviderEtherPriceChangedNotification
                                                        object:provider];
         }
@@ -458,7 +458,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     NSMutableSet *newAccounts = [NSMutableSet set];
     
     NSString *keychainKey = _keychainKey;
-    if (testnet) { keychainKey = [keychainKey stringByAppendingString:@"-testnet"]; }
+    if (testnet) { keychainKey = [keychainKey stringByAppendingString:@"/ropsten"]; }
     
     for (Address *address in [CloudKeychainSigner addressesForKeychainKey:keychainKey]) {
         if (![accounts containsObject:address]) {
@@ -517,7 +517,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     _accounts = [NSMutableArray array];
     
     [self addSigners:_keychainKey chainId:ChainIdHomestead];
-    [self addSigners:[_keychainKey stringByAppendingString:@"-testnet"] chainId:ChainIdRopsten];
+    [self addSigners:[_keychainKey stringByAppendingString:@"/ropsten"] chainId:ChainIdRopsten];
     
     // Sort the accounts
     [_accounts sortUsingComparator:^NSComparisonResult(Signer *a, Signer *b) {
@@ -531,17 +531,16 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     
     NSLog(@"Signers: %@", _accounts);
     
-//    [self refresh:^(BOOL updated) { }];
     [self setActiveAccountAddress:currentAddress provider:currentProvider];
     
 }
 
 #pragma mark - State
 
-- (void)notifyEtherPrice: (NSNotification*)note {
+- (void)notifyEtherPriceChanged: (NSNotification*)note {
     float etherPrice = [[note.userInfo objectForKey:@"price"] floatValue];
     if (etherPrice != 0.0f && etherPrice != self.etherPrice) {
-        [_dataStore setFloat:etherPrice forKey:DataStoreKeyNetworkEtherPrice];
+        [_dataStore setFloat:etherPrice forKey:DataStoreKeyEtherPrice];
     }
 }
 
@@ -753,7 +752,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
             NSLog(@"Test: %d", testnet);
             
             if (testnet) {
-                NSString *testnetKeychainKey = [weakSelf.keychainKey stringByAppendingString:@"-testnet"];
+                NSString *testnetKeychainKey = [weakSelf.keychainKey stringByAppendingString:@"/ropsten"];
                 signer = [CloudKeychainSigner writeToKeychain:testnetKeychainKey
                                                      nickname:@"ethers.io - Ropsten"
                                                          json:json
@@ -1071,7 +1070,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
         }
         
         configController.passwordField.status = ConfigTextFieldStatusSpinning;
-        [signer unlock:password callback:^(Signer *signer, NSError *error) {
+        [signer unlockPassword:password callback:^(Signer *signer, NSError *error) {
             if (![configController.passwordField.textField.text isEqualToString:password]) {
                 return;
             }
@@ -1275,17 +1274,42 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
 #pragma mark - Transactions
 
-- (void)scan:(void (^)())callback {
+- (void)scan:(void (^)(Hash*, NSError*))callback {
     
     if (!self.activeAccountAddress) {
         dispatch_async(dispatch_get_main_queue(), ^() {
-            if (callback) { callback(); }
+            if (callback) { callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorNoAccount userInfo:@{}]); }
         });
         return;
     }
     
-    ScannerConfigController *scanner = [ScannerConfigController configWithSigner:[_accounts objectAtIndex:_activeAccountIndex]];
+    __weak Wallet *weakSelf = self;
     
+    Signer *signer = [_accounts objectAtIndex:_activeAccountIndex];
+    
+    ScannerConfigController *scanner = [ScannerConfigController configWithSigner:signer];
+    
+    scanner.onNext = ^(ConfigController *configController) {
+        ScannerConfigController *scanner = (ScannerConfigController*)configController;
+        
+        Transaction *transaction = [Transaction transaction];
+        transaction.toAddress = scanner.foundAddress;
+        if (scanner.foundAmount) {
+            transaction.value = scanner.foundAmount;
+        }
+
+        TransactionConfigController *config = [TransactionConfigController configWithSigner:signer
+                                                                                transaction:transaction
+                                                                                   nameHint:scanner.foundName];
+        config.etherPrice = weakSelf.etherPrice;
+        
+        config.onSign = ^(TransactionConfigController *configController, Transaction *transaction) {
+            [(ConfigNavigationController*)(configController.navigationController) dismissWithResult:transaction];
+        };
+
+        [configController.navigationController pushViewController:config animated:YES];
+    };
+
     __weak ScannerConfigController *weakScanner = scanner;
     void (^onComplete)() = ^() {
         dispatch_async(dispatch_get_main_queue(), ^() {
@@ -1295,9 +1319,12 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     
     ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:scanner];
     navigationController.onDismiss = ^(NSObject *result) {
-        // @TOOD: This should be nil or a Transaction; if a tx add it to the
-        NSLog(@"Scan Result: %@", result);
-        if (callback) { callback(); }
+        if (!callback) { return; }
+        if (![result isKindOfClass:[Transaction class]]) {
+            callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
+        } else {
+            callback(((Transaction*)result).transactionHash, nil);
+        }
     };
 
     [ModalViewController presentViewController:navigationController
@@ -1318,8 +1345,6 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 }
 
 - (void)sendTransaction: (Transaction*)transaction firm: (BOOL)firm callback:(void (^)(Hash*, NSError*))callback {
-    NSLog(@"Transaction: %@", transaction);
-    
     // No signer is an automatic cancel
     if (_activeAccountIndex == AccountNotFound) {
         dispatch_async(dispatch_get_main_queue(), ^() {
@@ -1339,12 +1364,11 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
     ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:config];
     navigationController.onDismiss = ^(NSObject *result) {
-        if ([result isKindOfClass:[Transaction class]]) {
+        if (![result isKindOfClass:[Transaction class]]) {
             callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
         } else {
             callback(((Transaction*)result).transactionHash, nil);
         }
-        
     };
 
     [ModalViewController presentViewController:navigationController animated:YES completion:nil];
@@ -1367,6 +1391,8 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
 #pragma mark - Blockchain
 
+
+// The oldest sync date for any account
 - (NSTimeInterval)syncDate {
     BOOL found = NO;
     NSTimeInterval syncDate = 0.0f;
@@ -1381,13 +1407,23 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 }
 
 - (float)etherPrice {
-    return [_dataStore floatForKey:DataStoreKeyNetworkEtherPrice];
+    return [_dataStore floatForKey:DataStoreKeyEtherPrice];
 }
 
 - (void)refresh:(void (^)(BOOL))callback {
-    @synchronized (self) {
-        
+    NSMutableArray *promises = [NSMutableArray arrayWithCapacity:_accounts.count];
+    
+    for (Signer *signer in _accounts) {
+        [promises addObject:[Promise promiseWithSetup:^(Promise *promise) {
+            [signer refresh:^(BOOL changed) {
+                [promise resolve:@(changed)];
+            }];
+        }]];
     }
+    
+    [[Promise all:promises] onCompletion:^(ArrayPromise *promise) {
+        if (callback) { callback(YES); }
+    }];
 }
 
 @end

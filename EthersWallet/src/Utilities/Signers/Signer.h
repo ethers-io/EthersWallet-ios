@@ -1,10 +1,28 @@
-//
-//  Signer.h
-//  EthersWallet
-//
-//  Created by Richard Moore on 2017-05-03.
-//  Copyright © 2017 ethers.io. All rights reserved.
-//
+/**
+ *  MIT License
+ *
+ *  Copyright (c) 2017 Richard Moore <me@ricmoo.com>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining
+ *  a copy of this software and associated documentation files (the
+ *  "Software"), to deal in the Software without restriction, including
+ *  without limitation the rights to use, copy, modify, merge, publish,
+ *  distribute, sublicense, and/or sell copies of the Software, and to
+ *  permit persons to whom the Software is furnished to do so, subject to
+ *  the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included
+ *  in all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ *  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ *  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ */
+
 
 #import <Foundation/Foundation.h>
 
@@ -38,6 +56,20 @@ extern const NSString* SignerNotificationTransactionKey;
 
 extern const NSString* SignerNotificationSyncDateKey;
 
+#pragma mark - Errors
+
+extern NSErrorDomain SignerErrorDomain;
+
+typedef enum SignerError {
+    SignerErrorNotImplemented                 = -1,
+    SignerErrorUnsupported                    = -2,
+    SignerErrorCancelled                      = -10,
+    
+    SignerErrorAccountLocked                  = -40,
+
+    SignerErrorFailed                         = -50,
+    
+} SignerError;
 
 #pragma mark - Signer
 
@@ -53,10 +85,6 @@ extern const NSString* SignerNotificationSyncDateKey;
 
 @property (nonatomic, readonly) Provider *provider;
 
-@property (nonatomic, readonly) NSUInteger blockNumber;
-
-@property (nonatomic, readonly) NSTimeInterval syncDate;
-
 
 
 #pragma Blockchain Data
@@ -69,29 +97,35 @@ extern const NSString* SignerNotificationSyncDateKey;
 @property (nonatomic, readonly) BOOL truncatedTransactionHistory;
 @property (nonatomic, readonly) NSArray<TransactionInfo*> *transactionHistory;
 
+@property (nonatomic, readonly) NSUInteger blockNumber;
 
+@property (nonatomic, readonly) NSTimeInterval syncDate;
 
-// Fingerprint
+- (void)refresh: (void (^)(BOOL))callback;
+
+#pragma mark - Signing
+
+// Biometric-Based Unlocking
 //  - A wallet only supports fingerprints if the password has previously been entered
-@property (nonatomic, readonly) BOOL supportsFingerprintUnlock;
-- (void)fingerprintUnlockCallback: (void (^)(Signer*, NSError*))callback;
+@property (nonatomic, readonly) BOOL supportsBiometricUnlock;
+- (void)unlockBiometricCallback: (void (^)(Signer*, NSError*))callback;
 
-
-// Signing
-//  - Watch-only wallets (just an address) cannot sign
-//  - Signing on Firefly hardware wallets opens a BLECast controller and a QR code scanner
-//  - Secret Storage JSON wallets support signing with unlocked signers
-@property (nonatomic, readonly) BOOL supportsSign;
-
-- (void)send: (Transaction*)transaction callback: (void (^)(Transaction*, NSError*))callback;
-
-// Passwords
+// Password-Based Unlocking
 //   - Watch-only wallets (just an address) do not have passwords
 //   - Various hardware wallets may manage their own password requirements
 //   - Firefly hardware wallets require a password to decrypt the Firefly private key
 //   - Secret Storage JSON wallets require a password to unlock them
-@property (nonatomic, readonly) BOOL hasPassword;
-@property (nonatomic, readonly) BOOL unlocked;
+@property (nonatomic, readonly) BOOL supportsPasswordUnlock;
+- (void)unlockPassword: (NSString*)password callback: (void (^)(Signer*, NSError*))callback;
+
+
+// Send
+//  - Watch-only wallets (just an address) cannot sign
+//  - Signing on Firefly hardware wallets opens a BLECast controller and a QR code scanner
+//  - Secret Storage JSON wallets support signing with unlocked signers
+//@property (nonatomic, readonly) BOOL supportsSign;
+
+- (void)send: (Transaction*)transaction callback: (void (^)(Transaction*, NSError*))callback;
 
 
 // Mnemonic Phrase
@@ -99,17 +133,26 @@ extern const NSString* SignerNotificationSyncDateKey;
 //   - Secret storage JSON wallets created by ethers do
 @property (nonatomic, readonly) BOOL supportsMnemonicPhrase;
 
-
-// This is only available if the signer is unlocked
+// This is only available if the signer is unlocked and supports mnemonic phrases
 @property (nonatomic, readonly) NSString *mnemonicPhrase;
 
 
-- (void)lock;
-- (void)cancelUnlock;
-- (void)unlock: (NSString*)password callback: (void (^)(Signer*, NSError*))callback;
+@property (nonatomic, readonly) BOOL unlocked;
 
+// Lock and cancel any in-flight unlock
+- (void)lock;
+
+// Cancel any unlock in progress
+- (void)cancelUnlock;
+
+
+#pragma mark - Subclass support functions
 
 // Sub-classes can use these to update the cached state
 - (void)addTransaction: (Transaction*)transaction;
+
+- (NSString*)dataStoreValueForKey: (NSString*)key;
+- (void)setDataStoreValue: (NSString*)value forKey: (NSString*)key;
+
 
 @end
