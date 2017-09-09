@@ -39,6 +39,8 @@
 
 + (instancetype)sharedCachedDataStoreWithKey: (NSString*)key;
 
+@property (nonatomic, readonly) NSString *key;
+
 - (void)purgeData;
 - (void)filterData: (BOOL (^)(CachedDataStore *dataStore, NSString *key))filterCallback;
 

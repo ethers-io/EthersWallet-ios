@@ -25,18 +25,16 @@
 
 #import "CachedDataStore.h"
 
-@interface CachedDataStore () {
+#import <ethers/SecureData.h>
+
+
+@implementation CachedDataStore {
     NSMutableDictionary *_values;
     BOOL _dirty;
     NSTimer *_syncTimer;
     NSOperationQueue *_writeQueue;
     NSString *_filename;
 }
-
-@end
-
-
-@implementation CachedDataStore
 
 NSMutableDictionary<NSString*, CachedDataStore*> *SharedCachedDataStores;
 
@@ -59,6 +57,10 @@ NSMutableDictionary<NSString*, CachedDataStore*> *SharedCachedDataStores;
 - (instancetype)initWithKey: (NSString*)key {
     self = [super init];
     if (self) {
+        _key = key;
+        
+        // This makes sure we don't care about weird characters in the key (like @"/")
+        key = [SecureData dataToHexString:[SecureData KECCAK256:[key dataUsingEncoding:NSUTF8StringEncoding]]];
         
         // We want to serialize all writes
         _writeQueue = [[NSOperationQueue alloc] init];
