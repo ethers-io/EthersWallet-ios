@@ -138,19 +138,16 @@
 
 - (void)pulse {
     void (^animate)() = ^() {
-        self.transform = CGAffineTransformIdentity;
+        self.backgroundColor = [UIColor clearColor];
     };
     
-    self.transform = CGAffineTransformMakeScale(1.0f, 1.4f);
+    self.backgroundColor = [UIColor colorWithWhite:0.8f alpha:0.25f];
     
-    [UIView animateWithDuration:1.7f
+    [UIView animateWithDuration:0.3f
                           delay:0.0f
-         usingSpringWithDamping:0.6f
-          initialSpringVelocity:0.0f
-                        options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction
+                        options:UIViewAnimationOptionCurveEaseOut
                      animations:animate
                      completion:nil];
-    
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
