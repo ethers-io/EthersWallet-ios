@@ -60,7 +60,7 @@ NSMutableDictionary<NSString*, CachedDataStore*> *SharedCachedDataStores;
         _key = key;
         
         // This makes sure we don't care about weird characters in the key (like @"/")
-        key = [SecureData dataToHexString:[SecureData KECCAK256:[key dataUsingEncoding:NSUTF8StringEncoding]]];
+        key = [[SecureData dataToHexString:[SecureData KECCAK256:[key dataUsingEncoding:NSUTF8StringEncoding]]] substringToIndex:18];
         
         // We want to serialize all writes
         _writeQueue = [[NSOperationQueue alloc] init];
