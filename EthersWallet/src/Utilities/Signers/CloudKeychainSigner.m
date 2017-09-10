@@ -153,7 +153,7 @@ static NSString* getKeychainValue(NSString *keychainKey, Address *address) {
     return value;
 }
 
-static BOOL addKeychainVaue(NSString *keychainKey, Address *address, NSString *nickname, NSString *value) {
+static BOOL addKeychainVaue(NSString *keychainKey, Address *address, NSString *nickname, NSString *value, BOOL updateOnly) {
     NSString *serviceName = getServiceName(keychainKey);
     if (!serviceName) { return NO; }
 
@@ -191,7 +191,7 @@ static BOOL addKeychainVaue(NSString *keychainKey, Address *address, NSString *n
             NSLog(@"ERROR: Failed to update %@ - %d", address, (int)status);
         }
         
-    } else {
+    } else if (!updateOnly) {
         NSDictionary *addEntry = @{
                                    (id)kSecClass: (id)kSecClassGenericPassword,
                                    (id)kSecAttrGeneric: [keychainKey dataUsingEncoding:NSUTF8StringEncoding],
@@ -210,6 +210,8 @@ static BOOL addKeychainVaue(NSString *keychainKey, Address *address, NSString *n
             NSLog(@"Keychain: Error adding %@ - %d", address, (int)status);
         }
         
+    } else {
+        status = !noErr;
     }
     
     if (existingEntry) { CFRelease(existingEntry); }
@@ -256,7 +258,7 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
 + (NSArray<Address*>*)addressesForKeychainKey: (NSString*)keychainKey {
     NSString *serviceName = getServiceName(keychainKey);
     if (!serviceName) { return @[]; }
-
+    
     NSString *cacheKey = [@"cloudkeychainsigner-" stringByAppendingString:keychainKey];
     CachedDataStore *dataStore = [CachedDataStore sharedCachedDataStoreWithKey:cacheKey];;
     
@@ -285,14 +287,11 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
             [addresses addObject:[Address addressWithString:addressString]];
         }
 
-        NSLog(@"Keychain: Found %d accounts for %@", (int)(addresses.count), keychainKey);
-
         // Save the list of addresses to the data store (so we can load it without keychain access if needed)
         [dataStore setArray:addressStrings forKey:DataStoreKeyAccounts];
         
     } else if (status == errSecItemNotFound) {
         // No problem... No exisitng entries
-        NSLog(@"Keychain: No accounts for %@", keychainKey);
 
         [dataStore setArray:nil forKey:DataStoreKeyAccounts];
         
@@ -321,9 +320,11 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     Address *address = checkJson(json);
     if (!address) { return nil; }
     
-    addKeychainVaue(keychainKey, address, nickname, json);
+    addKeychainVaue(keychainKey, address, nickname, json, NO);
     
-    return [CloudKeychainSigner signerWithKeychainKey:keychainKey address:address provider:provider];
+    CloudKeychainSigner *signer = [CloudKeychainSigner signerWithKeychainKey:keychainKey address:address provider:provider];
+    [signer _setNickname:nickname];
+    return signer;
 }
 
 + (instancetype)signerWithKeychainKey: (NSString*)keychainKey address: (Address*)address provider: (Provider*)provider {
@@ -409,7 +410,6 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
         
         __weak CloudKeychainSigner *weakSelf = self;
         
-        //NSDictionary *userInfo = @{ SignerNotificationSignerKey: self };
         NSDictionary *userInfo = @{};
         dispatch_async(dispatch_get_main_queue(), ^() {
             [[NSNotificationCenter defaultCenter] postNotificationName:SignerRemovedNotification
@@ -423,13 +423,17 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
 
 #pragma mark - UI State
 
+// We use this from writeToKeychain so the nickname gets reflected immediately
+- (void)_setNickname: (NSString*)nickname {
+    [super setNickname:nickname];
+}
+
 - (void)setNickname:(NSString *)nickname {
     NSString *json = [self _json];
-
     Address *address = checkJson(json);
     if (address) {
         if ([address isEqualToAddress:self.address]) {
-            addKeychainVaue(self.keychainKey, address, nickname, json);
+            addKeychainVaue(self.keychainKey, address, nickname, json, YES);
             [super setNickname:nickname];
         } else {
             NSLog(@"ERROR: setNickname - address does not match JSON");
@@ -919,7 +923,12 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
 
 
 - (BOOL)supportsMnemonicPhrase {
-    return YES;
+    NSError *error = nil;
+    NSDictionary *info = [NSJSONSerialization JSONObjectWithData:[[self _json] dataUsingEncoding:NSUTF8StringEncoding]
+                                                         options:0
+                                                           error:&error];
+    
+    return (!error && [info objectForKey:@"x-ethers"] != nil);
 }
 
 - (NSString*)mnemonicPhrase {

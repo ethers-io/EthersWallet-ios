@@ -183,12 +183,15 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                                                      name:UIApplicationDidBecomeActiveNotification
                                                    object:nil];
         
-//        _refreshKeychainTimer = [NSTimer scheduledTimerWithTimeInterval:60.0f
-//                                                                 target:self
-//                                                               selector:@selector(refreshKeychainValues)
-//                                                               userInfo:@{}
-//                                                                repeats:YES];
-//        [self refreshKeychainValues];
+        __weak Wallet *weakSelf = self;
+        [NSTimer scheduledTimerWithTimeInterval:4.0f repeats:YES block:^(NSTimer *timer) {
+            if (!weakSelf) {
+                [timer invalidate];
+                return;
+            }
+            [weakSelf checkForNewAccounts:NO];
+            [weakSelf checkForNewAccounts:YES];
+        }];
     }
     return self;
 }
@@ -345,7 +348,6 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                 continue;
             }
             
-            //NSDictionary *userInfo = @{ SignerNotificationSignerKey:  };
             [self doNotify:WalletAccountAddedNotification signer:[_accounts objectAtIndex:index] userInfo:nil transform:nil];
         }
      }
@@ -622,7 +624,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
             if (testnet) {
                 NSString *testnetKeychainKey = [weakSelf.keychainKey stringByAppendingString:@"/ropsten"];
                 signer = [CloudKeychainSigner writeToKeychain:testnetKeychainKey
-                                                     nickname:@"ethers.io - Ropsten"
+                                                     nickname:@"Testnet"
                                                          json:json
                                                      provider:[weakSelf getProvider:ChainIdRopsten]];
             } else {
@@ -1027,6 +1029,11 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
             }
             
         } else if (index == 1) {
+//            // Debugging to remove pesky accounts during development
+//            if (!signer.supportsMnemonicPhrase) {
+//                [(CloudKeychainSigner*)signer remove];
+//            }
+            
             void (^confirmDelete)(ConfigController*) = ^(ConfigController *configController) {
                 NSString *heading = @"Delete Account?";
                 NSString *subheading = signer.nickname;
