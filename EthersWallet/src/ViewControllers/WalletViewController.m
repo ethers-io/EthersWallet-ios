@@ -61,6 +61,8 @@
     NSArray<NSArray*> *_sections;
 
     SectionHeaderView *_headerConfirmed, *_headerInProgress, *_headerPending;
+    
+    CrossfadeLabel *_networkLabel;
 }
 
 @end
@@ -158,6 +160,8 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         
         _updatedLabel.hidden = NO;
         _nicknameLabel.hidden = NO;
+        
+        [_networkLabel setText:(_wallet.activeAccountProvider.testnet ? @"ROPSTEN": @"") animated:animated];
     
     } else {
         targetNoAccountAlpha = 1.0f;
@@ -167,6 +171,8 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 
         _updatedLabel.hidden = YES;
         _nicknameLabel.hidden = YES;
+        
+        [_networkLabel setText:@"" animated:animated];
     }
     
     {
@@ -232,6 +238,14 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         _walletView.frame = frame;
     }
     [_headerView addSubview:_walletView];
+    
+    _networkLabel = [[CrossfadeLabel alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 85.0f, 7.0f, 70.0f, 30.0f)];
+    _networkLabel.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+    _networkLabel.font = [UIFont fontWithName:FONT_BOLD size:12];
+    _networkLabel.text = @"ROPSTEN";
+    _networkLabel.textAlignment = NSTextAlignmentRight;
+    _networkLabel.textColor = [UIColor colorWithHex:ColorHexRed];
+    [_headerView addSubview:_networkLabel];
 
     top += _walletView.frame.size.height + 64.0f;
 
