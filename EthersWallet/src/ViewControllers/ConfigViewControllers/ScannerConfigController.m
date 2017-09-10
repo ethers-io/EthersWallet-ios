@@ -548,7 +548,11 @@ typedef enum PromptType {
         }
     
     } else if (promptType == PromptTypeScanning) {
-        self.navigationItem.prompt = @"Scanning for QR code...";
+        if (_cameraReady) {
+            self.navigationItem.prompt = @"Scanning for QR code...";
+        } else {
+            self.navigationItem.prompt = @"Camera disabled";
+        }
         _searchBar.text = @"";
         _boxView.points = nil;
         
@@ -740,6 +744,19 @@ typedef enum PromptType {
     [previewBackground addSubview:_boxView];
     
     _cameraReady = [self setupCamera];
+    
+    // Notify the user if their camera is disabled
+    if (!_cameraReady) {
+        UILabel *enableCamera = [[UILabel alloc] initWithFrame:CGRectMake(40.0f, 0.0f, 320.0f - 80.0f, 100.0f)];
+        enableCamera.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+        enableCamera.center = CGPointMake(_cameraPreview.frame.size.width / 2.0f, _cameraPreview.frame.size.height / 2.0f);
+        enableCamera.font = [UIFont fontWithName:FONT_BOLD size:16.0f];
+        enableCamera.numberOfLines = 3;
+        enableCamera.text = @"Please enable the camera in your settings to scan QR codes.";
+        enableCamera.textAlignment = NSTextAlignmentCenter;
+        enableCamera.textColor = [UIColor whiteColor];
+        [_cameraPreview addSubview:enableCamera];
+    }
 
     _searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(25.0f, 106.0f, size.width - 50.0f, 44.0f)];
     _searchBar.autocapitalizationType = UITextAutocapitalizationTypeNone;
@@ -797,8 +814,20 @@ typedef enum PromptType {
         [photoView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapPhoto:)]];
     }
     
-    CGFloat height = padding * 2.0f + ceilf(_photoViews.count / 3.0f) * dx;
+    CGFloat height = padding * 2.0f + ceilf(_photoViews.count / columns) * dx;
     _photosScrollView.contentSize = CGSizeMake(_photosScrollView.frame.size.width, height);
+    
+    if (PHPhotoLibrary.authorizationStatus != PHAuthorizationStatusAuthorized) {
+        UILabel *enablePhotos = [[UILabel alloc] initWithFrame:CGRectMake(40.0f, 0.0f, 320.0f - 80.0f, 100.0f)];
+        enablePhotos.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+        enablePhotos.center = CGPointMake(_photosView.frame.size.width / 2.0f, _photosView.frame.size.height / 2.0f);
+        enablePhotos.font = [UIFont fontWithName:FONT_BOLD size:16.0f];
+        enablePhotos.numberOfLines = 3;
+        enablePhotos.text = @"Please enable photos in your settings to scan QR codes from your camera roll.";
+        enablePhotos.textAlignment = NSTextAlignmentCenter;
+        enablePhotos.textColor = [UIColor whiteColor];
+        [_photosView addSubview:enablePhotos];
+    }
 }
 
 - (void)didTapClipboard: (UIButton*)button {
@@ -865,12 +894,10 @@ NSString *flipYAndScale(CGPoint point, UIImage *baseImage, UIImage *targetImage)
         // Find the QR Code data
         NSDictionary *qrDetectorOptions = @{ CIDetectorAccuracy:CIDetectorAccuracyHigh };
         CIDetector *qrDetector = [CIDetector detectorOfType:CIDetectorTypeQRCode context:nil options:qrDetectorOptions];
-        NSLog(@"Photo: %@ %@ %f", photo, NSStringFromCGSize(photo.size), photo.scale);
         
         // Create a smaller image to search (the CIDetector fails for large images)
         // Note: For iPhone 5S if this is 1000x1000 or more the @selector(featuresInImage:) fails
         UIImage *searchImage = [photo imageThatFits:CGSizeMake(999.0f, 999.0f) scaleIfSmaller:NO];
-        NSLog(@"TTT: %@ %@ %@ %@", photo, searchImage, searchImage.CGImage, qrDetector);
         
         NSArray *features = nil;
         if (searchImage.size.width > 320.0f && searchImage.size.height >= 320.0f) {
@@ -996,16 +1023,18 @@ NSString *flipYAndScale(CGPoint point, UIImage *baseImage, UIImage *targetImage)
 }
 
 - (void)pauseScanning: (BOOL)pause visible: (BOOL)visible animated: (BOOL)animated {
-    if (_scanning != pause) { return; }
-  
-    if (pause) {
-        [self stop];
-    } else {
-        [self start];
+    if (_cameraReady) {
+        if (_scanning != pause) { return; }
+        
+        if (pause) {
+            [self stop];
+        } else {
+            [self start];
+        }
+        
+        if (_scanning == pause) { return; }
     }
     
-    if (_scanning == pause) { return; }
-
     __weak ScannerConfigController *weakSelf = self;
     void (^animate)() = ^() {
         weakSelf.cameraPreview.alpha = (visible ? 1.0f: 0.0f);
