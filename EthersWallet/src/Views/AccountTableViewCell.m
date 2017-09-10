@@ -115,15 +115,19 @@ const CGFloat AccountTableViewCellHeight = 80.0f;
         [_isSelectedView addSubview:_selectedLabel];
         
         // The balance
-        _balanceLabel = [BalanceLabel balanceLabelWithFrame:CGRectMake(frame.size.width - 115.0f, 0.0f, 100.0f, frame.size.height)
+        _balanceLabel = [BalanceLabel balanceLabelWithFrame:CGRectMake(frame.size.width - 80.0f - 9.0f, 0.0f,
+                                                                       80.0f, frame.size.height)
                                                    fontSize:15.0f
                                                       color:BalanceLabelColorStatus
                                                   alignment:BalanceLabelAlignmentAlignDecimal];
         _balanceLabel.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleLeftMargin;
+//        _balanceLabel.backgroundColor = [UIColor redColor];
         [self.contentView addSubview:_balanceLabel];
         
         // The nickname
-        _nicknameTextField = [[UITextField alloc] initWithFrame:CGRectMake(62.0f, 10.0f, 200.0f, 30.0f)];
+        _nicknameTextField = [[UITextField alloc] initWithFrame:CGRectMake(62.0f, 10.0f,
+                                                                           frame.size.width - 62.0f - 89.0f, 30.0f)];
+        _nicknameTextField.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         _nicknameTextField.autocapitalizationType = UITextAutocapitalizationTypeWords;
         _nicknameTextField.delegate = self;
         _nicknameTextField.font = [UIFont fontWithName:FONT_BOLD size:24.0f];
@@ -134,7 +138,9 @@ const CGFloat AccountTableViewCellHeight = 80.0f;
         [self.contentView addGestureRecognizer:[[UILongPressGestureRecognizer alloc] initWithTarget:self
                                                                                             action:@selector(showNicknameMenu:)]];
         
-        _addressLabel = [[UILabel alloc] initWithFrame:CGRectMake(62.0f, 40.0f, 200.0f, 30.0f)];
+        _addressLabel = [[UILabel alloc] initWithFrame:CGRectMake(_nicknameTextField.frame.origin.x, 40.0f,
+                                                                  _nicknameTextField.frame.size.width, 30.0f)];
+        _addressLabel.autoresizingMask = _nicknameTextField.autoresizingMask;
         _addressLabel.font = [UIFont fontWithName:FONT_MONOSPACE_SMALL size:15.0f];
         _addressLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
         _addressLabel.textColor = [UIColor colorWithHex:ColorHexNormal];

@@ -272,9 +272,9 @@
         {
             gasLimitView.titleLabel.text = @"TRANSFER";
             
-            UILabel *gasLimitLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 40.0f)];
+            UILabel *gasLimitLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 60.0f)];
             gasLimitLabel.font = [UIFont fontWithName:FONT_ITALIC size:16.0f];
-            gasLimitLabel.numberOfLines = 2;
+            gasLimitLabel.numberOfLines = 3;
             gasLimitLabel.textColor = [UIColor colorWithWhite:0.35f alpha:1.0f];
             gasLimitLabel.text = @"This transaction requires exactly 21,000 gas and cannot be adjusted.";
             [gasLimitView addView:gasLimitLabel];

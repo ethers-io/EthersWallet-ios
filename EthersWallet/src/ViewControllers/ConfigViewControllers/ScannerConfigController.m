@@ -783,13 +783,16 @@ typedef enum PromptType {
     _photosScrollView.contentSize = CGSizeMake(size.width, 500.0f);
     [_photosView addSubview:_photosScrollView];
 
+    int columns = 2;
+    if (self.view.frame.size.width > 320.0f) { columns = 3; }
+    
     CGFloat padding = 14.0f;
-    CGFloat dx = (self.view.frame.size.width - 2.0f * padding) / 3.0f;
+    CGFloat dx = (self.view.frame.size.width - 2.0f * padding) / columns;
     
     NSInteger index = -1;
     for (PhotoView *photoView in _photoViews) {
         index++;
-        photoView.center = CGPointMake(padding + dx / 2.0f + (index % 3) * dx, padding + dx / 2.0f + (index / 3) * dx);
+        photoView.center = CGPointMake(padding + dx / 2.0f + (index % columns) * dx, padding + dx / 2.0f + (index / columns) * dx);
         [_photosScrollView addSubview:photoView];
         [photoView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapPhoto:)]];
     }
@@ -862,10 +865,18 @@ NSString *flipYAndScale(CGPoint point, UIImage *baseImage, UIImage *targetImage)
         // Find the QR Code data
         NSDictionary *qrDetectorOptions = @{ CIDetectorAccuracy:CIDetectorAccuracyHigh };
         CIDetector *qrDetector = [CIDetector detectorOfType:CIDetectorTypeQRCode context:nil options:qrDetectorOptions];
+        NSLog(@"Photo: %@ %@ %f", photo, NSStringFromCGSize(photo.size), photo.scale);
         
         // Create a smaller image to search (the CIDetector fails for large images)
-        UIImage *searchImage = [photo imageThatFits:CGSizeMake(1000.0f, 1000.0f) scaleIfSmaller:NO];
-        NSArray *features = [qrDetector featuresInImage:[CIImage imageWithCGImage:searchImage.CGImage]];
+        // Note: For iPhone 5S if this is 1000x1000 or more the @selector(featuresInImage:) fails
+        UIImage *searchImage = [photo imageThatFits:CGSizeMake(999.0f, 999.0f) scaleIfSmaller:NO];
+        NSLog(@"TTT: %@ %@ %@ %@", photo, searchImage, searchImage.CGImage, qrDetector);
+        
+        NSArray *features = nil;
+        if (searchImage.size.width > 320.0f && searchImage.size.height >= 320.0f) {
+            features = [qrDetector featuresInImage:[CIImage imageWithCGImage:searchImage.CGImage]];
+        }
+        
         
         // These get filled in if we find a valid Ethereum payment
         UIImage *displayImage = nil;
