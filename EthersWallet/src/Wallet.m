@@ -29,7 +29,7 @@
 
 // This is useful for testing. It prevents us from having to re-type a mnemonic
 // phrase to add or delete an account. This is BAD for production.
-#define DEBUG_SKIP_VERIFY_MNEMONIC    YES
+#define DEBUG_SKIP_VERIFY_MNEMONIC    NO
 
 // Minimum length for a valid password
 #define MIN_PASSWORD_LENGTH       6
