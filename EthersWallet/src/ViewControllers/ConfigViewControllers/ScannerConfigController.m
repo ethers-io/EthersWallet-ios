@@ -301,8 +301,6 @@ typedef enum PromptType {
     
     NSTimer *_flickerPromptTimer;
     
-    NSMutableArray<PhotoView*> *_photoViews;
-    
     NSTimer *_textChangeTimer;
     
     UIImpactFeedbackGenerator *_hapticGood, *_hapticBad;
@@ -333,6 +331,8 @@ typedef enum PromptType {
 
 @property (nonatomic, readonly) BoxView *boxView;
 
+@property (nonatomic, readonly) NSMutableArray<PhotoView*> *photoViews;
+
 @end
 
 
@@ -351,21 +351,8 @@ typedef enum PromptType {
         _signer = signer;
 
         _photoViews = [NSMutableArray array];
-        
-        __weak ScannerConfigController *weakSelf = self;
 
-        // Most recent 100 photos
-        PHFetchOptions *options = [[PHFetchOptions alloc] init];
-        options.fetchLimit = 36;
-        options.sortDescriptors = @[
-                                    [NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO],
-                                    ];
-        
-        PHFetchResult *fetchResult = [PHAsset fetchAssetsWithMediaType:PHAssetMediaTypeImage options:options];
-        for (PHAsset *asset in fetchResult) {
-            PhotoView *photoView = [[PhotoView alloc] initWithAsset:asset];
-            [_photoViews addObject:photoView];
-        }
+        __weak ScannerConfigController *weakSelf = self;
         
         self.navigationItem.prompt = @" ";
                 
@@ -772,8 +759,6 @@ typedef enum PromptType {
 
     [self.view addSubview:_searchBar];
 
-    NSLog(@"Camera: %d", _cameraReady);
-
     _photosView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, size.height - 160.0f, size.width, 160.0f)];
     _photosView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [self.view addSubview:_photosView];
@@ -799,25 +784,23 @@ typedef enum PromptType {
     _photosScrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     _photosScrollView.contentSize = CGSizeMake(size.width, 500.0f);
     [_photosView addSubview:_photosScrollView];
+    
+    [self updatePhotos];
+}
 
-    int columns = 2;
-    if (self.view.frame.size.width > 320.0f) { columns = 3; }
-    
-    CGFloat padding = 14.0f;
-    CGFloat dx = (self.view.frame.size.width - 2.0f * padding) / columns;
-    
-    NSInteger index = -1;
-    for (PhotoView *photoView in _photoViews) {
-        index++;
-        photoView.center = CGPointMake(padding + dx / 2.0f + (index % columns) * dx, padding + dx / 2.0f + (index / columns) * dx);
-        [_photosScrollView addSubview:photoView];
-        [photoView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapPhoto:)]];
-    }
-    
-    CGFloat height = padding * 2.0f + ceilf(_photoViews.count / columns) * dx;
-    _photosScrollView.contentSize = CGSizeMake(_photosScrollView.frame.size.width, height);
-    
-    if (PHPhotoLibrary.authorizationStatus != PHAuthorizationStatusAuthorized) {
+/*
+ PHAuthorizationStatusNotDetermined = 0, // User has not yet made a choice with regards to this application
+ PHAuthorizationStatusRestricted,        // This application is not authorized to access photo data.
+ // The user cannot change this application’s status, possibly due to active restrictions
+ //   such as parental controls being in place.
+ PHAuthorizationStatusDenied,            // User has explicitly denied this application access to photos data.
+ PHAuthorizationStatusAuthorized         // User has authorized this application to access photos data.
+ */
+- (void)updatePhotos {
+    PHAuthorizationStatus status = PHPhotoLibrary.authorizationStatus;
+
+    if (status == PHAuthorizationStatusDenied || status == PHAuthorizationStatusRestricted) {
+        
         UILabel *enablePhotos = [[UILabel alloc] initWithFrame:CGRectMake(40.0f, 0.0f, 320.0f - 80.0f, 100.0f)];
         enablePhotos.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
         enablePhotos.center = CGPointMake(_photosView.frame.size.width / 2.0f, _photosView.frame.size.height / 2.0f);
@@ -827,6 +810,51 @@ typedef enum PromptType {
         enablePhotos.textAlignment = NSTextAlignmentCenter;
         enablePhotos.textColor = [UIColor whiteColor];
         [_photosView addSubview:enablePhotos];
+    
+    } else if (status == PHAuthorizationStatusNotDetermined) {
+        __weak ScannerConfigController *weakSelf = self;
+        
+        [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+            if (status == PHAuthorizationStatusNotDetermined) {
+                // This should never happen, but if it does, prevent infinite-loop
+                return;
+            }
+            dispatch_async(dispatch_get_main_queue(), ^() {
+                [weakSelf updatePhotos];
+            });
+        }];
+
+    } else {
+        __weak ScannerConfigController *weakSelf = self;
+
+        // Most recent 100 photos
+        PHFetchOptions *options = [[PHFetchOptions alloc] init];
+        options.fetchLimit = 36;
+        options.sortDescriptors = @[
+                                    [NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO],
+                                    ];
+        
+        PHFetchResult *fetchResult = [PHAsset fetchAssetsWithMediaType:PHAssetMediaTypeImage options:options];
+        for (PHAsset *asset in fetchResult) {
+            [weakSelf.photoViews addObject:[[PhotoView alloc] initWithAsset:asset]];
+        }
+
+        int columns = 2;
+        if (self.view.frame.size.width > 320.0f) { columns = 3; }
+        
+        CGFloat padding = 14.0f;
+        CGFloat dx = (self.view.frame.size.width - 2.0f * padding) / columns;
+        
+        NSInteger index = -1;
+        for (PhotoView *photoView in _photoViews) {
+            index++;
+            photoView.center = CGPointMake(padding + dx / 2.0f + (index % columns) * dx, padding + dx / 2.0f + (index / columns) * dx);
+            [_photosScrollView addSubview:photoView];
+            [photoView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapPhoto:)]];
+        }
+        
+        CGFloat height = padding * 2.0f + ceilf(_photoViews.count / columns) * dx;
+        _photosScrollView.contentSize = CGSizeMake(_photosScrollView.frame.size.width, height);
     }
 }
 
@@ -971,7 +999,6 @@ NSString *flipYAndScale(CGPoint point, UIImage *baseImage, UIImage *targetImage)
     NSError *error = nil;
     if ([videoCaptureDevice lockForConfiguration:&error]) {
         if (videoCaptureDevice.isAutoFocusRangeRestrictionSupported) {
-            NSLog(@"AutoRange");
             [videoCaptureDevice setAutoFocusRangeRestriction:AVCaptureAutoFocusRangeRestrictionNear];
         }
         [videoCaptureDevice unlockForConfiguration];
