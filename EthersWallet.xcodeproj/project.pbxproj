@@ -16,7 +16,6 @@
 		E21481CF1E431CC600B87132 /* ethers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2FA046E1E4293750013E5A7 /* ethers.framework */; };
 		E22A59E71EBA9D8500AEE894 /* Signer.m in Sources */ = {isa = PBXBuildFile; fileRef = E22A59E61EBA9D8500AEE894 /* Signer.m */; };
 		E2491AB61F42642A007DB5A4 /* ConfigLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2491AB51F42642A007DB5A4 /* ConfigLabel.m */; };
-		E28B15331EAC3D6C00D79C52 /* BLECast.m in Sources */ = {isa = PBXBuildFile; fileRef = E28B15321EAC3D6C00D79C52 /* BLECast.m */; };
 		E29AB1091F4E199C0009FEF0 /* SignedRemoteDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB1081F4E199C0009FEF0 /* SignedRemoteDictionary.m */; };
 		E29AB10D1F4E4E1C0009FEF0 /* ScannerConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB10C1F4E4E1C0009FEF0 /* ScannerConfigController.m */; };
 		E29AB1101F5913B00009FEF0 /* BoxView.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB10F1F5913B00009FEF0 /* BoxView.m */; };
@@ -801,7 +800,6 @@
 				E2FF6A161F46AFC100544B0B /* CrossfadeLabel.m in Sources */,
 				E2B6A31C1F3D12B200B315B6 /* MnemonicWarningConfigController.m in Sources */,
 				E2FA04271E428DF50013E5A7 /* BalanceLabel.m in Sources */,
-				E28B15331EAC3D6C00D79C52 /* BLECast.m in Sources */,
 				E2FA043E1E428E030013E5A7 /* PanelViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
