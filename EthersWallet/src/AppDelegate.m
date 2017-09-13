@@ -210,12 +210,13 @@ static NSString *CanaryVersion = nil;
 }
 
 - (void)setupApplications {
-    if (_wallet.activeAccountProvider.testnet) {
+    if (_wallet.activeAccountProvider.chainId == ChainIdRopsten) {
         _applicationTitles = @[@"Welcome", @"Testnet Faucet"];
         _applicationUrls = @[
                              @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
                              @"https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/",
                              ];
+    
     } else {
         _applicationTitles = @[@"Welcome", @"DevCon2 PoA"];
         _applicationUrls = @[

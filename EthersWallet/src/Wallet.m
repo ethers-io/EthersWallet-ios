@@ -189,8 +189,10 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                 [timer invalidate];
                 return;
             }
-            [weakSelf checkForNewAccounts:NO];
-            [weakSelf checkForNewAccounts:YES];
+            [weakSelf checkForNewAccountsChainId:ChainIdHomestead];
+            [weakSelf checkForNewAccountsChainId:ChainIdRopsten];
+            [weakSelf checkForNewAccountsChainId:ChainIdRinkeby];
+            [weakSelf checkForNewAccountsChainId:ChainIdKovan];
         }];
     }
     return self;
@@ -216,13 +218,9 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 }
 
 - (AccountIndex)indexForAddress: (Address*)address chainId: (ChainId)chainId {
-    if (chainId != ChainIdHomestead && chainId != ChainIdRopsten) {
-        return AccountNotFound;
-    }
-    
     for (NSUInteger i = 0; i < _accounts.count; i++) {
         Signer *signer = [_accounts objectAtIndex:i];
-        if ([signer.address isEqualToAddress:address] && chainId == (signer.provider.testnet ? ChainIdRopsten: ChainIdHomestead)) {
+        if ([signer.address isEqualToAddress:address] && signer.provider.chainId == chainId) {
             return i;
         }
     }
@@ -238,20 +236,14 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     Provider *provider = [_providers objectForKey:key];
     
     if (!provider) {
-        // Not supported yet (coming soon)
-        if (chainId != ChainIdHomestead && chainId != ChainIdRopsten) {
-            return nil;
-        }
-        
-        BOOL testnet = (chainId == ChainIdRopsten);
         
         // Prepare a new provider
-        FallbackProvider *fallbackProvider = [[FallbackProvider alloc] initWithTestnet:testnet];
+        FallbackProvider *fallbackProvider = [[FallbackProvider alloc] initWithChainId:chainId];
         provider = fallbackProvider;
         
         // Add INFURA and Etherscan unless explicitly disabled
-        [fallbackProvider addProvider:[[InfuraProvider alloc] initWithTestnet:testnet]];
-        [fallbackProvider addProvider:[[EtherscanProvider alloc] initWithTestnet:testnet apiKey:ETHERSCAN_API_KEY]];
+        [fallbackProvider addProvider:[[InfuraProvider alloc] initWithChainId:chainId]];
+        [fallbackProvider addProvider:[[EtherscanProvider alloc] initWithChainId:chainId apiKey:ETHERSCAN_API_KEY]];
     
         [provider startPolling];
 
@@ -318,10 +310,10 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     }
 }
 
-- (void)checkForNewAccounts: (BOOL)testnet {
+- (void)checkForNewAccountsChainId: (ChainId)chainId {
     NSMutableSet *accounts = [NSMutableSet set];
     for (Signer *signer in _accounts) {
-        if (signer.provider.testnet == testnet) {
+        if (signer.provider.chainId == chainId) {
             [accounts addObject:signer.address];
         }
     }
@@ -329,7 +321,9 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     NSMutableSet *newAccounts = [NSMutableSet set];
     
     NSString *keychainKey = _keychainKey;
-    if (testnet) { keychainKey = [keychainKey stringByAppendingString:@"/ropsten"]; }
+    if (chainId != ChainIdHomestead) {
+        keychainKey = [NSString stringWithFormat:@"%@/%@", keychainKey, chainName(chainId)];
+    }
     
     for (Address *address in [CloudKeychainSigner addressesForKeychainKey:keychainKey]) {
         if (![accounts containsObject:address]) {
@@ -342,7 +336,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
         [self reloadSigners];
         
         for (Address *address in newAccounts) {
-            AccountIndex index = [self indexForAddress:address chainId:testnet ? ChainIdRopsten: ChainIdHomestead];
+            AccountIndex index = [self indexForAddress:address chainId:chainId];
             if (index == AccountNotFound) {
                 NSLog(@"Huh?! New Account doesn't exist after all??");
                 continue;
@@ -354,8 +348,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 }
 
 - (void)setActiveAccountAddress: (Address*)address provider: (Provider*)provider {
-    ChainId chainId = (provider.testnet ? ChainIdRopsten: ChainIdHomestead);
-    AccountIndex accountIndex = [self indexForAddress:address chainId:chainId];
+    AccountIndex accountIndex = [self indexForAddress:address chainId:provider.chainId];
     
     // No matching account, try loading the most recently used account from the data store
     if (accountIndex == AccountNotFound) {
@@ -388,6 +381,8 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     
     [self addSigners:_keychainKey chainId:ChainIdHomestead];
     [self addSigners:[_keychainKey stringByAppendingString:@"/ropsten"] chainId:ChainIdRopsten];
+    [self addSigners:[_keychainKey stringByAppendingString:@"/rinkeby"] chainId:ChainIdRinkeby];
+    [self addSigners:[_keychainKey stringByAppendingString:@"/kovan"] chainId:ChainIdKovan];
     
     // Sort the accounts
     [_accounts sortUsingComparator:^NSComparisonResult(Signer *a, Signer *b) {
@@ -528,7 +523,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 }
 
 - (ChainId)chainIdForIndex:(AccountIndex)index {
-    return ([_accounts objectAtIndex:index].provider.testnet) ? ChainIdRopsten: ChainIdHomestead;
+    return [_accounts objectAtIndex:index].provider.chainId;
 }
 
 - (NSString*)nicknameForIndex: (NSUInteger)index {
@@ -575,7 +570,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
     if (signer) {
         [_dataStore setObject:signer.address.checksumAddress forKey:DataStoreKeyActiveAccountAddress];
-        [_dataStore setObject:@(signer.provider.testnet ? ChainIdRopsten: ChainIdHomestead) forKey:DataStoreKeyActiveAccountChainId];
+        [_dataStore setObject:@(signer.provider.chainId) forKey:DataStoreKeyActiveAccountChainId];
     } else {
         [_dataStore setObject:nil forKey:DataStoreKeyActiveAccountAddress];
         [_dataStore setObject:nil forKey:DataStoreKeyActiveAccountChainId];
@@ -609,7 +604,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
     __block Account *account = nil;
     __block NSString *accountPassword = nil;
-    __block BOOL testnet = NO;
+    __block ChainId chainId = ChainIdHomestead;
     
     // ***************************
     // STEP 6/5 - Encrypt and return the
@@ -619,20 +614,29 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
             NSString *json = ((DoneConfigController*)config).json;
             Signer *signer = nil;
             
-            NSLog(@"Test: %d", testnet);
-            
-            if (testnet) {
-                NSString *testnetKeychainKey = [weakSelf.keychainKey stringByAppendingString:@"/ropsten"];
-                signer = [CloudKeychainSigner writeToKeychain:testnetKeychainKey
-                                                     nickname:@"Testnet"
-                                                         json:json
-                                                     provider:[weakSelf getProvider:ChainIdRopsten]];
-            } else {
-                signer = [CloudKeychainSigner writeToKeychain:weakSelf.keychainKey
-                                                     nickname:@"ethers.io"
-                                                         json:json
-                                                     provider:[weakSelf getProvider:ChainIdHomestead]];
+            NSString *keychainKey = weakSelf.keychainKey;
+            NSString *nickname = @"ethers.io";
+            if (chainId != ChainIdHomestead) {
+                keychainKey = [NSString stringWithFormat:@"%@/%@", keychainKey, chainName(chainId)];
+                switch (chainId) {
+                    case ChainIdKovan:
+                        nickname = @"Kovan";
+                        break;
+                    case ChainIdRinkeby:
+                        nickname = @"Rinkeby";
+                        break;
+                    case ChainIdRopsten:
+                        nickname = @"Ropsten";
+                        break;
+                    default:
+                        nickname = @"Testnet";
+                        break;
+                }
             }
+            signer = [CloudKeychainSigner writeToKeychain:keychainKey
+                                                 nickname:nickname
+                                                     json:json
+                                                 provider:[weakSelf getProvider:chainId]];
             
             if (signer) {
                 // Make sure account indices are compact
@@ -816,7 +820,6 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
             // ***************************
             // STEP 2 - Get the backup phrase
             void (^getBackupPhrase)(ConfigController*) = ^(ConfigController *configController) {
-                NSLog(@"Testnet: %d", testnet);
                 
                 NSString *title = @"Enter Phrase";
                 NSString *message = @"Please enter your //backup phrase//.";
@@ -876,20 +879,33 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                                                                       preferredStyle:UIAlertControllerStyleAlert];
             void (^useRopsten)(UIAlertAction*) = ^(UIAlertAction *action) {
                 config.nextTitle = @"Ropsten";
-                testnet = YES;
+                chainId = ChainIdRopsten;
+            };
+
+            void (^useRinkeby)(UIAlertAction*) = ^(UIAlertAction *action) {
+                config.nextTitle = @"Rinkeby";
+                chainId = ChainIdRinkeby;
+            };
+
+            void (^useKovan)(UIAlertAction*) = ^(UIAlertAction *action) {
+                config.nextTitle = @"Kovan";
+                chainId = ChainIdKovan;
             };
 
             void (^useHomestead)(UIAlertAction*) = ^(UIAlertAction *action) {
                 config.nextTitle = @"Mainnet";
-                testnet = NO;
+                chainId = ChainIdHomestead;
             };
             
+            [options addAction:[UIAlertAction actionWithTitle:@"Kovan Testnet"
+                                                        style:UIAlertActionStyleDefault
+                                                      handler:useKovan]];
             [options addAction:[UIAlertAction actionWithTitle:@"Ropsten Testnet"
                                                         style:UIAlertActionStyleDefault
                                                       handler:useRopsten]];
-//            [options addAction:[UIAlertAction actionWithTitle:@"Rinkeby Testnet"
-//                                                        style:UIAlertActionStyleDefault
-//                                                      handler:useRinkeby]];
+            [options addAction:[UIAlertAction actionWithTitle:@"Rinkeby Testnet"
+                                                        style:UIAlertActionStyleDefault
+                                                      handler:useRinkeby]];
             [options addAction:[UIAlertAction actionWithTitle:@"Homestead Mainnet"
                                                         style:UIAlertActionStyleCancel
                                                       handler:useHomestead]];

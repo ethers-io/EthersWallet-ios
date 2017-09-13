@@ -1167,9 +1167,12 @@ NSString *getPointString(NSArray *points, NSInteger index) {
     [self clearTextChangeTimer];
     
     BOOL maybeValid = [searchText hasSuffix:@".eth"];
+    /*
+     @TODO: Support .test on Ropsten?
     if (_signer.provider.testnet && [searchText hasSuffix:@".test"]) {
         maybeValid = YES;
     }
+     */
     
     if (maybeValid) {
         [self setAddress:nil name:nil amount:nil promptType:PromptTypeSearching];

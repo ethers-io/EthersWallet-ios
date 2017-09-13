@@ -25,6 +25,8 @@
 
 #import "WalletViewController.h"
 
+#import <ethers/Transaction.h>
+
 #import "AccountsViewController.h"
 #import "BalanceLabel.h"
 #import "CrossfadeLabel.h"
@@ -161,7 +163,11 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         _updatedLabel.hidden = NO;
         _nicknameLabel.hidden = NO;
         
-        [_networkLabel setText:(_wallet.activeAccountProvider.testnet ? @"ROPSTEN": @"") animated:animated];
+        NSString *networkName = @"";
+        if (_wallet.activeAccountProvider.chainId != ChainIdHomestead) {
+            networkName = [chainName(_wallet.activeAccountProvider.chainId) uppercaseString];
+        }
+        [_networkLabel setText:networkName animated:animated];
     
     } else {
         targetNoAccountAlpha = 1.0f;

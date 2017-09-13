@@ -114,6 +114,10 @@ static NSString *getServiceName(NSString *keychainKey) {
         return @"ethers.io";
     } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet/ropsten"]) {
         return @"ethers.io/ropsten";
+    } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet/kovan"]) {
+        return @"ethers.io/kovan";
+    } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet/rinkeby"]) {
+        return @"ethers.io/rinkeby";
     }
     
     // @TODO: return keychainKey
@@ -480,7 +484,24 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
 
 // Fetch local secret value
 - (NSString*)keychainKeyForKey: (NSString*)key {
-    return [NSString stringWithFormat:@"%@%@_%@", self.address.checksumAddress, (self.provider.testnet ? @"/ropsten": @""), key];
+    NSString *suffix = @"";
+    switch (self.provider.chainId) {
+        case ChainIdHomestead:
+            break;
+        case ChainIdRopsten:
+            suffix = @"/ropsten";
+            break;
+        case ChainIdKovan:
+            suffix = @"/kovan";
+            break;
+        case ChainIdRinkeby:
+            suffix = @"/rinkeby";
+            break;
+        default:
+            return nil;
+    }
+    
+    return [NSString stringWithFormat:@"%@%@_%@", self.address.checksumAddress, suffix, key];
 }
 
 // Set local secret value

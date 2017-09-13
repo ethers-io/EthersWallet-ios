@@ -208,8 +208,8 @@ const CGFloat AccountTableViewCellHeight = 80.0f;
 }
 
 - (void)notifyActiveAccountDidChange: (NSNotification*)note {
-    ChainId activeChainId = (_wallet.activeAccountProvider.testnet ? ChainIdRopsten: ChainIdHomestead);
-    BOOL selected = (_wallet.activeAccountAddress == _accountAddress && activeChainId == _accountChainId);
+    BOOL selected = ([_wallet.activeAccountAddress isEqualToAddress:_accountAddress] &&
+                     _wallet.activeAccountProvider.chainId == _accountChainId);
     [self setAccountSelected:selected animated:YES];
 }
 
@@ -225,8 +225,7 @@ const CGFloat AccountTableViewCellHeight = 80.0f;
     Provider *provider = [note.userInfo objectForKey:WalletNotificationProviderKey];
     if (!address || !provider) { return NO; }
     
-    ChainId chainId = (provider.testnet ? ChainIdRopsten: ChainIdHomestead);
-    return (chainId == _accountChainId && [address isEqualToAddress:_accountAddress]);
+    return (_wallet.activeAccountProvider.chainId == _accountChainId && [address isEqualToAddress:_accountAddress]);
 }
 
 - (void)notifyBalanceDidChange: (NSNotification*)note {
@@ -245,8 +244,8 @@ const CGFloat AccountTableViewCellHeight = 80.0f;
     _accountAddress = [_wallet addressForIndex:accountIndex];
     _accountChainId = [_wallet chainIdForIndex:accountIndex];
     
-    ChainId activeChainId = (_wallet.activeAccountProvider.testnet ? ChainIdRopsten: ChainIdHomestead);
-    BOOL selected = (_wallet.activeAccountAddress == _accountAddress && activeChainId == _accountChainId);
+    BOOL selected = ([_wallet.activeAccountAddress isEqualToAddress:_accountAddress] &&
+                     _wallet.activeAccountProvider.chainId == _accountChainId);
     [self setAccountSelected:selected animated:NO];
 
     _nicknameTextField.text = [_wallet nicknameForIndex:accountIndex];

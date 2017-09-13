@@ -511,8 +511,7 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
     return [NSString stringWithFormat:@"<%@ index=%d address=%@ nickname='%@' balance=%@ nonce=%d chainId=%d biometrics=%@>",
             NSStringFromClass([self class]), (int)self.accountIndex, self.address,
             self.nickname, [Payment formatEther:self.balance], (int)self.transactionCount,
-            (self.provider.testnet ? ChainIdRopsten: ChainIdHomestead),
-            (self.supportsBiometricUnlock ? @"YES": @"NO")];
+            self.provider.chainId, (self.supportsBiometricUnlock ? @"YES": @"NO")];
 }
 
 @end

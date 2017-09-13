@@ -240,21 +240,18 @@ Transaction *getTransaction(NSDictionary *info) {
         }
 
     } else if ([action isEqualToString:@"getNetwork"]) {
-        [self sendResult:(_wallet.activeAccountProvider.testnet ? @"ropsten": @"homestead") messageId:messageId];
+        [self sendResult:chainName(_wallet.activeAccountProvider.chainId) messageId:messageId];
         
     } else if ([action isEqualToString:@"fundAccount"]) {
         
-        if (!_wallet.activeAccountProvider.testnet) {
-            [self sendError:@"invalid network" messageId:messageId];
-
-        } else {
-
+        if (_wallet.activeAccountProvider.chainId == ChainIdRopsten) {
+            
             Address *address = queryPath(params, @"dictionary:address/address");
             if (!address) {
                 [self sendError:@"invalid address" messageId:messageId];
-
+                
             } else {
-            
+                
                 void (^handleResponse)(NSData*, NSURLResponse*, NSError*) = ^(NSData *data, NSURLResponse *response, NSError *error) {
                     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
                     
@@ -271,7 +268,7 @@ Transaction *getTransaction(NSDictionary *info) {
                     
                     [self sendResult:hash.hexString messageId:messageId];
                 };
-
+                
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^() {
                     NSString *urlFormat = @"https://api.ethers.io/api/v1/?action=fundAccount&address=%@";
                     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:urlFormat, address]];
@@ -284,7 +281,8 @@ Transaction *getTransaction(NSDictionary *info) {
                 });
             }
 
-            
+        } else {
+            [self sendError:@"invalid network" messageId:messageId];
         }
 
         

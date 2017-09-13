@@ -122,7 +122,7 @@
         _nameHint = nameHint;
         _transaction = [transaction copy];
         
-        _transaction.chainId = _signer.provider.testnet ? ChainIdRopsten: ChainIdHomestead;
+        _transaction.chainId = _signer.provider.chainId;
         _transaction.nonce = _signer.transactionCount;
         
         NSArray *promises = @[
@@ -428,11 +428,12 @@
     }
     
     // Flare for testnet
-    if (_signer.provider.testnet) {
+    NSString *networkName = chainName(_signer.provider.chainId);
+    if (![networkName isEqualToString:chainName(ChainIdHomestead)]) {
         UILabel *networkLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 85.0f, 7.0f, 70.0f, 30.0f)];
         networkLabel.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
         networkLabel.font = [UIFont fontWithName:FONT_BOLD size:12];
-        networkLabel.text = @"ROPSTEN";
+        networkLabel.text = [networkName uppercaseString];
         networkLabel.textAlignment = NSTextAlignmentRight;
         networkLabel.textColor = [UIColor colorWithHex:ColorHexRed];
         [self.scrollView addSubview:networkLabel];
