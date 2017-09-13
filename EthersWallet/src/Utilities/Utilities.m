@@ -133,6 +133,8 @@ static NSMutableDictionary *FetchDedup = nil;
 
 + (NSString*)timeAgo:(NSTimeInterval)timestamp {
 
+    if (timestamp == 0) { return @"Never"; }
+    
     NSTimeInterval secondsAgo = [NSDate timeIntervalSinceReferenceDate] - timestamp;
     if (secondsAgo < 60.0f) {
         return @"Just Now";
