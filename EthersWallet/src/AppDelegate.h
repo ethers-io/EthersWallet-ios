@@ -28,7 +28,7 @@
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
-@property (nonatomic, readonly) UIWindow *window;
+@property (nonatomic, strong) UIWindow *window;
 
 
 @end
