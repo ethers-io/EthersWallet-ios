@@ -30,6 +30,7 @@
 #import <ethers/SecureData.h>
 #import <ethers/Transaction.h>
 
+#import "AccountsViewController.h"
 #import "ApplicationViewController.h"
 #import "CloudView.h"
 #import "ConfigNavigationController.h"
@@ -59,7 +60,7 @@ static NSString *CanaryUrl = @"https://ethers.io/canary.raw";
 static Address *CanaryAddress = nil;
 static NSString *CanaryVersion = nil;
 
-@interface AppDelegate () <PanelViewControllerDataSource> {
+@interface AppDelegate () <AccountsViewControllerDelegate, PanelViewControllerDataSource> {
     
     NSArray<NSString*> *_applicationTitles;
     NSArray<NSString*> *_applicationUrls;
@@ -106,6 +107,13 @@ static NSString *CanaryVersion = nil;
     _panelViewController.navigationItem.titleView = [Utilities navigationBarLogoTitle];
     _panelViewController.titleColor = [UIColor colorWithWhite:1.0f alpha:1.0f];
 
+    // The Accounts button on the top-right
+    {
+        UIButton *button = [Utilities ethersButton:ICON_NAME_ACCOUNTS fontSize:33.0f color:0xffffff];
+        [button addTarget:self action:@selector(tapAccounts) forControlEvents:UIControlEventTouchUpInside];
+        _panelViewController.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:button];
+    }
+    
     {
         CloudView *cloudView = [[CloudView alloc] initWithFrame:_panelViewController.view.bounds];
         cloudView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -200,6 +208,23 @@ static NSString *CanaryVersion = nil;
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+}
+
+
+#pragma mark - AccountsViewControllerDelegate
+
+- (void)tapAccounts {
+    AccountsViewController *accountsViewController = [[AccountsViewController alloc] initWithWallet:_wallet];
+    accountsViewController.delegate = self;
+    [ModalViewController presentViewController:accountsViewController animated:YES completion:nil];
+}
+
+- (void)accountsViewControllerDidCancel:(AccountsViewController *)accountsViewController {
+    [accountsViewController.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)accountsViewController:(AccountsViewController *)accountsViewController didSelectAccountIndex:(NSInteger)accountIndex {
+    _wallet.activeAccountIndex = accountIndex;
 }
 
 

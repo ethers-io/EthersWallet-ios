@@ -60,6 +60,7 @@
 #define ICON_NAME_ORIGAMI            @"2"
 #define ICON_NAME_CLIPBOARD          @"3"
 #define ICON_NAME_ACCOUNT            @"4"
+#define ICON_NAME_SETTINGS           @"5"
 
 //#define FONT_MONOSPACE               @"AmericanTypewriter"
 //#define FONT_MONOSPACE_SMALL         @"AmericanTypewriter-Condensed"

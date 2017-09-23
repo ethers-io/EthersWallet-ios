@@ -40,14 +40,14 @@
 
 #define CONFIRMED_COUNT        12
 
-@interface WalletViewController () <AccountsViewControllerDelegate, UITableViewDataSource, UITableViewDelegate> {
+@interface WalletViewController () <UITableViewDataSource, UITableViewDelegate> {
     BigNumber *_amount;
     
     WalletView *_walletView;
     
     UIView *_noAccountView;
     
-    UIButton *_accountsButton, *_sendButton;
+    UIButton *_shareButton, *_sendButton;
     
     UITableView *_tableView;
 
@@ -103,6 +103,12 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
                                                   alignment:BalanceLabelAlignmentCenter];
         
         self.navigationItem.titleView = _balanceLabel;
+        
+//        {
+//            UIButton *sendButton = [Utilities ethersButton:ICON_NAME_AIRPLANE fontSize:30.0f color:0xffffff];
+//            [sendButton addTarget:sendButton action:@selector(tapCamera) forControlEvents:UIControlEventTouchUpInside];
+//            self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:sendButton];
+//        }
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(updateBalance)
@@ -156,7 +162,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     if (_wallet.activeAccountIndex != AccountNotFound) {
         _nicknameLabel.text = [_wallet nicknameForIndex:_wallet.activeAccountIndex];
 
-        _accountsButton.enabled = YES;
+        _shareButton.enabled = YES;
         
         _sendButton.enabled = YES;
         
@@ -172,7 +178,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     } else {
         targetNoAccountAlpha = 1.0f;
 
-        _accountsButton.enabled = NO;
+        _shareButton.enabled = NO;
         _sendButton.enabled = NO;
 
         _updatedLabel.hidden = YES;
@@ -357,16 +363,21 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     _nicknameLabel.textColor = [UIColor colorWithWhite:0.4f alpha:1.0f];
     [status addSubview:_nicknameLabel];
 
-    _accountsButton = [Utilities ethersButton:ICON_NAME_ACCOUNTS fontSize:36.0f color:ColorHexToolbarIcon];
-    [_accountsButton addTarget:self action:@selector(tapAccounts) forControlEvents:UIControlEventTouchUpInside];
-    UIBarButtonItem *accounts = [[UIBarButtonItem alloc] initWithCustomView:_accountsButton];
-
+//    _shareButton = [Utilities ethersButton:ICON_NAME_ fontSize:27.0f color:ColorHexToolbarIcon];
+//    [_shareButton addTarget:self action:@selector(tapManage) forControlEvents:UIControlEventTouchUpInside];
+//    UIBarButtonItem *share = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction
+//                                                                           target:nil
+//                                                                           action:nil];
+    
     _sendButton = [Utilities ethersButton:ICON_NAME_AIRPLANE fontSize:36.0f color:ColorHexToolbarIcon];
     [_sendButton addTarget:self action:@selector(tapCamera) forControlEvents:UIControlEventTouchUpInside];
     UIBarButtonItem *send = [[UIBarButtonItem alloc] initWithCustomView:_sendButton];
     
     [toolbar setItems:@[
-                        accounts,
+//                        share,
+                        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+                                                                      target:nil
+                                                                      action:nil],
                         [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                                                                       target:nil
                                                                       action:nil],
@@ -375,6 +386,9 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
                                                                       target:nil
                                                                       action:nil],
                         send,
+//                        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+//                                                                      target:nil
+//                                                                      action:nil],
                         ]];
     
     [self updatedActiveAccountAnimated:NO];
@@ -592,22 +606,12 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     return;
 }
 
-#pragma mark - AccountsViewControllerDelegate
-
-- (void)accountsViewControllerDidCancel:(AccountsViewController *)accountsViewController {
-    [self dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void)accountsViewController:(AccountsViewController *)accountsViewController didSelectAccountIndex:(NSInteger)accountIndex {
-    _wallet.activeAccountIndex = accountIndex;
-}
-
 #pragma mark - WalletViewControllerDelegate
 
-- (void)tapAccounts {
-    AccountsViewController *accountsViewController = [[AccountsViewController alloc] initWithWallet:_wallet];
-    accountsViewController.delegate = self;
-    [self presentViewController:accountsViewController animated:YES completion:nil];
+- (void)tapManage {
+    [_wallet manageAccountAtIndex:_wallet.activeAccountIndex callback:^() {
+        NSLog(@"FOO");
+    }];
 }
 
 - (void)tapCamera {
