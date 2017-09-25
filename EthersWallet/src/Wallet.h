@@ -145,10 +145,10 @@ typedef enum WalletError {
 
 #pragma mark - Transactions (Modal UI)
 
-- (void)scan: (void (^)(Hash*, NSError*))callback;
+- (void)scan: (void (^)(Transaction*, NSError*))callback;
 
-- (void)sendPayment: (Payment*)payment callback: (void (^)(Hash*, NSError*))callback;
-- (void)sendTransaction: (Transaction*)transaction callback:(void (^)(Hash*, NSError*))callback;
+- (void)sendPayment: (Payment*)payment callback: (void (^)(Transaction*, NSError*))callback;
+- (void)sendTransaction: (Transaction*)transaction callback:(void (^)(Transaction*, NSError*))callback;
 
 
 #pragma mark - Debug (Modal UI)

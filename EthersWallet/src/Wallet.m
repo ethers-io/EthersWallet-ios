@@ -1165,7 +1165,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
 #pragma mark - Transactions
 
-- (void)scan:(void (^)(Hash*, NSError*))callback {
+- (void)scan:(void (^)(Transaction*, NSError*))callback {
     
     if (!self.activeAccountAddress) {
         dispatch_async(dispatch_get_main_queue(), ^() {
@@ -1214,7 +1214,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
         if (![result isKindOfClass:[Transaction class]]) {
             callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
         } else {
-            callback(((Transaction*)result).transactionHash, nil);
+            callback((Transaction*)result, nil);
         }
     };
 
@@ -1223,7 +1223,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                                     completion:onComplete];
 }
 
-- (void)sendPayment:(Payment *)payment callback:(void (^)(Hash*, NSError*))callback {
+- (void)sendPayment:(Payment *)payment callback:(void (^)(Transaction*, NSError*))callback {
     Transaction *transaction = [Transaction transaction];
     transaction.toAddress = payment.address;
     transaction.value = payment.amount;
@@ -1231,11 +1231,11 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     [self sendTransaction:transaction firm:payment.firm callback:callback];
 }
 
-- (void)sendTransaction: (Transaction*)transaction callback:(void (^)(Hash*, NSError*))callback {
+- (void)sendTransaction: (Transaction*)transaction callback:(void (^)(Transaction*, NSError*))callback {
     [self sendTransaction:transaction firm:YES callback:callback];
 }
 
-- (void)sendTransaction: (Transaction*)transaction firm: (BOOL)firm callback:(void (^)(Hash*, NSError*))callback {
+- (void)sendTransaction: (Transaction*)transaction firm: (BOOL)firm callback:(void (^)(Transaction*, NSError*))callback {
     // No signer is an automatic cancel
     if (_activeAccountIndex == AccountNotFound) {
         dispatch_async(dispatch_get_main_queue(), ^() {
@@ -1258,7 +1258,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
         if (![result isKindOfClass:[Transaction class]]) {
             callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
         } else {
-            callback(((Transaction*)result).transactionHash, nil);
+            callback((Transaction*)result, nil);
         }
     };
 

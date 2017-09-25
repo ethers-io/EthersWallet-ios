@@ -369,8 +369,8 @@ static NSString *CanaryVersion = nil;
 - (void)showScanner {
     [ModalViewController dismissAllCompletionCallback:^() {
         if (_wallet.activeAccountAddress) {
-            [_wallet scan:^(Hash *hash, NSError *error) {
-                NSLog(@"Scan compelte: %@ %@", hash, error);
+            [_wallet scan:^(Transaction *transaction, NSError *error) {
+                NSLog(@"Scan compelte: %@ %@", transaction, error);
             }];
 
         } else {
@@ -412,8 +412,8 @@ typedef enum ExternalAction {
             [weakSelf showScanner];
         
         } else if (action == ExternalActionSend) {
-            [weakSelf.wallet sendPayment:payment callback:^(Hash *hash, NSError *error) {
-                NSLog(@"AppDelegate: Sent hash=%@ error=%@", hash, error);
+            [weakSelf.wallet sendPayment:payment callback:^(Transaction *transaction, NSError *error) {
+                NSLog(@"AppDelegate: Sent transaction=%@ error=%@", transaction, error);
             }];
         
         } else if (action == ExternalActionConfig) {
