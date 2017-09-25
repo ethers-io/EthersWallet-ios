@@ -28,18 +28,16 @@
 #import "ConfigNavigationController.h"
 #import "Utilities.h"
 
-NSString *DataStoreKeyEnableTestnet = @"DEBUG_ENABLE_TESTNET";
-
 @implementation DebugConfigController
 
-+ (instancetype)configWithDataStore:(CachedDataStore *)dataStore {
-    return [[DebugConfigController  alloc] initWithDataStore:dataStore];
++ (instancetype)configWithWallet:(Wallet *)wallet {
+    return [[DebugConfigController  alloc] initWithWallet:wallet];
 }
 
-- (instancetype)initWithDataStore:(CachedDataStore *)dataStore {
+- (instancetype)initWithWallet:(Wallet*)wallet {
     self = [super init];
     if (self) {
-        _dataStore = dataStore;
+        _wallet = wallet;
     }
     return self;
 }
@@ -69,15 +67,24 @@ NSString *DataStoreKeyEnableTestnet = @"DEBUG_ENABLE_TESTNET";
     [self addFlexibleGap];
 
     [self addSeparator];
-    ConfigToggle *allowRopsten = [self addToggle:@"Enable Testnet"];
-    allowRopsten.on = [_dataStore boolForKey:DataStoreKeyEnableTestnet];
-    allowRopsten.didChange = ^(ConfigToggle *toggle) {
-        [weakSelf.dataStore setBool:toggle.on forKey:DataStoreKeyEnableTestnet];
+    ConfigToggle *allowTestnets = [self addToggle:@"Enable Testnets"];
+    allowTestnets.on = _wallet.testnetEnabled;
+    allowTestnets.didChange = ^(ConfigToggle *toggle) {
+        weakSelf.wallet.testnetEnabled = toggle.on;
     };
     [self addSeparator];
     [self addNoteText:@"Allow new (created and imported) accounts to be optionally attached to a testnet."];
 
     [self addFlexibleGap];
+
+    [self addFlexibleGap];
+    
+    [self addButton:@"Purge Cached Data" action:^(UIButton *button) {
+        [weakSelf.wallet purgeCacheData];
+        [weakSelf.wallet refresh:nil];
+    }];
+    
+    [self addGap:44.0f];
 
     /**
      *  Other things to add here one day:

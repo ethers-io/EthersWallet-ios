@@ -25,14 +25,12 @@
 
 #import "ConfigController.h"
 
-#import "CachedDataStore.h"
-
-extern NSString *DataStoreKeyEnableTestnet;
+#import "Wallet.h"
 
 @interface DebugConfigController : ConfigController
 
-+ (instancetype)configWithDataStore: (CachedDataStore*)dataStore;
++ (instancetype)configWithWallet: (Wallet*)wallet;
 
-@property (nonatomic, readonly) CachedDataStore *dataStore;
+@property (nonatomic, readonly) Wallet *wallet;
 
 @end

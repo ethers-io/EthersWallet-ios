@@ -110,8 +110,15 @@ const NSString* WalletNotificationSyncDateKey                            = @"Wal
 
 static NSString *DataStoreKeyEtherPrice                   = @"ETHER_PRICE";
 
+static NSString *DataStoreKeyEnableTestnet                = @"DEBUG_ENABLE_TESTNET";
+
 static NSString *DataStoreKeyActiveAccountAddress         = @"ACTIVE_ACCOUNT_ADDRESS";
 static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHAINID";
+
+
+
+
+
 
 
 #pragma mark - Wallet Life-Cycle
@@ -1268,8 +1275,16 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
 #pragma mark - Debugging
 
+- (BOOL)testnetEnabled {
+    return [_dataStore boolForKey:DataStoreKeyEnableTestnet];
+}
+
+- (void)setTestnetEnabled:(BOOL)enabled {
+    [_dataStore setBool:enabled forKey:DataStoreKeyEnableTestnet];
+}
+
 - (void)showDebuggingOptionsCallback: (void (^)())callback {
-    DebugConfigController *config = [DebugConfigController configWithDataStore:_dataStore];
+    DebugConfigController *config = [DebugConfigController configWithWallet:self];
     
     ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:config];
     navigationController.onDismiss = ^(NSObject *result) {

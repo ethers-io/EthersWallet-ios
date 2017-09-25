@@ -155,4 +155,11 @@ typedef enum WalletError {
 
 - (void)showDebuggingOptionsCallback: (void (^)())callback;
 
+
+#pragma mark - Debugging Options
+
+@property (nonatomic, assign) BOOL testnetEnabled;
+- (void)purgeCacheData;
+
+
 @end
