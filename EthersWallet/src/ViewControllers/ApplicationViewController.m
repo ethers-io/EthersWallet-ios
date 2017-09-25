@@ -28,6 +28,7 @@
 #import <ethers/ApiProvider.h>
 #import <ethers/SecureData.h>
 
+#import "UIColor+hex.h"
 #import "Utilities.h"
 #import "Wallet.h"
 
@@ -149,7 +150,7 @@ Transaction *getTransaction(NSDictionary *info) {
     
     _lastBlockNumber = blockNumber;
     
-    [self send:@{ @"action": @"block", @"blockNumber": @(blockNumber), @"ethers": EthersVersion }];
+    //[self send:@{ @"action": @"block", @"blockNumber": @(blockNumber), @"ethers": EthersVersion }];
 }
 
 - (void)send: (NSDictionary*)response {
@@ -240,7 +241,19 @@ Transaction *getTransaction(NSDictionary *info) {
         }
 
     } else if ([action isEqualToString:@"getNetwork"]) {
-        [self sendResult:chainName(_wallet.activeAccountProvider.chainId) messageId:messageId];
+        NSString *networkName = nil;
+        switch (_wallet.activeAccountProvider.chainId) {
+            case ChainIdHomestead:
+                networkName = @"mainnet";
+                break;
+            case ChainIdRopsten:
+                networkName = @"testnet";
+                break;
+            default:
+                networkName = chainName(_wallet.activeAccountProvider.chainId);
+                break;
+        }
+        [self sendResult:networkName messageId:messageId];
         
     } else if ([action isEqualToString:@"fundAccount"]) {
         
@@ -287,277 +300,52 @@ Transaction *getTransaction(NSDictionary *info) {
 
         
     /**
-     *  Events
-     */
-
-    } else if ([action isEqualToString:@"setupEvent"]) {
-        [self sendError:@"not implemented" messageId:messageId];
-
-    } else if ([action isEqualToString:@"teardowEvent"]) {
-        [self sendError:@"not implemented" messageId:messageId];
-        
-    /**
      *  Blockchain (permissioned calls)
      */
 
-    } else if ([action isEqualToString:@"send"]) {
+    } else if ([action isEqualToString:@"sendTransaction"]) {
         
         if (!_wallet.activeAccountAddress) {
             [self sendError:@"cancelled" messageId:messageId];
         
         } else {
             
-            Address *address = queryPath(params, @"dictionary:address/address");
-
-            BigNumber *amountWei = queryPath(params, @"dictionary:amountWei/bigNumberHex");
-            if (!amountWei) { amountWei = [BigNumber constantZero]; }
-
-            if (!address) {
-                [self sendError:@"invalid parameter" messageId:messageId];
-                
-            } else {
-                
-                Payment *payment = [[Payment alloc] init];
-                payment.address = address;
-                payment.amount = amountWei;
-                //payment.firm = ensureBool([params objectForKey:@"firm"]);
-                
-                [_wallet sendPayment:payment callback:^(Hash *hash, NSError *error) {
-                    if (hash) {
-                        [self sendResult:hash.hexString messageId:messageId];
-                    } else if ([error.domain isEqualToString:WalletErrorDomain] && error.code == WalletErrorSendCancelled) {
-                        [self sendError:@"cancelled" messageId:messageId];
-                    } else {
-                        [self sendError:@"unknown error" messageId:messageId];
-                    }
-                }];
-
-            }
-        }
-
-    } else if ([action isEqualToString:@"sendTransaction"]) {
-        [self sendError:@"not implemented" messageId:messageId];
-        
-        /*
-         if (!_wallet.activeAccount) {
-            [self sendError:@"cancelled" messageId:messageId];
-            
-        } else {
             Transaction *transaction = getTransaction([params objectForKey:@"transaction"]);
             
             if (!transaction) {
                 [self sendError:@"invalid parameter" messageId:messageId];
-                
+
             } else {
-                [_wallet sendTransaction:transaction callback:^(Hash *hash, NSError *error) {
-                    if (hash) {
-                        [self sendResult:hash.hexString messageId:messageId];
-                    } else if ([error.domain isEqualToString:WalletErrorDomain] && error.code == kWalletErrorSendCancelled) {
+                [_wallet sendTransaction:transaction callback:^(Transaction *transaction, NSError *error) {
+                    if (transaction) {
+                        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:8];
+                        
+                        if (transaction.toAddress) {
+                            [result setObject:transaction.toAddress.checksumAddress forKey:@"to"];
+                        }
+                        
+                        [result setObject:transaction.fromAddress.checksumAddress forKey:@"from"];
+                        [result setObject:@(transaction.nonce) forKey:@"nonce"];
+                        [result setObject:[transaction.gasLimit hexString] forKey:@"gasLimit"];
+                        [result setObject:[transaction.gasPrice hexString] forKey:@"gasPrice"];
+                        [result setObject:[transaction.value hexString] forKey:@"value"];
+                        [result setObject:[SecureData dataToHexString:transaction.data] forKey:@"data"];
+                        
+                        [result setObject:[transaction.transactionHash hexString] forKey:@"hash"];
+                        
+                        [self sendResult:result messageId:messageId];
+                    
+                    } else if ([error.domain isEqualToString:WalletErrorDomain] && error.code == WalletErrorSendCancelled) {
                         [self sendError:@"cancelled" messageId:messageId];
+                    
                     } else {
                         [self sendError:@"unknown error" messageId:messageId];
                     }
                 }];
+
             }
         }
-         */
-
-    } else if ([action isEqualToString:@"deployContract"]) {
-        [self sendError:@"not implemented" messageId:messageId];
-
-
-    /**
-     *  Blockchain (read-only)
-     */
-        
-    } else if ([action isEqualToString:@"call"]) {
-        Transaction *transaction = getTransaction(queryPath(params, @"dictionary:transaction"));
-        if (!transaction) {
-            [self sendError:@"invalid transaction" messageId:messageId];
-        
-        } else {
-            [[_wallet.activeAccountProvider call:transaction] onCompletion:^(DataPromise *promise) {
-                if (promise.result) {
-                    [self sendResult:[SecureData dataToHexString:promise.value] messageId:messageId];
-                } else {
-                    NSLog(@"ApplicationViewController: Error during call - %@", promise.error);
-                    [self sendError:@"unknown error" messageId:messageId];
-                }
-            }];
-        }
-        
-    } else if ([action isEqualToString:@"estimateGas"]) {
-        [self sendError:@"not implemented" messageId:messageId];
-
-    } else if ([action isEqualToString:@"getBalance"]) {
-        
-        Address *address = queryPath(params, @"dictionary:address/address");
-        if (!address) {
-            [self sendError:@"invalid address" messageId:messageId];
-
-        } else {
-            [[_wallet.activeAccountProvider getBalance:address] onCompletion:^(BigNumberPromise *promise) {
-                if (promise.result) {
-                    [self sendResult:promise.value messageId:messageId];
-                } else {
-                    [self sendError:@"unknown error" messageId:messageId];
-                }
-            }];
-        }
-
-
-    } else if ([action isEqualToString:@"getBlock"]) {
-        
-        void (^sendBlock)(BlockInfoPromise*) = ^(BlockInfoPromise *promise) {
-            if (promise.result) {
-                NSMutableDictionary *info = [NSMutableDictionary dictionary];
-                
-                BlockInfo *blockInfo = promise.value;
-                if (blockInfo) {
-                    [info setObject:blockInfo.blockHash.hexString forKey:@"hash"];
-                    [info setObject:@(blockInfo.blockNumber) forKey:@"number"];
-                    [info setObject:blockInfo.parentHash.hexString forKey:@"parentHash"];
-                    [info setObject:@(blockInfo.timestamp) forKey:@"timestamp"];
-                    [info setObject:@(blockInfo.nonce) forKey:@"nonce"];
-                    [info setObject:[SecureData dataToHexString:blockInfo.extraData] forKey:@"extraData"];
-                    [info setObject:[blockInfo.gasLimit hexString] forKey:@"gasLimit"];
-                    [info setObject:[blockInfo.gasUsed hexString] forKey:@"gasUsed"];
-                }
-
-                [self sendResult:info messageId:messageId];
-
-
-            } else {
-                NSLog(@"ApplicationViewController: Error during getBlock - %@", promise.error);
-                [self sendError:@"unknown error" messageId:messageId];
-            }
-        };
-        
-        Hash *blockHash = queryPath(params, @"dictionary:block/hash");
-        if (blockHash) {
-            [[_wallet.activeAccountProvider getBlockByBlockHash:blockHash] onCompletion:sendBlock];
-            
-        } else {
-            BOOL validBlockTag = NO;
-            BlockTag blockTag = 0;
-            
-            NSString *blockTagString = queryPath(params, @"dictionary:block/string");
-            if (blockTagString) {
-                if ([blockTagString isEqualToString:@"earliest"]) {
-                    blockTag = BLOCK_TAG_EARLIEST;
-                    validBlockTag = YES;
-                } else if ([blockTagString isEqualToString:@"latest"]) {
-                    blockTag = BLOCK_TAG_LATEST;
-                    validBlockTag = YES;
-                } else if ([blockTagString isEqualToString:@"pending"]) {
-                    blockTag = BLOCK_TAG_PENDING;
-                    validBlockTag = YES;
-                } else {
-                    NSNumber *blockTagNumber = coerceValue(blockTagString, ApiProviderFetchTypeInteger);
-                    if (blockTagNumber) {
-                        blockTag = [blockTagNumber integerValue];
-                        validBlockTag = YES;
-                    }
-                }
-            
-            } else {
-                NSNumber *blockTagNumber = queryPath(params, @"dictionary:block/integer");
-                if (blockTagNumber) {
-                    blockTag = [blockTagNumber integerValue];
-                    validBlockTag = YES;
-                }
-            }
-            
-            if (validBlockTag) {
-                [[_wallet.activeAccountProvider getBlockByBlockTag:blockTag] onCompletion:sendBlock];
-            } else {
-                [self sendError:@"invalid parameters" messageId:messageId];
-            }
-        }
-
-    } else if ([action isEqualToString:@"getBlockNumber"]) {
-        [[_wallet.activeAccountProvider getBlockNumber] onCompletion:^(IntegerPromise *promise) {
-            if (promise.error) {
-                NSLog(@"ApplicationViewController: Error during getBlockNumber - %@", promise.error);
-                [self sendError:@"unknown error" messageId:messageId];
-            } else {
-                [self sendResult:@(promise.value) messageId:messageId];
-            }
-        }];
-
-    } else if ([action isEqualToString:@"getGasPrice"]) {
-        NSLog(@"Deprecated: getGasPrice");
-        [[_wallet.activeAccountProvider getGasPrice] onCompletion:^(BigNumberPromise *promise) {
-            if (promise.error) {
-                NSLog(@"ApplicationViewController: Error during getGasPrice - %@", promise.error);
-                [self sendError:@"unknown error" messageId:messageId];
-            } else {
-                [self sendResult:[promise.value hexString] messageId:messageId];
-            }
-        }];
-
-    } else if ([action isEqualToString:@"getTransaction"]) {
-        Hash *hash = queryPath(params, @"dictionary:hash/hash");
-        if (!hash) {
-            [self sendError:@"invalid hash" messageId:messageId];
-            
-        } else {
-            [[_wallet.activeAccountProvider getTransaction:hash] onCompletion:^(TransactionInfoPromise *promise) {
-                if (promise.result) {
-                    
-                    NSMutableDictionary *info = [NSMutableDictionary dictionary];
-                    
-                    TransactionInfo *transactionInfo = promise.value;
-                    if (transactionInfo) {
-                        [info setObject:transactionInfo.toAddress.checksumAddress forKey:@"to"];
-                        [info setObject:transactionInfo.fromAddress.checksumAddress forKey:@"from"];
-
-                        [info setObject:[transactionInfo.gasLimit hexString] forKey:@"gasLimit"];
-                        [info setObject:[transactionInfo.gasPrice hexString] forKey:@"gasPrice"];
-                        [info setObject:[transactionInfo.value hexString] forKey:@"value"];
-
-                        if (transactionInfo.blockHash && ![transactionInfo.blockHash isZeroHash]) {
-                            [info setObject:[transactionInfo.blockHash hexString] forKey:@"blockHash"];
-                        }
-
-                        [info setObject:[transactionInfo.transactionHash hexString] forKey:@"hash"];
-
-                        if (transactionInfo.data.length) {
-                            [info setObject:[SecureData dataToHexString:transactionInfo.data] forKey:@"data"];
-                        }
-                        
-                        [info setObject:@(transactionInfo.nonce) forKey:@"nonce"];
-                    }
-
-                    [self sendResult:info messageId:messageId];
-                    
-                } else {
-                    NSLog(@"Unknown Error: %@", promise.error);
-                    [self sendError:@"unknown error" messageId:messageId];
-                }
-            }];
-        }
-
-    } else if ([action isEqualToString:@"getTransactionCount"]) {
-        
-        Address *address = queryPath(params, @"dictionary:address/address");
-        if (!address) {
-            [self sendError:@"invalid address" messageId:messageId];
-
-        } else {
-            [[_wallet.activeAccountProvider getTransactionCount:address] onCompletion:^(IntegerPromise *promise) {
-                if (promise.result) {
-                    [self sendResult:@(promise.value) messageId:messageId];
-                } else {
-                    [self sendError:@"unknown error" messageId:messageId];
-                }
-            }];
-        }
-
-    } else if ([action isEqualToString:@"getTransactionReceipt"]) {
-        [self sendError:@"not implemented" messageId:messageId];
-
-
+    
     /**
      *  Ready
      */
@@ -568,12 +356,12 @@ Transaction *getTransaction(NSDictionary *info) {
     } else if ([action isEqualToString:@"ready"]) {
         _ready = YES;
         
-        // @TODO: Remvoe loading animation
+        // @TODO: Remove loading animation
 
         _lastBlockNumber = _wallet.activeAccountBlockNumber;
         
         [self send:@{@"action": @"ready"}];
-        [self send:@{@"action": @"block", @"blockNumber": @(_lastBlockNumber)}];
+        //[self send:@{@"action": @"block", @"blockNumber": @(_lastBlockNumber)}];
         
     } else {
         NSLog(@"Unknown action: %@ (data: %@)", action, data);
@@ -603,6 +391,15 @@ Transaction *getTransaction(NSDictionary *info) {
         _wallet = wallet;
         _etherScriptHandler = [[EthersScriptHandler alloc] initWithWallet:wallet];
         _etherScriptHandler.delegate = self;
+        
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 200.0f, 40.0f)];
+        titleLabel.font = [UIFont fontWithName:FONT_MEDIUM size:20.0f];
+        titleLabel.text = applicationTitle;
+        titleLabel.textAlignment = NSTextAlignmentCenter;
+        titleLabel.textColor = [UIColor colorWithHex:ColorHexNavigationBarTitle];
+        
+        
+        self.navigationItem.titleView = titleLabel;
         
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(notifyActiveAccountDidChange:)
@@ -680,6 +477,112 @@ Transaction *getTransaction(NSDictionary *info) {
     }];
 }
 
+#pragma mark - WKUIDelegate
+
+- (WKWebView*)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures {
+
+    NSURL *url = navigationAction.request.URL;
+    if (![url.scheme isEqualToString:@"https"] && ![url.scheme isEqualToString:@"http"]) {
+        url = nil;
+    }
+    
+    if (url) {
+        dispatch_async(dispatch_get_main_queue(), ^() {
+            [[UIApplication sharedApplication] openURL:navigationAction.request.URL
+                                               options:@{}
+                                     completionHandler:nil];
+        });
+    }
+    
+    return nil;
+}
+
+- (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler {
+    
+    if (![webView.URL.host isEqualToString:frame.request.URL.host]) {
+        NSLog(@"ApplicationViewController: Security Warning webviewHost=%@ frameHost=%@", webView.URL.host, frame.request.URL.host);
+        completionHandler();
+        return;
+    }
+
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:_applicationTitle
+                                                                   message:message
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+
+    {
+        void (^action)(UIAlertAction*) = ^(UIAlertAction *action) {
+            completionHandler();
+        };
+        [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:action]];
+    }
+    
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+
+- (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL))completionHandler {
+    NSLog(@"Confirm: %@ %@", message, frame);
+    
+    if (![webView.URL.host isEqualToString:frame.request.URL.host]) {
+        NSLog(@"ApplicationViewController: Security Warning webviewHost=%@ frameHost=%@", webView.URL.host, frame.request.URL.host);
+        completionHandler(NO);
+        return;
+    }
+    
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:_applicationTitle
+                                                                   message:message
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    
+    {
+        void (^action)(UIAlertAction*) = ^(UIAlertAction *action) {
+            completionHandler(NO);
+        };
+        [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:action]];
+    }
+
+    {
+        void (^action)(UIAlertAction*) = ^(UIAlertAction *action) {
+            completionHandler(YES);
+        };
+        [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:action]];
+    }
+
+    [self presentViewController:alert animated:YES completion:nil];
+
+}
+
+- (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString * _Nullable))completionHandler {
+
+    if (![webView.URL.host isEqualToString:frame.request.URL.host]) {
+        NSLog(@"ApplicationViewController: Security Warning webviewHost=%@ frameHost=%@", webView.URL.host, frame.request.URL.host);
+        completionHandler(nil);
+        return;
+    }
+    
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:_applicationTitle
+                                                                   message:prompt
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        
+    }];
+    
+    {
+        void (^action)(UIAlertAction*) = ^(UIAlertAction *action) {
+            completionHandler([alert.textFields firstObject].text);
+        };
+        [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:action]];
+    }
+
+    {
+        void (^action)(UIAlertAction*) = ^(UIAlertAction *action) {
+            completionHandler(nil);
+        };
+        [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:action]];
+    }
+
+    [self presentViewController:alert animated:YES completion:nil];
+}
 
 #pragma mark - WKNavigationDelegate
 

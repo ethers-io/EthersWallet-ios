@@ -236,17 +236,20 @@ static NSString *CanaryVersion = nil;
 
 - (void)setupApplications {
     if (_wallet.activeAccountProvider.chainId == ChainIdRopsten) {
-        _applicationTitles = @[@"Welcome", @"Testnet Faucet"];
+        _applicationTitles = @[@"Welcome", @"Testnet Faucet", @"Block Explorer", @"Test Token"];
         _applicationUrls = @[
                              @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
                              @"https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/",
+                             @"https://0xc3fbbba629d27a348a2f3ccd3e8bdcdca9b1019e.ethers.space/",
+                             @"https://0x84db171b84950185431e76d6cd2aa5ce1cf853cf.ethers.space"
                              ];
     
     } else {
-        _applicationTitles = @[@"Welcome", @"DevCon2 PoA"];
+        _applicationTitles = @[@"Welcome", @"DevCon2 PoA", @"Block Explorer"];
         _applicationUrls = @[
                              @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
-                             @"https://0x2f2ab85f856ec137699cbe5d8038110dd7ce9cbe.ethers.space/"
+                             @"https://0x2f2ab85f856ec137699cbe5d8038110dd7ce9cbe.ethers.space/",
+                             @"https://c3fbbba629d27a348a2f3ccd3e8bdcdca9b1019e.ethers.space/",
                              ];
     }
     
