@@ -25,6 +25,9 @@
 
 #import <UIKit/UIKit.h>
 
+#import "PanelController.h"
+
+
 @class PanelViewController;
 
 
@@ -46,7 +49,6 @@
 @property (nonatomic, weak) NSObject<PanelViewControllerDataSource> *dataSource;
 
 @property (nonatomic, readonly) UIView *backgroundView;
-@property (nonatomic, readonly) UINavigationBar *navigationBar;
 
 @property (nonatomic, strong) UIColor *titleColor;
 

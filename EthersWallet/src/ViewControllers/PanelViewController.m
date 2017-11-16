@@ -29,6 +29,13 @@
 #import "Utilities.h"
 
 
+@interface PanelController ()
+
+- (void)setFocused:(BOOL)focused animated: (BOOL)animated;
+
+@end
+
+
 @interface PanelViewController () <UITableViewDataSource, UITableViewDelegate> {
     BOOL _focusPanel;
     
@@ -55,9 +62,6 @@
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
         _viewControllerIndex = -1;
-        
-        _navigationBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 64.0f)];
-        _navigationBar.items = @[self.navigationItem];
         
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(notifyBackground)
@@ -90,11 +94,10 @@
     
     // The bckground view is added/removed in focusPanel
     _backgroundView = [[UIView alloc] initWithFrame:self.view.bounds];
-//    [self.view addSubview:_backgroundView];
     
     _tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     _tableView.backgroundColor = [UIColor clearColor];
-    _tableView.contentInset = UIEdgeInsetsMake(64.0f, 0.0f, 0.0f, 0.0f);
+    _tableView.contentInset = UIEdgeInsetsMake(20.0f, 0.0f, 0.0f, 0.0f);
     _tableView.dataSource = self;
     _tableView.delegate = self;
     _tableView.rowHeight = 50.0f;
@@ -122,6 +125,7 @@
     
     _panelView = [[UIView alloc] initWithFrame:_transformView.bounds];
     _panelView.backgroundColor = [UIColor whiteColor];
+    _panelView.clipsToBounds = YES;
     [_tiltView addSubview:_panelView];
 
     _curtainView = [[UIView alloc] initWithFrame:_transformView.bounds];
@@ -129,17 +133,13 @@
     [_tiltView addSubview:_curtainView];
     [_curtainView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapCurtainView)]];
     
-    _navigationBar.frame = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, 64.0f);
-    _navigationBar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    [self.view addSubview:_navigationBar];
-    
     [self focusPanel:_focusPanel animated:NO];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
 
-    if (_viewControllerIndex == -1 && [_dataSource panelViewControllerChildCount:self]) {
+    if (_viewControllerIndex == -1 && [_dataSource panelViewControllerChildCount:self] > 0) {
         [self setViewControllerIndex:0];
     }
 }
@@ -167,10 +167,10 @@
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
         [_tableView cellForRowAtIndexPath:indexPath].textLabel.font = [UIFont fontWithName:FONT_BOLD size:20.0f];
     }
-
+    
     UIViewController *viewController = [_dataSource panelViewController:self viewControllerAtIndex:index];
     if (viewController == _viewController) { return; }
-
+    
     UIButton *button = [Utilities ethersButton:ICON_NAME_LOGO fontSize:40.0f color:0xffffff];
     [button addTarget:self action:@selector(tapEthers) forControlEvents:UIControlEventTouchUpInside];
     viewController.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:button];
@@ -179,23 +179,6 @@
     
     [oldViewController willMoveToParentViewController:nil];
     [viewController willMoveToParentViewController:self];
-
-    //oldViewController.navigationItem.leftBarButtonItem.customView.alpha = (_focusPanel ? 1.0f: 0.4f);
-
-    void (^swapViewControllers)() = ^() {
-        [oldViewController removeFromParentViewController];
-        [self addChildViewController:viewController];
-
-        [oldViewController didMoveToParentViewController:nil];
-        [viewController didMoveToParentViewController:self];
-        
-        [oldViewController.view removeFromSuperview];
-        [_panelView addSubview:viewController.view];
-        
-        oldViewController.navigationItem.leftBarButtonItem = nil;
-        
-        button.alpha = (_focusPanel ? 1.0f: 0.5f);
-    };
     
     if (animated) {
         void (^animateStep1)() = ^() {
@@ -208,12 +191,29 @@
 
         // At this point, the view is off-screen
         void (^completeStep1)(BOOL) = ^(BOOL complete) {
-            swapViewControllers();
-            [UIView animateWithDuration:0.3f
-                                  delay:0.0f
-                                options:(UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionBeginFromCurrentState)
-                             animations:animateStep2
-                             completion:nil];
+            [oldViewController removeFromParentViewController];
+            [self addChildViewController:viewController];
+            
+            [oldViewController.view removeFromSuperview];
+            [self.view insertSubview:viewController.view atIndex:0];
+
+            [oldViewController didMoveToParentViewController:nil];
+            [viewController didMoveToParentViewController:self];
+            
+            oldViewController.navigationItem.leftBarButtonItem = nil;
+            
+            button.alpha = (_focusPanel ? 1.0f: 0.5f);
+
+            [NSTimer scheduledTimerWithTimeInterval:0.0f repeats:NO block:^(NSTimer *timer) {
+                // @TODO: Don't need this anymore!
+                [_panelView addSubview:viewController.view];
+                
+                [UIView animateWithDuration:0.3f
+                                      delay:0.0f
+                                    options:(UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionBeginFromCurrentState)
+                                 animations:animateStep2
+                                 completion:nil];
+            }];
         };
         
         [UIView animateWithDuration:0.3f
@@ -223,7 +223,18 @@
                          completion:completeStep1];
         
     } else {
-        swapViewControllers();
+        [oldViewController removeFromParentViewController];
+        [self addChildViewController:viewController];
+        
+        [oldViewController.view removeFromSuperview];
+        [_panelView addSubview:viewController.view];
+        
+        [oldViewController didMoveToParentViewController:nil];
+        [viewController didMoveToParentViewController:self];
+        
+        oldViewController.navigationItem.leftBarButtonItem = nil;
+        
+        button.alpha = (_focusPanel ? 1.0f: 0.5f);
     }
     
     _viewController = viewController;
@@ -300,16 +311,20 @@
 - (void)focusPanel: (BOOL)focusPanel animated:(BOOL)animated {
     _focusPanel = focusPanel;
 
+    //_viewController.navigationItem.prompt = nil;
+
     // Nothing to layout yet (loadView will call this again)
     if (![self isViewLoaded]) { return; }
     
     UIViewController *viewController = _viewController;
     
+    [((PanelController*)viewController) setFocused:focusPanel animated:animated];
+    
     if (focusPanel) {
         
         void (^animate)() = ^() {
             _transformView.transform = CGAffineTransformIdentity;
-            _navigationBar.transform = CGAffineTransformMakeTranslation(0.0f, -64.0f);
+            self.navigationController.navigationBar.transform = CGAffineTransformMakeTranslation(0.0f, -88.0f);
             _tableView.transform = CGAffineTransformMakeTranslation(-self.view.frame.size.width, 0.0f);
 
             viewController.navigationItem.leftBarButtonItem.customView.alpha = 1.0f;
@@ -341,7 +356,7 @@
         
         void (^animate)() = ^() {
             _transformView.transform = CGAffineTransformScale(CGAffineTransformMakeTranslation(140.0f, 0.0f), 0.5f, 0.5f);
-            _navigationBar.transform = CGAffineTransformIdentity;
+            self.navigationController.navigationBar.transform = CGAffineTransformIdentity;
             _tableView.transform = CGAffineTransformIdentity;
 
             viewController.navigationItem.leftBarButtonItem.customView.alpha = 0.5f;

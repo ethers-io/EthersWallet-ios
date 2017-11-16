@@ -120,12 +120,14 @@ static NSString *CanaryVersion = nil;
         [_panelViewController.backgroundView addSubview:cloudView];
     }
     
-    {
-        UIColor *navigationBarColor = [UIColor colorWithHex:ColorHexNavigationBar overHex:0xb3cffe alpha:0.2];
-        [Utilities setupNavigationBar:_panelViewController.navigationBar backgroundColor:navigationBarColor];
-    }
+    UINavigationController *rootController = [[UINavigationController alloc] initWithRootViewController:_panelViewController];
+    UIColor *navigationBarColor = [UIColor colorWithHex:ColorHexNavigationBar];
+    [Utilities setupNavigationBar:rootController.navigationBar backgroundColor:navigationBarColor];
 
-    _window.rootViewController = _panelViewController;
+    [_panelViewController focusPanel:YES animated:NO];
+    //[_panelViewController focusPanel:NO animated:NO];
+
+    _window.rootViewController = rootController;
     
     [_window makeKeyAndVisible];
     

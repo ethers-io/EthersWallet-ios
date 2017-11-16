@@ -86,7 +86,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 }
 
 - (instancetype)initWithWallet: (Wallet*)wallet {
-    self = [super initWithNibName:nil bundle:nil];
+    self = [super init];
     if (self) {
         _wallet = wallet;
 
@@ -213,7 +213,9 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 }
 
 - (void)noticeUpdateTransactions {
-    [self reloadTableAnimated:YES];
+    [NSTimer scheduledTimerWithTimeInterval:0.5f repeats:NO block:^(NSTimer *timer) {
+        [self reloadTableAnimated:YES];
+    }];
 }
 
 - (void)updateSyncDateAniamted: (BOOL)animated {
@@ -231,6 +233,14 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     [_tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]
                       atScrollPosition:UITableViewScrollPositionTop
                               animated:animated];
+}
+
+- (void)didUpdateNavigationBar:(CGFloat)marginTop {
+    [super didUpdateNavigationBar:marginTop];
+    CGPoint contentOffset = _tableView.contentOffset;
+    _tableView.contentInset = UIEdgeInsetsMake(marginTop, 0.0f, 44.0f, 0.0f);
+    _tableView.scrollIndicatorInsets = UIEdgeInsetsMake(marginTop, 0.0f, 44.0f, 0.0f);
+    _tableView.contentOffset = contentOffset;
 }
 
 - (void)loadView {
@@ -298,12 +308,15 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         [_headerView addSubview:_noTransactionsView];
     }
     
+    // This is kinda hacky, but the way the automatic scroll insets is computed is not
+    // currently compatible with our PanelViewController
+    //CGFloat navHeight = self.navigationController.navigationBar.bounds.size.height + [[UIApplication sharedApplication] statusBarFrame].size.height;
+
     _tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     _tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    _tableView.contentInset = UIEdgeInsetsMake(64.0f, 0.0f, 44.0f, 0.0f);
     _tableView.dataSource = self;
     _tableView.delegate = self;
-    _tableView.scrollIndicatorInsets = UIEdgeInsetsMake(64.0f, 0.0f, 44.0f, 0.0f);
+    //_tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     [self.view addSubview:_tableView];
 
@@ -340,9 +353,6 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         label.textColor = [UIColor colorWithHex:ColorHexNormal];
         [_noAccountView addSubview:label];
     }
-    
-    UINavigationBar *navigationBar = [Utilities addNavigationBarToView:self.view];
-    [navigationBar setItems:@[self.navigationItem]];
     
     UIToolbar *toolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0f, frame.size.height - 44.0f, frame.size.width, 44.0f)];
     toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
@@ -409,7 +419,6 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 #pragma mark - UITableViewDataSoruce and UITableViewDelegate
 
 - (void)reloadTableAnimated: (BOOL)animated {
-    
     NSArray <TransactionInfo*> *transactions = nil;
     
     // @TODO: Animate by fading
@@ -523,7 +532,6 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         [_tableView reloadData];
         animate();
     }
-
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {

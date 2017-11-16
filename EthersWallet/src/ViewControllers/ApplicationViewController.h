@@ -25,9 +25,10 @@
 
 #import <UIKit/UIKit.h>
 
+#import "PanelController.h"
 #import "Wallet.h"
 
-@interface ApplicationViewController : UIViewController
+@interface ApplicationViewController : PanelController
 
 - (instancetype)initWithApplicationTitle: (NSString*)applicationTitle
                                      url: (NSURL*)url

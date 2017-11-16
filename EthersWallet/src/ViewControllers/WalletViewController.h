@@ -25,10 +25,10 @@
 
 #import <UIKit/UIKit.h>
 
+#import "PanelController.h"
 #import "Wallet.h"
 
-
-@interface WalletViewController : UIViewController
+@interface WalletViewController : PanelController
 
 - (instancetype)initWithWallet: (Wallet*)wallet;
 

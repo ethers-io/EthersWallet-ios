@@ -194,20 +194,9 @@ static NSMutableDictionary *FetchDedup = nil;
         blank = [[UIImage alloc] init];
     });
 
-    navigationBar.backgroundColor = [UIColor clearColor];
     navigationBar.tintColor = [UIColor whiteColor];
-    [navigationBar setBackgroundImage:blank forBarPosition:UIBarPositionTop barMetrics:UIBarMetricsDefault];
-    
-
-    UIView *colorView = [[UIView alloc] initWithFrame:navigationBar.bounds];
-    colorView.tag = 100;
-    colorView.backgroundColor = backgroundColor;
-    [navigationBar insertSubview:colorView atIndex:0];
-
-    UIVisualEffectView *visualEffectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleLight]];
-    visualEffectView.frame = navigationBar.bounds;
-    visualEffectView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    [navigationBar insertSubview:visualEffectView atIndex:0];
+    navigationBar.translucent = YES;
+    navigationBar.barTintColor = backgroundColor;
 }
 
 + (UINavigationBar*)addNavigationBarToView: (UIView*)view {

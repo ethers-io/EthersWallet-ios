@@ -16,6 +16,7 @@
 		E21481CF1E431CC600B87132 /* ethers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2FA046E1E4293750013E5A7 /* ethers.framework */; };
 		E22A59E71EBA9D8500AEE894 /* Signer.m in Sources */ = {isa = PBXBuildFile; fileRef = E22A59E61EBA9D8500AEE894 /* Signer.m */; };
 		E2491AB61F42642A007DB5A4 /* ConfigLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2491AB51F42642A007DB5A4 /* ConfigLabel.m */; };
+		E29620591FBE2B2F00BFA868 /* PanelController.m in Sources */ = {isa = PBXBuildFile; fileRef = E29620581FBE2B2F00BFA868 /* PanelController.m */; };
 		E29AB1091F4E199C0009FEF0 /* SignedRemoteDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB1081F4E199C0009FEF0 /* SignedRemoteDictionary.m */; };
 		E29AB10D1F4E4E1C0009FEF0 /* ScannerConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB10C1F4E4E1C0009FEF0 /* ScannerConfigController.m */; };
 		E29AB1101F5913B00009FEF0 /* BoxView.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB10F1F5913B00009FEF0 /* BoxView.m */; };
@@ -141,6 +142,8 @@
 		E2491AB51F42642A007DB5A4 /* ConfigLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ConfigLabel.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigLabel.m; sourceTree = "<group>"; };
 		E28B15311EAC3D6C00D79C52 /* BLECast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BLECast.h; path = src/Utilities/BLECast.h; sourceTree = "<group>"; };
 		E28B15321EAC3D6C00D79C52 /* BLECast.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BLECast.m; path = src/Utilities/BLECast.m; sourceTree = "<group>"; };
+		E29620571FBE2B2F00BFA868 /* PanelController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PanelController.h; path = src/ViewControllers/PanelController.h; sourceTree = "<group>"; };
+		E29620581FBE2B2F00BFA868 /* PanelController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = PanelController.m; path = src/ViewControllers/PanelController.m; sourceTree = "<group>"; };
 		E29AB1071F4E199C0009FEF0 /* SignedRemoteDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SignedRemoteDictionary.h; path = src/Utilities/SignedRemoteDictionary.h; sourceTree = "<group>"; };
 		E29AB1081F4E199C0009FEF0 /* SignedRemoteDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SignedRemoteDictionary.m; path = src/Utilities/SignedRemoteDictionary.m; sourceTree = "<group>"; };
 		E29AB10B1F4E4E1C0009FEF0 /* ScannerConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ScannerConfigController.h; path = src/ViewControllers/ConfigViewControllers/ScannerConfigController.h; sourceTree = "<group>"; };
@@ -460,6 +463,8 @@
 				E2FA04311E428E020013E5A7 /* InfoViewController.m */,
 				E2FA04321E428E030013E5A7 /* ModalViewController.h */,
 				E2FA04331E428E030013E5A7 /* ModalViewController.m */,
+				E29620571FBE2B2F00BFA868 /* PanelController.h */,
+				E29620581FBE2B2F00BFA868 /* PanelController.m */,
 				E2FA04341E428E030013E5A7 /* PanelViewController.h */,
 				E2FA04351E428E030013E5A7 /* PanelViewController.m */,
 				E2FA04381E428E030013E5A7 /* WalletViewController.h */,
@@ -779,6 +784,7 @@
 				E2FF6A131F467F1700544B0B /* GasPriceKeyboardView.m in Sources */,
 				E2FF6A0F1F4673F300544B0B /* GasLimitKeyboardView.m in Sources */,
 				E2FA03E61E428AC10013E5A7 /* main.m in Sources */,
+				E29620591FBE2B2F00BFA868 /* PanelController.m in Sources */,
 				E2B6A3121F3CFB1B00B315B6 /* OptionsConfigController.m in Sources */,
 				E2FA049F1E43186D0013E5A7 /* TodayViewController.m in Sources */,
 				E2FA04551E428E0E0013E5A7 /* Utilities.m in Sources */,
@@ -940,7 +946,7 @@
 				CODE_SIGN_ENTITLEMENTS = EthersWallet/EthersWallet.entitlements;
 				DEVELOPMENT_TEAM = 7GS2C8FTGM;
 				INFOPLIST_FILE = EthersWallet/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = io.ethers.app;
@@ -955,7 +961,7 @@
 				CODE_SIGN_ENTITLEMENTS = EthersWallet/EthersWallet.entitlements;
 				DEVELOPMENT_TEAM = 7GS2C8FTGM;
 				INFOPLIST_FILE = EthersWallet/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = io.ethers.app;

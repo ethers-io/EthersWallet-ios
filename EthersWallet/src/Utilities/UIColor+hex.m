@@ -25,7 +25,7 @@
 
 #import "UIColor+hex.h"
 
-const NSUInteger ColorHexNavigationBar            = 0x80aaeb;
+const NSUInteger ColorHexNavigationBar            = 0x2878e8;
 const NSUInteger ColorHexNavigationBarTitle       = 0xffffff;
 const NSUInteger ColorHexToolbarIcon              = 0x4499ff; //0x64aaf1;
 

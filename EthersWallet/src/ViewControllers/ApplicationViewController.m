@@ -332,7 +332,7 @@ Transaction *getTransaction(NSDictionary *info) {
                         [result setObject:[SecureData dataToHexString:transaction.data] forKey:@"data"];
                         
                         [result setObject:[transaction.transactionHash hexString] forKey:@"hash"];
-                        
+
                         [self sendResult:result messageId:messageId];
                     
                     } else if ([error.domain isEqualToString:WalletErrorDomain] && error.code == WalletErrorSendCancelled) {
@@ -383,7 +383,7 @@ Transaction *getTransaction(NSDictionary *info) {
 @implementation ApplicationViewController
 
 - (instancetype)initWithApplicationTitle:(NSString *)applicationTitle url:(NSURL *)url wallet:(Wallet *)wallet {
-    self = [super initWithNibName:nil bundle:nil];
+    self = [super init];
     if (self) {
         _applicationTitle = applicationTitle;
         _url = url;
@@ -397,7 +397,6 @@ Transaction *getTransaction(NSDictionary *info) {
         titleLabel.text = applicationTitle;
         titleLabel.textAlignment = NSTextAlignmentCenter;
         titleLabel.textColor = [UIColor colorWithHex:ColorHexNavigationBarTitle];
-        
         
         self.navigationItem.titleView = titleLabel;
         
@@ -427,6 +426,12 @@ Transaction *getTransaction(NSDictionary *info) {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+- (void)didUpdateNavigationBar:(CGFloat)marginTop {
+    [super didUpdateNavigationBar:marginTop];
+    _webView.scrollView.contentInset = UIEdgeInsetsMake(marginTop, 0, 0, 0);
+    _webView.scrollView.scrollIndicatorInsets = UIEdgeInsetsMake(marginTop, 0.0f, 0.0f, 0.0f);
+}
+
 - (void)loadView {
     [super loadView];
     
@@ -454,18 +459,11 @@ Transaction *getTransaction(NSDictionary *info) {
     
     _webView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:config];
     _webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    _webView.backgroundColor = [UIColor whiteColor];
-    _webView.scrollView.contentInset = UIEdgeInsetsMake(64.0f, 0, 0, 0);
-    _webView.scrollView.scrollIndicatorInsets = UIEdgeInsetsMake(64.0f, 0.0f, 0.0f, 0.0f);
     _webView.navigationDelegate = self;
     _webView.UIDelegate = self;
     [self.view addSubview:_webView];
     [_webView loadRequest:[NSURLRequest requestWithURL:_url]];
-    
-    UINavigationBar *navigationBar = [Utilities addNavigationBarToView:self.view];
-    [navigationBar setItems:@[self.navigationItem]];
 }
-
 
 #pragma mark - EthersScriptHandler
 
