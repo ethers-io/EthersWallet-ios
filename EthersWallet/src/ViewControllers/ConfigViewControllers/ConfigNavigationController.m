@@ -78,12 +78,13 @@
     
     void (^animationsComplete)(BOOL) = ^(BOOL complete) {
         toViewController.view.userInteractionEnabled = YES;
+        fromViewController.view.transform = CGAffineTransformIdentity;
         [transitionContext completeTransition:YES];
     };
     
     [UIView animateWithDuration:[self transitionDuration:transitionContext]
                           delay:0.0f
-                        options:UIViewAnimationOptionCurveEaseOut
+                        options:UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionBeginFromCurrentState
                      animations:animations
                      completion:animationsComplete];
 }
