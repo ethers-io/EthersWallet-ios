@@ -169,11 +169,9 @@
     self.view.backgroundColor = [UIColor whiteColor];
     
     _tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
-    _tableView.contentInset = UIEdgeInsetsMake(64.0f, 0.0f, 0.0f, 0.0f);
     _tableView.dataSource = self;
     _tableView.delegate = self;
     _tableView.rowHeight = AccountTableViewCellHeight;
-    _tableView.scrollIndicatorInsets = _tableView.contentInset;
     [self.view addSubview:_tableView];
    
     // @TODO: Check this... Should it return a uint? If not found, does it return -1 or NSNOTFOUND?
@@ -188,9 +186,6 @@
                           scrollPosition:UITableViewScrollPositionTop];
     }
      */
-
-    UINavigationBar *navigationBar = [Utilities addNavigationBarToView:self.view];
-    navigationBar.items = @[self.navigationItem];
 }
 
 

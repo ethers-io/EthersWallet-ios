@@ -16,6 +16,7 @@
 
 @implementation PanelController {
     UIView *_navigationBarBackground;
+    CGFloat _bottomMargin, _topMargin;
 }
 
 - (instancetype)init {
@@ -26,9 +27,7 @@
         dispatch_once(&onceToken, ^{
             blank = [[UIImage alloc] init];
         });
-        
-        _navigationBarHeight = -1.0f;
-        
+
         _navigationBarBackground = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 64.0f)];
 
         {
@@ -65,7 +64,7 @@
         
         [_navigationBarBackground addSubview:_navigationBar];
         
-
+/*
         __weak PanelController *weakSelf = self;
         [NSTimer scheduledTimerWithTimeInterval:5.0f repeats:YES block:^(NSTimer *timer) {
             if (!weakSelf) {
@@ -75,6 +74,7 @@
             
             [weakSelf _didUpdateNavigationBar];
         }];
+ */
     }
     return self;
 }
@@ -84,52 +84,18 @@
     [self.view addSubview:_navigationBarBackground];
 }
 
-- (void)setFocused:(BOOL)focused animated: (BOOL)animated {
-    _focused = focused;
-
-    void (^animate)() = ^() {
-        [self _didUpdateNavigationBar];
-    };
-
-    if (animated) {
-        if (focused) {
-            [UIView animateWithDuration:0.3f delay:0.0f options:UIViewAnimationOptionCurveEaseOut animations:animate completion:nil];
-        } else {
-            [UIView animateWithDuration:0.3f delay:0.1f options:UIViewAnimationOptionCurveEaseOut animations:animate completion:nil];
-        }
-    } else {
-        animate();
-    }
-}
-
-- (void)_didUpdateNavigationBar {
+- (void)updateTopMargin:(CGFloat)topMargin bottomMargin:(CGFloat)bottomMargin {
+    NSLog(@"Update Panel: %f %f %d", topMargin, bottomMargin, [self isViewLoaded]);
+    _bottomMargin = bottomMargin;
+    _topMargin = topMargin;
     if (![self isViewLoaded]) { return; }
-
-    CGFloat height = 44.0f;
-    if (_focused) {
-        height += [UIApplication sharedApplication].statusBarFrame.size.height;
-    }
-
-    NSLog(@"Focused: %d %f", _focused, height);
-
-    if (_navigationBarBackground.frame.size.height == height) {
-        NSLog(@"No change");
-        return;
-    }
-
-    [self didUpdateNavigationBar:height];
-}
-
-- (void)didUpdateNavigationBar: (CGFloat)marginTop {
-    NSLog(@"didUpdate: %f", marginTop);
-    _navigationBarBackground.frame = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, marginTop);
+    _navigationBarBackground.frame = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, topMargin + 44.0f);
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self.view bringSubviewToFront:_navigationBarBackground];
-    NSLog(@"ViewWillAppear: %@", self.view.subviews);
-    [self _didUpdateNavigationBar];
+    _navigationBarBackground.frame = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, _topMargin + 44.0f);
 }
 
 @end

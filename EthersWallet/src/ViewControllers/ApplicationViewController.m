@@ -426,10 +426,13 @@ Transaction *getTransaction(NSDictionary *info) {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (void)didUpdateNavigationBar:(CGFloat)marginTop {
-    [super didUpdateNavigationBar:marginTop];
-    _webView.scrollView.contentInset = UIEdgeInsetsMake(marginTop, 0, 0, 0);
-    _webView.scrollView.scrollIndicatorInsets = UIEdgeInsetsMake(marginTop, 0.0f, 0.0f, 0.0f);
+- (void)updateTopMargin:(CGFloat)topMargin bottomMargin:(CGFloat)bottomMargin {
+    [super updateTopMargin:topMargin bottomMargin:bottomMargin];
+    
+    CGFloat dTop = _webView.scrollView.contentInset.top - topMargin - 44.0f;
+    _webView.scrollView.contentInset = UIEdgeInsetsMake(topMargin + 44.0f, 0, bottomMargin, 0);
+    _webView.scrollView.scrollIndicatorInsets = UIEdgeInsetsMake(topMargin + 44.0f, 0.0f, bottomMargin, 0.0f);
+    _webView.scrollView.contentOffset = CGPointMake(0.0f, _webView.scrollView.contentOffset.y + dTop);
 }
 
 - (void)loadView {
@@ -460,6 +463,7 @@ Transaction *getTransaction(NSDictionary *info) {
     _webView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:config];
     _webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     _webView.navigationDelegate = self;
+    _webView.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     _webView.UIDelegate = self;
     [self.view addSubview:_webView];
     [_webView loadRequest:[NSURLRequest requestWithURL:_url]];

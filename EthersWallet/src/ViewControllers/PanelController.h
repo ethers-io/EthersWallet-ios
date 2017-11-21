@@ -12,10 +12,6 @@
 
 @property (nonatomic, readonly) UINavigationBar *navigationBar;
 
-@property (nonatomic, readonly) BOOL focused;
-
-@property (nonatomic, readonly) CGFloat navigationBarHeight;
-
-- (void)didUpdateNavigationBar: (CGFloat)marginTop;
+- (void)updateTopMargin: (CGFloat)topMargin bottomMargin: (CGFloat)bottomMargin;
 
 @end

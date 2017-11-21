@@ -103,7 +103,6 @@ static NSString *CanaryVersion = nil;
     
     _panelViewController = [[PanelViewController alloc] initWithNibName:nil bundle:nil];
     _panelViewController.dataSource = self;
-    [_panelViewController focusPanel:YES animated:NO];
     _panelViewController.navigationItem.titleView = [Utilities navigationBarLogoTitle];
     _panelViewController.titleColor = [UIColor colorWithWhite:1.0f alpha:1.0f];
 
@@ -218,7 +217,10 @@ static NSString *CanaryVersion = nil;
 - (void)tapAccounts {
     AccountsViewController *accountsViewController = [[AccountsViewController alloc] initWithWallet:_wallet];
     accountsViewController.delegate = self;
-    [ModalViewController presentViewController:accountsViewController animated:YES completion:nil];
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:accountsViewController];
+    UIColor *navigationBarColor = [UIColor colorWithHex:ColorHexNavigationBar];
+    [Utilities setupNavigationBar:navigationController.navigationBar backgroundColor:navigationBarColor];
+    [ModalViewController presentViewController:navigationController animated:YES completion:nil];
 }
 
 - (void)accountsViewControllerDidCancel:(AccountsViewController *)accountsViewController {

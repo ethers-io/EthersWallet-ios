@@ -64,6 +64,8 @@
 
     SectionHeaderView *_headerConfirmed, *_headerInProgress, *_headerPending;
     
+    UIView *_toolbarBackground;
+    
     CrossfadeLabel *_networkLabel;
 }
 
@@ -235,12 +237,15 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
                               animated:animated];
 }
 
-- (void)didUpdateNavigationBar:(CGFloat)marginTop {
-    [super didUpdateNavigationBar:marginTop];
-    CGPoint contentOffset = _tableView.contentOffset;
-    _tableView.contentInset = UIEdgeInsetsMake(marginTop, 0.0f, 44.0f, 0.0f);
-    _tableView.scrollIndicatorInsets = UIEdgeInsetsMake(marginTop, 0.0f, 44.0f, 0.0f);
-    _tableView.contentOffset = contentOffset;
+- (void)updateTopMargin:(CGFloat)topMargin bottomMargin:(CGFloat)bottomMargin {
+    [super updateTopMargin:topMargin bottomMargin:bottomMargin];
+    
+    CGFloat dTop = _tableView.contentInset.top - topMargin - 44.0f;
+    _tableView.contentInset = UIEdgeInsetsMake(topMargin + 44.0f, 0.0f, 44.0f + bottomMargin, 0.0f);
+    _tableView.scrollIndicatorInsets = UIEdgeInsetsMake(topMargin + 44.0f, 0.0f, 44.0f + bottomMargin, 0.0f);
+    _tableView.contentOffset = CGPointMake(0.0f, _tableView.contentOffset.y + dTop);
+    
+    _toolbarBackground.frame = CGRectMake(0.0f, self.view.frame.size.height - bottomMargin - 44.0f, self.view.frame.size.width, 44.0f + bottomMargin);
 }
 
 - (void)loadView {
@@ -314,9 +319,9 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 
     _tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     _tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    _tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     _tableView.dataSource = self;
     _tableView.delegate = self;
-    //_tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     [self.view addSubview:_tableView];
 
@@ -354,11 +359,16 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
         [_noAccountView addSubview:label];
     }
     
-    UIToolbar *toolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0f, frame.size.height - 44.0f, frame.size.width, 44.0f)];
-    toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
-    toolbar.translucent = YES;
-    [self.view addSubview:toolbar];
-    
+    _toolbarBackground = [[UIView alloc] initWithFrame:CGRectMake(0.0f, frame.size.height - 44.0f, frame.size.width, 44.0f)];
+    _toolbarBackground.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    _toolbarBackground.backgroundColor = [UIColor colorWithHex:0xf8f8f8];
+    [self.view addSubview:_toolbarBackground];
+
+    UIToolbar *toolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 44.0f)];
+    [_toolbarBackground addSubview:toolbar];
+    toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleBottomMargin;
+    [toolbar setBackgroundImage:[[UIImage alloc] init] forToolbarPosition:UIBarPositionAny barMetrics:UIBarMetricsDefault];
+
     UIView *status = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 200.0f, 44.0f)];
     
     _updatedLabel = [[CrossfadeLabel alloc] initWithFrame:CGRectMake(0.0f, 4.0f, 200.0f, 18.0f)];

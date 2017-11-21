@@ -765,11 +765,18 @@ typedef enum PromptType {
 
     // Use a navigation bar for the same blur effect (flip it for a top shadow)
     {
+        /*
         UINavigationBar *background = [[UINavigationBar alloc] initWithFrame:_photosView.bounds];
         background.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         background.barStyle = UIBarStyleBlack;
         background.transform = CGAffineTransformMakeRotation(M_PI);
         [_photosView addSubview:background];
+         */
+        
+        UIVisualEffectView *blur = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+        blur.frame = _photosView.bounds;
+        blur.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [_photosView addSubview:blur];
     }
     
     _rescanButton = [self addButtonTitle:ICON_NAME_CAMERA action:@selector(didTapRestart:)];
@@ -871,12 +878,17 @@ typedef enum PromptType {
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     
-    /*
-    Payment *payment = [self checkPasteboard];
-    if (payment) {
-        NSLog(@"Payment: %@", payment);
-    }
-     */
+    CGFloat topMargin = self.navigationController.view.safeAreaInsets.top;
+    CGFloat bottomMargin = self.navigationController.view.safeAreaInsets.bottom;
+    NSLog(@"TopMargin: %f %f", topMargin, bottomMargin);
+    
+    CGSize size = self.view.frame.size;
+
+    _searchBar.frame = CGRectMake(25.0f, topMargin + 106.0f, size.width - 50.0f, 44.0f);
+    _photosView.frame = CGRectMake(0.0f, size.height - 160.0f - bottomMargin, size.width, 160.0f + bottomMargin);
+    
+    _rescanButton.center = CGPointMake(size.width - 30.0f - 15.0f, size.height - 160.0f - 30.0f - 15.0f - topMargin - bottomMargin);
+    _clipboardButton.center = CGPointMake(30.0f + 15.0f, size.height - 160.0f - 30.0f - 15.0f - topMargin - bottomMargin);
 }
 
 

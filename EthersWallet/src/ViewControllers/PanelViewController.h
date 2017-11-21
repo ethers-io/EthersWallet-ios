@@ -39,7 +39,7 @@
 
 - (NSString*)panelViewController: (PanelViewController*)panelViewController titleAtIndex: (NSUInteger)index;
 
-- (UIViewController*)panelViewController: (PanelViewController*)panelViewController viewControllerAtIndex: (NSUInteger)index;
+- (PanelController*)panelViewController: (PanelViewController*)panelViewController viewControllerAtIndex: (NSUInteger)index;
 
 @end
 
