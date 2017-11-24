@@ -432,18 +432,11 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 - (void)loadView {
     [super loadView];
     
-    self.automaticallyAdjustsScrollViewInsets = NO;
-    
     _scrollView = [[ButtonFriendlyScrollView2 alloc] initWithFrame:self.view.bounds];
-    _scrollView.contentInset = UIEdgeInsetsMake(64.0f, 0.0f, 0.0f, 0.0f);
-    _scrollView.contentSize = CGSizeMake(self.view.frame.size.width, self.view.frame.size.height - _scrollView.contentInset.top);
     _scrollView.delegate = self;
-    _scrollView.scrollIndicatorInsets = _scrollView.contentInset;
     [self.view addSubview:_scrollView];
     
-    CGRect viewsFrame = self.view.bounds;
-    viewsFrame.size.height -= _scrollView.contentInset.top;
-    _views = [[FlexibleView alloc] initWithFrame:viewsFrame];
+    _views = [[FlexibleView alloc] initWithFrame:self.view.bounds];
     [_scrollView addSubview:_views];
     
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -466,6 +459,11 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     
+    float topMargin = self.view.safeAreaInsets.top - 44.0f;
+    float bottomMargin = self.view.safeAreaInsets.top;
+    _views.frame = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, self.view.frame.size.height - topMargin - bottomMargin);
+    _scrollView.contentSize = _views.frame.size;
+
     if (!_configViews) { return; }
     
     CGFloat maximumX = 0;
@@ -495,9 +493,9 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 - (void)noticeWillShowKeyboard: (NSNotification*)note {
     CGRect newFrame = [[note.userInfo objectForKey:@"UIKeyboardFrameEndUserInfoKey"] CGRectValue];
     NSTimeInterval duration = [[note.userInfo objectForKey:@"UIKeyboardAnimationDurationUserInfoKey"] doubleValue];
-    
+
     void (^animations)() = ^() {
-        _scrollView.contentInset = UIEdgeInsetsMake(64.0f, 0.0f, self.view.frame.size.height - newFrame.origin.y, 0.0f);
+        _scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, self.view.frame.size.height - newFrame.origin.y, 0.0f);
         _scrollView.scrollIndicatorInsets = _scrollView.contentInset;
         //            [_scrollView setNeedsDisplay];
     };
@@ -514,7 +512,7 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
     NSTimeInterval duration = [[note.userInfo objectForKey:@"UIKeyboardAnimationDurationUserInfoKey"] doubleValue];
     
     void (^animations)() = ^() {
-        _scrollView.contentInset = UIEdgeInsetsMake(64.0f, 0.0f, self.view.frame.size.height - newFrame.origin.y, 0.0f);
+        _scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, self.view.frame.size.height - newFrame.origin.y, 0.0f);
         _scrollView.scrollIndicatorInsets = _scrollView.contentInset;
     };
     

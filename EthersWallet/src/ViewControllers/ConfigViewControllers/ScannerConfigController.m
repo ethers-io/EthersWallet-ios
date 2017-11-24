@@ -294,8 +294,11 @@ typedef enum PromptType {
     
     CrossfadeLabel *_infoIcon, *_infoText;
     
+    UIView *_photoDrawer;
+    UIView *_buttonsDrawer;
+
     UIScrollView *_photosScrollView;
-    
+
     BOOL _scanning;
     BOOL _cameraReady;
     
@@ -304,16 +307,14 @@ typedef enum PromptType {
     NSTimer *_textChangeTimer;
     
     UIImpactFeedbackGenerator *_hapticGood, *_hapticBad;
-    
 }
+
 
 @property (nonatomic, assign) PromptType promptType;
 
 @property (nonatomic, copy) NSString *foundName;
 @property (nonatomic, strong) Address *foundAddress;
 @property (nonatomic, strong) BigNumber *foundAmount;
-
-@property (nonatomic, strong) Payment *clipboardPayment;
 
 @property (nonatomic, readonly) UISearchBar *searchBar;
 
@@ -323,8 +324,6 @@ typedef enum PromptType {
 @property (nonatomic, readonly) PhotoPreviewView *photoPreview;
 
 @property (nonatomic, readonly) PhotoView *selectedPhoto;
-
-@property (nonatomic, readonly) UIView *photosView;
 
 @property (nonatomic, readonly) UIView *rescanButton;
 @property (nonatomic, readonly) UIView *clipboardButton;
@@ -352,37 +351,8 @@ typedef enum PromptType {
 
         _photoViews = [NSMutableArray array];
 
-        __weak ScannerConfigController *weakSelf = self;
-        
         self.navigationItem.prompt = @" ";
-                
-        UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-        [NSTimer scheduledTimerWithTimeInterval:1.0f repeats:YES block:^(NSTimer *timer) {
-            
-            // If we died, nuke the timer
-            if (!weakSelf) {
-                [timer invalidate];
-                return;
-            }
-            
-            Payment *payment = nil;
-            
-            if ([pasteboard hasStrings]) {
-                for (NSString *string in [pasteboard strings]) {
-                    payment = [Payment paymentWithURI:string];
-                }
-            }
-            
-            if (!payment && [pasteboard hasURLs]) {
-                for (NSURL *url in [pasteboard URLs]) {
-                    payment = [Payment paymentWithURI:[url absoluteString]];
-                }
-            }
-            
-            weakSelf.clipboardPayment = payment;
-            [weakSelf updateClipboardAnimated:YES];
-        }];
-        
+
         _hapticBad = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
         _hapticGood = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
     }
@@ -397,8 +367,8 @@ typedef enum PromptType {
 #pragma mark - UI
 
 - (void)updateClipboardAnimated: (BOOL)animated {
-    BOOL enabled = (_promptType == PromptTypeScanning && _clipboardPayment);
-    
+    BOOL enabled = (_promptType == PromptTypeScanning);
+
     __weak ScannerConfigController *weakSelf = self;
     void (^animate)() = ^() {
         weakSelf.clipboardButton.alpha = (enabled ? 1.0f: 0.0f);
@@ -442,24 +412,12 @@ typedef enum PromptType {
     }
 }
 
-- (void)setDrawerShowing: (BOOL)showing animated: (BOOL)animated {
-    __weak ScannerConfigController *weakSelf = self;
+- (void)layoutPhotosDrawerAnimated {
     void (^animate)() = ^() {
-        if (showing) {
-            weakSelf.photosView.transform = CGAffineTransformMakeTranslation(0.0f, 0.0f);
-        } else {
-            CGFloat height = weakSelf.photosView.frame.size.height;
-            weakSelf.photosView.transform = CGAffineTransformMakeTranslation(0.0f, height);
-        }
-        weakSelf.rescanButton.transform = weakSelf.photosView.transform;
-        weakSelf.clipboardButton.transform = weakSelf.photosView.transform;
+        [self layoutPhotosDrawer];
+        [self layoutButtons];
     };
-    
-    if (animated) {
-        [UIView animateWithDuration:0.5f animations:animate];
-    } else {
-        animate();
-    }
+    [UIView animateWithDuration:0.5f animations:animate];
 }
 
 - (void)setSpinningShowing: (BOOL)showing animated: (BOOL)animated {
@@ -568,7 +526,7 @@ typedef enum PromptType {
                 visible:(_promptType == PromptTypeScanning || _promptType == PromptTypeFoundScanner)
                animated:YES];
     [self setPhotoPreviewShowing:(_promptType & PROMPT_PREVIEW) animated:YES];
-    [self setDrawerShowing:(_promptType & PROMPT_DRAWER) animated:YES];
+    [self layoutPhotosDrawerAnimated];
     [self setRescanButtonEnabled:!(_promptType & PROMPT_SCANNING) animated:YES];
     [self setSearchShowing:(_promptType & PROMPT_SEARCH) animated:YES];
     
@@ -618,23 +576,22 @@ typedef enum PromptType {
 
 #pragma mark - View Life-Cycle
 
-- (UIView*)addButtonTitle: (NSString*)title action: (SEL)action {
+- (UIView*)makeButtonWithIconName: (NSString*)iconName action: (SEL)action {
+    
     UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 60.0f, 60.0f)];
     view.clipsToBounds = YES;
     view.layer.borderColor = [UIColor colorWithWhite:0.85f alpha:1.0f].CGColor;
     view.layer.borderWidth = 2.0f;
     view.layer.cornerRadius = 30.0f;
-    [self.view addSubview:view];
-    
-    UINavigationBar *background = [[UINavigationBar alloc] initWithFrame:view.bounds];
-    background.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    background.barStyle = UIBarStyleBlack;
-    background.transform = CGAffineTransformMakeRotation(M_PI);
-    [view addSubview:background];
-    
+
+    UIVisualEffectView *blur = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+    blur.frame = view.bounds;
+    blur.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [view addSubview:blur];
+ 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
     button.frame = view.bounds;
-    [button setTitle:title forState:UIControlStateNormal];
+    [button setTitle:iconName forState:UIControlStateNormal];
     button.titleLabel.font = [UIFont fontWithName:FONT_ETHERS size:30.0f];
     [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
     [button setTitleColor:[UIColor colorWithWhite:0.8f alpha:1.0f] forState:UIControlStateNormal];
@@ -647,6 +604,7 @@ typedef enum PromptType {
 - (void)loadView {
     [super loadView];
     
+    /*
     UIView *searchAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 50.0f)];
     {
         searchAccessoryView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -671,15 +629,16 @@ typedef enum PromptType {
         [doneButton addTarget:self action:@selector(dismissFirstResponder) forControlEvents:UIControlEventTouchUpInside];
         [searchAccessoryView addSubview:doneButton];
     }
+     */
 
     self.nextEnabled = NO;
     self.nextTitle = @"Next";
 
     {
-        UIView *titleView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 180.0f, 44.0f + 20.0f + 20.0f)];
+        UIView *titleView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 180.0f, 44.0f)];
         [titleView addSubview:_spinner];
         
-        UIView *tapDetector = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 180.0f, 44.0f + 20.0f)];
+        UIView *tapDetector = [[UIView alloc] initWithFrame:CGRectMake(0.0f, -20.0f, 180.0f, 44.0f + 20.0f)];
         [tapDetector addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapPrompt:)]];
         [titleView addSubview:tapDetector];
 
@@ -758,39 +717,39 @@ typedef enum PromptType {
     _searchBar.tintColor = [UIColor whiteColor];
 
     [self.view addSubview:_searchBar];
-
-    _photosView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, size.height - 160.0f, size.width, 160.0f)];
-    _photosView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    [self.view addSubview:_photosView];
+    
+    _photoDrawer = [[UIView alloc] initWithFrame:CGRectMake(0.0f, size.height - 160.0f, size.width, 160.0f)];
+    _photoDrawer.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [self.view addSubview:_photoDrawer];
 
     // Use a navigation bar for the same blur effect (flip it for a top shadow)
     {
-        /*
-        UINavigationBar *background = [[UINavigationBar alloc] initWithFrame:_photosView.bounds];
-        background.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        background.barStyle = UIBarStyleBlack;
-        background.transform = CGAffineTransformMakeRotation(M_PI);
-        [_photosView addSubview:background];
-         */
-        
         UIVisualEffectView *blur = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
-        blur.frame = _photosView.bounds;
+        blur.frame = _photoDrawer.bounds;
         blur.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        [_photosView addSubview:blur];
+        [_photoDrawer addSubview:blur];
     }
     
-    _rescanButton = [self addButtonTitle:ICON_NAME_CAMERA action:@selector(didTapRestart:)];
-    _rescanButton.alpha = 0.0f;
-    _rescanButton.center = CGPointMake(size.width - 30.0f - 15.0f, size.height - 160.0f - 30.0f - 15.0f);
-
-    _clipboardButton = [self addButtonTitle:ICON_NAME_CLIPBOARD action:@selector(didTapClipboard:)];
-    _clipboardButton.alpha = 0.0f;
-    _clipboardButton.center = CGPointMake(30.0f + 15.0f, size.height - 160.0f - 30.0f - 15.0f);
-
-    _photosScrollView = [[UIScrollView alloc] initWithFrame:_photosView.bounds];
+    _photosScrollView = [[UIScrollView alloc] initWithFrame:_photoDrawer.bounds];
     _photosScrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     _photosScrollView.contentSize = CGSizeMake(size.width, 500.0f);
-    [_photosView addSubview:_photosScrollView];
+    [_photoDrawer addSubview:_photosScrollView];
+    
+    _buttonsDrawer = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, size.width, 60.0f)];
+    _buttonsDrawer.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [self.view addSubview:_buttonsDrawer];
+    
+    _rescanButton = [self makeButtonWithIconName:ICON_NAME_CAMERA action:@selector(didTapRestart:)];
+    _rescanButton.alpha = 0.0f;
+    _rescanButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+    _rescanButton.center = CGPointMake(size.width - 30.0f - 15.0f, 30.0f);
+    [_buttonsDrawer addSubview:_rescanButton];
+    
+    _clipboardButton = [self makeButtonWithIconName:ICON_NAME_CLIPBOARD action:@selector(didTapClipboard:)];
+    _clipboardButton.alpha = 0.0f;
+    _clipboardButton.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
+    _clipboardButton.center = CGPointMake(30.0f + 15.0f, 30.0f);
+    [_buttonsDrawer addSubview:_clipboardButton];
     
     [self updatePhotos];
 }
@@ -810,17 +769,17 @@ typedef enum PromptType {
         
         UILabel *enablePhotos = [[UILabel alloc] initWithFrame:CGRectMake(40.0f, 0.0f, 320.0f - 80.0f, 100.0f)];
         enablePhotos.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
-        enablePhotos.center = CGPointMake(_photosView.frame.size.width / 2.0f, _photosView.frame.size.height / 2.0f);
+        enablePhotos.center = CGPointMake(_photoDrawer.frame.size.width / 2.0f, _photoDrawer.frame.size.height / 2.0f);
         enablePhotos.font = [UIFont fontWithName:FONT_BOLD size:16.0f];
         enablePhotos.numberOfLines = 3;
         enablePhotos.text = @"Please enable photos in your settings to scan QR codes from your camera roll.";
         enablePhotos.textAlignment = NSTextAlignmentCenter;
         enablePhotos.textColor = [UIColor whiteColor];
-        [_photosView addSubview:enablePhotos];
+        [_photoDrawer addSubview:enablePhotos];
     
     } else if (status == PHAuthorizationStatusNotDetermined) {
         __weak ScannerConfigController *weakSelf = self;
-        
+
         [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
             if (status == PHAuthorizationStatusNotDetermined) {
                 // This should never happen, but if it does, prevent infinite-loop
@@ -841,33 +800,59 @@ typedef enum PromptType {
                                     [NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO],
                                     ];
         
-        PHFetchResult *fetchResult = [PHAsset fetchAssetsWithMediaType:PHAssetMediaTypeImage options:options];
-        for (PHAsset *asset in fetchResult) {
-            [weakSelf.photoViews addObject:[[PhotoView alloc] initWithAsset:asset]];
-        }
+        void (^updatePhotos)(PHFetchResult*) = ^(PHFetchResult *fetchResult) {
+            for (PHAsset *asset in fetchResult) {
+                [weakSelf.photoViews addObject:[[PhotoView alloc] initWithAsset:asset]];
+            }
 
-        int columns = 2;
-        if (self.view.frame.size.width > 320.0f) { columns = 3; }
+            int columns = 2;
+            if (self.view.frame.size.width > 320.0f) { columns = 3; }
+            
+            CGFloat padding = 14.0f;
+            CGFloat dx = (self.view.frame.size.width - 2.0f * padding) / columns;
+            
+            NSInteger index = -1;
+            for (PhotoView *photoView in _photoViews) {
+                index++;
+                photoView.center = CGPointMake(padding + dx / 2.0f + (index % columns) * dx, padding + dx / 2.0f + (index / columns) * dx);
+                [_photosScrollView addSubview:photoView];
+                [photoView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapPhoto:)]];
+            }
+            
+            CGFloat height = padding * 2.0f + ceilf(_photoViews.count / columns) * dx;
+            _photosScrollView.contentSize = CGSizeMake(_photosScrollView.frame.size.width, height);
+            
+            [self layoutPhotosDrawerAnimated];
+        };
         
-        CGFloat padding = 14.0f;
-        CGFloat dx = (self.view.frame.size.width - 2.0f * padding) / columns;
-        
-        NSInteger index = -1;
-        for (PhotoView *photoView in _photoViews) {
-            index++;
-            photoView.center = CGPointMake(padding + dx / 2.0f + (index % columns) * dx, padding + dx / 2.0f + (index / columns) * dx);
-            [_photosScrollView addSubview:photoView];
-            [photoView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapPhoto:)]];
-        }
-        
-        CGFloat height = padding * 2.0f + ceilf(_photoViews.count / columns) * dx;
-        _photosScrollView.contentSize = CGSizeMake(_photosScrollView.frame.size.width, height);
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^() {
+            PHFetchResult *fetchResult = [PHAsset fetchAssetsWithMediaType:PHAssetMediaTypeImage options:options];
+            dispatch_async(dispatch_get_main_queue(), ^() {
+                updatePhotos(fetchResult);
+            });
+        });
     }
 }
 
 - (void)didTapClipboard: (UIButton*)button {
-    if (_clipboardPayment) {
-        [self setAddress:_clipboardPayment.address name:nil amount:_clipboardPayment.amount promptType:PromptTypeFoundPasteboard];
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    
+    Payment *payment = nil;
+    
+    if ([pasteboard hasStrings]) {
+        for (NSString *string in [pasteboard strings]) {
+            payment = [Payment paymentWithURI:string];
+        }
+    }
+    
+    if (!payment && [pasteboard hasURLs]) {
+        for (NSURL *url in [pasteboard URLs]) {
+            payment = [Payment paymentWithURI:[url absoluteString]];
+        }
+    }
+
+    if (payment) {
+        [self setAddress:payment.address name:nil amount:payment.amount promptType:PromptTypeFoundPasteboard];
     }
 }
 
@@ -875,20 +860,38 @@ typedef enum PromptType {
     [self setAddress:nil name:nil amount:nil promptType:PromptTypeScanning];
 }
 
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    
-    CGFloat topMargin = self.navigationController.view.safeAreaInsets.top;
+- (void)layoutPhotosDrawer {
     CGFloat bottomMargin = self.navigationController.view.safeAreaInsets.bottom;
-    NSLog(@"TopMargin: %f %f", topMargin, bottomMargin);
+    CGSize size = self.view.frame.size;
     
+    CGFloat height = 160.0f + bottomMargin;
+
+    if (_promptType & PROMPT_DRAWER && _photoViews.count > 0) {
+        _photoDrawer.frame = CGRectMake(0.0f, size.height - height, size.width, height);
+    } else {
+        _photoDrawer.frame = CGRectMake(0.0f, size.height, size.width, height);
+    }
+}
+
+- (void)layoutButtons {
+    CGFloat bottomMargin = self.navigationController.view.safeAreaInsets.bottom;
     CGSize size = self.view.frame.size;
 
-    _searchBar.frame = CGRectMake(25.0f, topMargin + 106.0f, size.width - 50.0f, 44.0f);
-    _photosView.frame = CGRectMake(0.0f, size.height - 160.0f - bottomMargin, size.width, 160.0f + bottomMargin);
+    if (_promptType & PROMPT_DRAWER && _photoViews.count > 0) {
+        _buttonsDrawer.frame = CGRectMake(0.0f, size.height - 160.0f - bottomMargin - 60.0f - 15.0f, size.width, 60.0f);
+    } else {
+        _buttonsDrawer.frame = CGRectMake(0.0f, size.height - bottomMargin - 60.0f - 15.0f, size.width, 60.0f);
+    }
+}
+
+- (void)viewDidLayoutSubviews {
+    CGFloat topMargin = self.navigationController.view.safeAreaInsets.top;
     
-    _rescanButton.center = CGPointMake(size.width - 30.0f - 15.0f, size.height - 160.0f - 30.0f - 15.0f - topMargin - bottomMargin);
-    _clipboardButton.center = CGPointMake(30.0f + 15.0f, size.height - 160.0f - 30.0f - 15.0f - topMargin - bottomMargin);
+    CGSize size = self.view.frame.size;
+    
+    _searchBar.frame = CGRectMake(25.0f, topMargin + 106.0f, size.width - 50.0f, 44.0f);
+    [self layoutPhotosDrawer];
+    [self layoutButtons];
 }
 
 
