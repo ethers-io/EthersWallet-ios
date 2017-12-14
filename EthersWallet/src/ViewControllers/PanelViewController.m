@@ -380,10 +380,13 @@
 
             // Scale and offset the panel view to trim off the extra header and footer
             UIEdgeInsets edges = self.view.safeAreaInsets;
+
+            // iphone 7 - 64 0 => 20
+            // iphone X - 88 34 => 12
             CGSize size = self.view.frame.size;
             CGFloat scale = (size.height) / (size.height - edges.top - edges.bottom + 44.0f);
             CGFloat offsetX = (scale * size.width - size.width) / 2.0f;
-            CGFloat offsetY = 0; // @TODO : -(scale * 20 - 10) / 2.0f;
+            CGFloat offsetY = -(scale * (edges.top - 44.0f - edges.bottom)) / 2;
             _panelView.transform = CGAffineTransformScale(CGAffineTransformMakeTranslation(offsetX, offsetY), scale, scale);
 
             // Fade the Ethers button
