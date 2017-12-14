@@ -150,6 +150,7 @@ typedef enum WalletError {
 - (void)sendPayment: (Payment*)payment callback: (void (^)(Transaction*, NSError*))callback;
 - (void)sendTransaction: (Transaction*)transaction callback:(void (^)(Transaction*, NSError*))callback;
 
+- (void)signMessage: (NSData*)message callback:(void (^)(Signature*, NSError*))callback;
 
 #pragma mark - Debug (Modal UI)
 

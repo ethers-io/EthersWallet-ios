@@ -143,8 +143,8 @@
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
 
-    [_viewController updateTopMargin:(self.view.safeAreaInsets.top - 44.0f)
-                        bottomMargin:(self.view.safeAreaInsets.bottom)];
+//    [_viewController updateTopMargin:(self.view.safeAreaInsets.top - 44.0f)
+//                        bottomMargin:(self.view.safeAreaInsets.bottom)];
 
     [self focusPanel:_focusPanel animated:NO];
 }
@@ -180,16 +180,14 @@
     PanelController *viewController = [_dataSource panelViewController:self viewControllerAtIndex:index];
     if (viewController == _viewController) { return; }
     
-    // Setup its margins
-    [viewController updateTopMargin:(self.view.safeAreaInsets.top - 44.0f)
-                       bottomMargin:(self.view.safeAreaInsets.bottom)];
-
     // Add a button to bring unfocus it
     UIButton *button = [Utilities ethersButton:ICON_NAME_LOGO fontSize:40.0f color:0xffffff];
     [button addTarget:self action:@selector(tapEthers) forControlEvents:UIControlEventTouchUpInside];
     viewController.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:button];
 
     PanelController *oldViewController = _viewController;
+    
+    UIEdgeInsets safeAreaInsets = self.view.safeAreaInsets;
 
     // Swap the view controllers as a container view controller
     void (^swapViewControllers)() = ^() {
@@ -204,6 +202,10 @@
         
         [oldViewController didMoveToParentViewController:nil];
         [viewController didMoveToParentViewController:self];
+
+        // Setup its margins (After it has been added to the view hierarchy)
+        [viewController updateTopMargin:(safeAreaInsets.top - 44.0f)
+                           bottomMargin:(safeAreaInsets.bottom)];
 
         oldViewController.navigationItem.leftBarButtonItem = nil;
         
@@ -380,8 +382,9 @@
             UIEdgeInsets edges = self.view.safeAreaInsets;
             CGSize size = self.view.frame.size;
             CGFloat scale = (size.height) / (size.height - edges.top - edges.bottom + 44.0f);
-            CGFloat offset = (scale * size.width - size.width) / 2.0f;
-            _panelView.transform = CGAffineTransformScale(CGAffineTransformMakeTranslation(offset, 0.0f), scale, scale);
+            CGFloat offsetX = (scale * size.width - size.width) / 2.0f;
+            CGFloat offsetY = 0; // @TODO : -(scale * 20 - 10) / 2.0f;
+            _panelView.transform = CGAffineTransformScale(CGAffineTransformMakeTranslation(offsetX, offsetY), scale, scale);
 
             // Fade the Ethers button
             viewController.navigationItem.leftBarButtonItem.customView.alpha = 0.5f;

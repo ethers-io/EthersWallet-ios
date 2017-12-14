@@ -57,6 +57,7 @@
 #import "OptionsConfigController.h"
 #import "PasswordConfigController.h"
 #import "ScannerConfigController.h"
+#import "SigningConfigController.h"
 #import "TransactionConfigController.h"
 
 #import "CachedDataStore.h"
@@ -1272,6 +1273,37 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     [ModalViewController presentViewController:navigationController animated:YES completion:nil];
 }
 
+- (void)signMessage: (NSData*)message callback:(void (^)(Signature*, NSError*))callback {
+    
+    // No signer is an automatic cancel
+    if (_activeAccountIndex == AccountNotFound) {
+        dispatch_async(dispatch_get_main_queue(), ^() {
+            callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
+        });
+        return;
+    }
+    
+    Signer *signer = [_accounts objectAtIndex:_activeAccountIndex];
+    NSLog(@"MM: %@", message);
+    SigningConfigController *config = [SigningConfigController configWithSigner:signer message:message];
+    
+    config.onSign = ^(SigningConfigController *configController, Signature *signature) {
+        [(ConfigNavigationController*)(configController.navigationController) dismissWithResult:signature];
+    };
+    
+    ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:config];
+    navigationController.onDismiss = ^(NSObject *result) {
+        if (![result isKindOfClass:[Signature class]]) {
+            callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
+        } else {
+            callback((Signature*)result, nil);
+        }
+    };
+    
+    [ModalViewController presentViewController:navigationController animated:YES completion:nil];
+//
+//    callback([Signature signatureWithData:[SecureData hexStringToData:@"0x0123456789012345678901234567890123456789012345678901234567890123012345678901234567890123456789012345678901234567890123456789012300"]], nil);
+}
 
 #pragma mark - Debugging
 

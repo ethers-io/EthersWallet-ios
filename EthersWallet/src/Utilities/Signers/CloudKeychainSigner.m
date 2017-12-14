@@ -693,7 +693,7 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     OSStatus status = SecItemDelete((__bridge CFDictionaryRef)query);
     
     if (status != noErr) {
-        NSLog(@"CloudKeychainSigner: Error SecItemDelete - %d", status);
+        NSLog(@"CloudKeychainSigner: Error SecItemDelete - %d", (int)status);
     } else {
         NSLog(@"CloudKeychainSigner: Success - destroyed Secure Enclave key");
     }
@@ -910,6 +910,23 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     }];
 }
 
+- (void)signMessage: (NSData*)message callback: (void (^)(Signature*, NSError*))callback {
+    if (!_account) {
+        dispatch_async(dispatch_get_main_queue(), ^() {
+            callback(nil, [NSError errorWithDomain:SignerErrorDomain code:SignerErrorAccountLocked userInfo:@{}]);
+        });
+        return;
+    }
+    
+    Signature *signature = [_account signMessage:message];
+    
+    [self setBiometricSupport];
+
+    dispatch_async(dispatch_get_main_queue(), ^() {
+        callback(signature, nil);
+    });
+
+}
 
 #pragma mark - Password-Based Unlock
 

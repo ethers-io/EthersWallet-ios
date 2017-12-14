@@ -128,6 +128,8 @@ typedef enum SignerError {
 - (void)send: (Transaction*)transaction callback: (void (^)(Transaction*, NSError*))callback;
 
 
+- (void)signMessage: (NSData*)message callback: (void (^)(Signature*, NSError*))callback;
+
 // Mnemonic Phrase
 //   - Watch-only wallets (just an address) do not have (known) mnemonic phrases
 //   - Secret storage JSON wallets created by ethers do

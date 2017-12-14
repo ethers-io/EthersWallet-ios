@@ -39,6 +39,7 @@
 #import "OptionsConfigController.h"
 #import "PanelViewController.h"
 #import "ScannerConfigController.h"
+#import "SearchTitleView.h"
 #import "SharedDefaults.h"
 #import "SignedRemoteDictionary.h"
 #import "UIColor+hex.h"
@@ -60,7 +61,7 @@ static NSString *CanaryUrl = @"https://ethers.io/canary.raw";
 static Address *CanaryAddress = nil;
 static NSString *CanaryVersion = nil;
 
-@interface AppDelegate () <AccountsViewControllerDelegate, PanelViewControllerDataSource> {
+@interface AppDelegate () <AccountsViewControllerDelegate, PanelViewControllerDataSource, SearchTitleViewDelegate> {
     
     NSArray<NSString*> *_applicationTitles;
     NSArray<NSString*> *_applicationUrls;
@@ -74,7 +75,10 @@ static NSString *CanaryVersion = nil;
 @end
 
 
-@implementation AppDelegate
+@implementation AppDelegate {
+    UIBarButtonItem *_addAccountsBarButton, *_addApplicationBarButton;
+    SearchTitleView *_searchTitleView;
+}
 
 #pragma mark - Life-Cycle
 
@@ -101,18 +105,30 @@ static NSString *CanaryVersion = nil;
     _wallet = [Wallet walletWithKeychainKey:@"io.ethers.sharedWallet"];
     _walletViewController = [[WalletViewController alloc] initWithWallet:_wallet];
     
+    _searchTitleView = [[SearchTitleView alloc] init];
+    _searchTitleView.delegate = self;
+    
     _panelViewController = [[PanelViewController alloc] initWithNibName:nil bundle:nil];
     _panelViewController.dataSource = self;
-    _panelViewController.navigationItem.titleView = [Utilities navigationBarLogoTitle];
+    _panelViewController.navigationItem.titleView = _searchTitleView;
     _panelViewController.titleColor = [UIColor colorWithWhite:1.0f alpha:1.0f];
 
     // The Accounts button on the top-right
     {
         UIButton *button = [Utilities ethersButton:ICON_NAME_ACCOUNTS fontSize:33.0f color:0xffffff];
         [button addTarget:self action:@selector(tapAccounts) forControlEvents:UIControlEventTouchUpInside];
-        _panelViewController.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:button];
+        _addAccountsBarButton = [[UIBarButtonItem alloc] initWithCustomView:button];
     }
     
+    _panelViewController.navigationItem.leftBarButtonItem = _addAccountsBarButton;
+    
+    _addApplicationBarButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd
+                                                                             target:self
+                                                                             action:@selector(tapAddApplication)];
+    
+    // @TODO: We aren't ready for any app yet
+    //_panelViewController.navigationItem.rightBarButtonItem = _addApplicationBarButton;
+
     {
         CloudView *cloudView = [[CloudView alloc] initWithFrame:_panelViewController.view.bounds];
         cloudView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -123,8 +139,8 @@ static NSString *CanaryVersion = nil;
     UIColor *navigationBarColor = [UIColor colorWithHex:ColorHexNavigationBar];
     [Utilities setupNavigationBar:rootController.navigationBar backgroundColor:navigationBarColor];
 
-    [_panelViewController focusPanel:YES animated:NO];
-    //[_panelViewController focusPanel:NO animated:NO];
+    //[_panelViewController focusPanel:YES animated:NO];
+    [_panelViewController focusPanel:NO animated:NO];
 
     _window.rootViewController = rootController;
     
@@ -211,6 +227,50 @@ static NSString *CanaryVersion = nil;
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
 
+#pragma mark - SearchTitleViewDelegate
+
+- (void)tapAddApplication {
+    [_panelViewController.navigationItem setLeftBarButtonItem:nil animated:YES];
+    [_panelViewController.navigationItem setRightBarButtonItem:nil animated:YES];
+    [_searchTitleView setWidth:_panelViewController.view.frame.size.width animated:YES];
+    [_searchTitleView becomeFirstResponder];
+}
+
+- (void)untapAddApplication {
+    [_panelViewController.navigationItem setLeftBarButtonItem:_addAccountsBarButton animated:YES];
+    [_panelViewController.navigationItem setRightBarButtonItem:_addApplicationBarButton animated:YES];
+    [_searchTitleView setWidth:SEARCH_TITLE_HIDDEN_WIDTH animated:YES];
+}
+
+- (void)searchTitleViewDidCancel:(SearchTitleView *)searchTitleView {
+    [self untapAddApplication];
+}
+
+- (BOOL)launchApplication: (NSString*)url {
+    NSURL *check = [NSURL URLWithString:url];
+    if (check && check.host.length > 0) {
+        NSMutableArray *urls = [_applicationUrls mutableCopy];
+        [urls insertObject:url atIndex:0];
+        _applicationUrls = urls;
+        
+        NSMutableArray *titles = [_applicationTitles mutableCopy];
+        [titles insertObject:check.host atIndex:0];
+        _applicationTitles = titles;
+        
+        [_panelViewController reloadData];
+        _panelViewController.viewControllerIndex = 1;
+        
+        return YES;
+    }
+    return NO;
+}
+
+- (void)searchTitleViewDidConfirm:(SearchTitleView *)searchTitleView {
+    BOOL valid = [self launchApplication:searchTitleView.searchText];
+    if (valid) {
+        [self untapAddApplication];
+    }
+}
 
 #pragma mark - AccountsViewControllerDelegate
 
@@ -231,7 +291,6 @@ static NSString *CanaryVersion = nil;
     _wallet.activeAccountIndex = accountIndex;
 }
 
-
 #pragma mark - Applications
 
 - (void)notifyActiveAccountDidChange: (NSNotification*)note {
@@ -240,20 +299,23 @@ static NSString *CanaryVersion = nil;
 
 - (void)setupApplications {
     if (_wallet.activeAccountProvider.chainId == ChainIdRopsten) {
-        _applicationTitles = @[@"Welcome", @"Testnet Faucet", @"Block Explorer", @"Test Token"];
+        _applicationTitles = @[@"Welcome", @"Testnet Faucet", @"Block Explorer", @"Test Token", @"Web3 Test"];
         _applicationUrls = @[
                              @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
                              @"https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/",
                              @"https://0xc3fbbba629d27a348a2f3ccd3e8bdcdca9b1019e.ethers.space/",
-                             @"https://0x84db171b84950185431e76d6cd2aa5ce1cf853cf.ethers.space"
+                             @"https://0x84db171b84950185431e76d6cd2aa5ce1cf853cf.ethers.space",
+                             @"https://0x0975cc18dc1ae5e744d117e59adf34697719be3a.ethers.space/"
                              ];
     
     } else {
-        _applicationTitles = @[@"Welcome", @"DevCon2 PoA", @"Block Explorer"];
+        _applicationTitles = @[@"Welcome", @"CryptoKitties", @"DevCon2 PoA", @"Block Explorer", @"Web3 Test"];
         _applicationUrls = @[
                              @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
+                             @"https://www.cryptokitties.co/",
                              @"https://0x2f2ab85f856ec137699cbe5d8038110dd7ce9cbe.ethers.space/",
                              @"https://c3fbbba629d27a348a2f3ccd3e8bdcdca9b1019e.ethers.space/",
+                             @"https://0x0975cc18dc1ae5e744d117e59adf34697719be3a.ethers.space/"
                              ];
     }
     
@@ -475,20 +537,30 @@ typedef enum ExternalAction {
     BOOL handled = NO;
     
     if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb]) {
+        NSLog(@"Handle: %@", userActivity.webpageURL);
         
         // Make sure we are at a URL we expect
         if (![userActivity.webpageURL.scheme isEqualToString:@"https"]) { return NO; }
         if (![userActivity.webpageURL.host isEqualToString:@"ethers.io"]) { return NO; }
-        if (![userActivity.webpageURL.path hasPrefix:@"/app-link"]) { return NO; }
+        if ([userActivity.webpageURL.path hasPrefix:@"/app-link"]) {
+            if ([userActivity.webpageURL.fragment hasPrefix:@"!debug"] || [userActivity.webpageURL.fragment hasPrefix:@"!config"]) {
+                handled = [self handleAction:ExternalActionConfig payment:nil];
+
+            } else if ([userActivity.webpageURL.fragment hasPrefix:@"!scan"]) {
+                handled = [self handleAction:ExternalActionScan payment:nil];
+
+            } else if ([userActivity.webpageURL.fragment hasPrefix:@"!wallet"]) {
+                handled = [self handleAction:ExternalActionWallet payment:nil];
+            }
         
-        if ([userActivity.webpageURL.fragment hasPrefix:@"!debug"] || [userActivity.webpageURL.fragment hasPrefix:@"!config"]) {
-            handled = [self handleAction:ExternalActionConfig payment:nil];
-
-        } else if ([userActivity.webpageURL.fragment hasPrefix:@"!scan"]) {
-            handled = [self handleAction:ExternalActionScan payment:nil];
-
-        } else if ([userActivity.webpageURL.fragment hasPrefix:@"!wallet"]) {
-            handled = [self handleAction:ExternalActionWallet payment:nil];
+        } else if ([userActivity.webpageURL.fragment hasPrefix:@"!/app-link/"]) {
+            NSString *url = [NSString stringWithFormat:@"https://%@", [userActivity.webpageURL.fragment substringFromIndex:11]];
+            NSUInteger index = [_applicationUrls indexOfObject:url];
+            if (index == NSNotFound) {
+                [self launchApplication:url];
+            } else {
+                _panelViewController.viewControllerIndex = index + 1;
+            }
         }
     }
     

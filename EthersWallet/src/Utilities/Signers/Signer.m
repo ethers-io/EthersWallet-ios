@@ -482,6 +482,12 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
     });
 }
 
+- (void)signMessage: (NSData*)message callback: (void (^)(Signature*, NSError*))callback {
+    dispatch_async(dispatch_get_main_queue(), ^() {
+        callback(nil, [NSError errorWithDomain:SignerErrorDomain code:SignerErrorNotImplemented userInfo:@{}]);
+    });
+}
+
 
 - (BOOL)supportsMnemonicPhrase {
     return NO;

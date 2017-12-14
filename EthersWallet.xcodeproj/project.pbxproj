@@ -34,6 +34,11 @@
 		E2B6A32C1F3E35A400B315B6 /* ConfigView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A32B1F3E35A400B315B6 /* ConfigView.m */; };
 		E2B6A32F1F3E534300B315B6 /* DoneConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A32E1F3E534300B315B6 /* DoneConfigController.m */; };
 		E2B6A3321F3EEF0500B315B6 /* CloudKeychainSigner.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B6A3311F3EEF0500B315B6 /* CloudKeychainSigner.m */; };
+		E2B972541FDEF74B00D4CC18 /* EthersScriptHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B972531FDEF74B00D4CC18 /* EthersScriptHandler.m */; };
+		E2B972591FDEFFCC00D4CC18 /* ethers-web3.js in Resources */ = {isa = PBXBuildFile; fileRef = E2B972571FDEFFCB00D4CC18 /* ethers-web3.js */; };
+		E2B9725A1FDEFFCC00D4CC18 /* ethers-web3.min.js in Resources */ = {isa = PBXBuildFile; fileRef = E2B972581FDEFFCC00D4CC18 /* ethers-web3.min.js */; };
+		E2B9725E1FE07AD800D4CC18 /* SigningConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B9725D1FE07AD800D4CC18 /* SigningConfigController.m */; };
+		E2BF0F941FCA20F900DD1B86 /* SearchTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2BF0F931FCA20F900DD1B86 /* SearchTitleView.m */; };
 		E2C1671E1F4AB48F001B4A31 /* DebugConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2C1671D1F4AB48F001B4A31 /* DebugConfigController.m */; };
 		E2C167221F4AB5A2001B4A31 /* ConfigToggle.m in Sources */ = {isa = PBXBuildFile; fileRef = E2C167211F4AB5A2001B4A31 /* ConfigToggle.m */; };
 		E2FA03E61E428AC10013E5A7 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA03E51E428AC10013E5A7 /* main.m */; };
@@ -178,6 +183,14 @@
 		E2B6A32E1F3E534300B315B6 /* DoneConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DoneConfigController.m; path = src/ViewControllers/DoneConfigController.m; sourceTree = "<group>"; };
 		E2B6A3301F3EEF0500B315B6 /* CloudKeychainSigner.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CloudKeychainSigner.h; path = src/Utilities/Signers/CloudKeychainSigner.h; sourceTree = "<group>"; };
 		E2B6A3311F3EEF0500B315B6 /* CloudKeychainSigner.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CloudKeychainSigner.m; path = src/Utilities/Signers/CloudKeychainSigner.m; sourceTree = "<group>"; };
+		E2B972521FDEF74B00D4CC18 /* EthersScriptHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EthersScriptHandler.h; path = src/ViewControllers/Applications/EthersScriptHandler.h; sourceTree = "<group>"; };
+		E2B972531FDEF74B00D4CC18 /* EthersScriptHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = EthersScriptHandler.m; path = src/ViewControllers/Applications/EthersScriptHandler.m; sourceTree = "<group>"; };
+		E2B972571FDEFFCB00D4CC18 /* ethers-web3.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = "ethers-web3.js"; path = "Assets/JavaScript/ethers-web3.js"; sourceTree = "<group>"; };
+		E2B972581FDEFFCC00D4CC18 /* ethers-web3.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = "ethers-web3.min.js"; path = "Assets/JavaScript/ethers-web3.min.js"; sourceTree = "<group>"; };
+		E2B9725C1FE07AD800D4CC18 /* SigningConfigController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SigningConfigController.h; path = src/ViewControllers/ConfigViewControllers/SigningConfigController.h; sourceTree = "<group>"; };
+		E2B9725D1FE07AD800D4CC18 /* SigningConfigController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SigningConfigController.m; path = src/ViewControllers/ConfigViewControllers/SigningConfigController.m; sourceTree = "<group>"; };
+		E2BF0F921FCA20F900DD1B86 /* SearchTitleView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SearchTitleView.h; path = src/Views/SearchTitleView.h; sourceTree = "<group>"; };
+		E2BF0F931FCA20F900DD1B86 /* SearchTitleView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SearchTitleView.m; path = src/Views/SearchTitleView.m; sourceTree = "<group>"; };
 		E2C1671C1F4AB48F001B4A31 /* DebugConfigController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DebugConfigController.h; path = src/ViewControllers/ConfigViewControllers/DebugConfigController.h; sourceTree = "<group>"; };
 		E2C1671D1F4AB48F001B4A31 /* DebugConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DebugConfigController.m; path = src/ViewControllers/ConfigViewControllers/DebugConfigController.m; sourceTree = "<group>"; };
 		E2C167201F4AB5A2001B4A31 /* ConfigToggle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigToggle.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigToggle.h; sourceTree = "<group>"; };
@@ -324,6 +337,8 @@
 				E2B6A3241F3E2FA400B315B6 /* PasswordConfigController.m */,
 				E29AB10B1F4E4E1C0009FEF0 /* ScannerConfigController.h */,
 				E29AB10C1F4E4E1C0009FEF0 /* ScannerConfigController.m */,
+				E2B9725C1FE07AD800D4CC18 /* SigningConfigController.h */,
+				E2B9725D1FE07AD800D4CC18 /* SigningConfigController.m */,
 				E2B3BE471F4165B400C5EC1C /* TransactionConfigController.h */,
 				E2B3BE481F4165B400C5EC1C /* TransactionConfigController.m */,
 			);
@@ -351,6 +366,15 @@
 				E2FF6A1B1F47988E00544B0B /* SliderKeyboardView.m */,
 			);
 			name = ConfigViews;
+			sourceTree = "<group>";
+		};
+		E2B972501FDEF6AE00D4CC18 /* Application */ = {
+			isa = PBXGroup;
+			children = (
+				E2B972521FDEF74B00D4CC18 /* EthersScriptHandler.h */,
+				E2B972531FDEF74B00D4CC18 /* EthersScriptHandler.m */,
+			);
+			name = Application;
 			sourceTree = "<group>";
 		};
 		E2FA03D81E428AC10013E5A7 = {
@@ -441,6 +465,8 @@
 				E2FA041F1E428DF50013E5A7 /* MnemonicPhraseView.m */,
 				E2FA04201E428DF50013E5A7 /* QRCodeView.h */,
 				E2FA04211E428DF50013E5A7 /* QRCodeView.m */,
+				E2BF0F921FCA20F900DD1B86 /* SearchTitleView.h */,
+				E2BF0F931FCA20F900DD1B86 /* SearchTitleView.m */,
 				E2FA04141E428DF50013E5A7 /* SectionHeaderView.h */,
 				E2FA04151E428DF50013E5A7 /* SectionHeaderView.m */,
 				E2FA04161E428DF50013E5A7 /* TransactionTableViewCell.h */,
@@ -454,6 +480,7 @@
 		E2FA040B1E428DA80013E5A7 /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				E2B972501FDEF6AE00D4CC18 /* Application */,
 				E2B6A3081F3CEFCC00B315B6 /* CongifViewControllers */,
 				E2FA042C1E428E020013E5A7 /* AccountsViewController.h */,
 				E2FA042D1E428E020013E5A7 /* AccountsViewController.m */,
@@ -549,6 +576,8 @@
 		E2FA04951E4316E30013E5A7 /* JavaScript */ = {
 			isa = PBXGroup;
 			children = (
+				E2B972571FDEFFCB00D4CC18 /* ethers-web3.js */,
+				E2B972581FDEFFCC00D4CC18 /* ethers-web3.min.js */,
 				E2FA04961E4316F80013E5A7 /* ethers.js */,
 				E2FA04971E4316F80013E5A7 /* index.html */,
 			);
@@ -722,9 +751,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				E2FA03F11E428AC10013E5A7 /* Assets.xcassets in Resources */,
+				E2B9725A1FDEFFCC00D4CC18 /* ethers-web3.min.js in Resources */,
 				E2FA04751E429A070013E5A7 /* LaunchScreen.storyboard in Resources */,
 				E2FA04A01E43186D0013E5A7 /* Info.plist in Resources */,
 				E2FA04981E4316F80013E5A7 /* ethers.js in Resources */,
+				E2B972591FDEFFCC00D4CC18 /* ethers-web3.js in Resources */,
 				E2FA048E1E4315180013E5A7 /* cloud-0.png in Resources */,
 				E2FA04941E4315580013E5A7 /* ethers.ttf in Resources */,
 				E2FA04991E4316F80013E5A7 /* index.html in Resources */,
@@ -755,6 +786,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2B972541FDEF74B00D4CC18 /* EthersScriptHandler.m in Sources */,
 				E2B6A3321F3EEF0500B315B6 /* CloudKeychainSigner.m in Sources */,
 				E2C1671E1F4AB48F001B4A31 /* DebugConfigController.m in Sources */,
 				E2FA042A1E428DF50013E5A7 /* QRCodeView.m in Sources */,
@@ -777,6 +809,7 @@
 				E2C167221F4AB5A2001B4A31 /* ConfigToggle.m in Sources */,
 				E2FA04121E428DDC0013E5A7 /* Wallet.m in Sources */,
 				E2B6A31F1F3D18FD00B315B6 /* IconView.m in Sources */,
+				E2BF0F941FCA20F900DD1B86 /* SearchTitleView.m in Sources */,
 				E2B6A3191F3D113000B315B6 /* BlockButton.m in Sources */,
 				E2FA04291E428DF50013E5A7 /* MnemonicPhraseView.m in Sources */,
 				E2FA043B1E428E030013E5A7 /* ApplicationViewController.m in Sources */,
@@ -790,6 +823,7 @@
 				E2FA04551E428E0E0013E5A7 /* Utilities.m in Sources */,
 				E2FA044F1E428E0E0013E5A7 /* AsyncOperation.m in Sources */,
 				E2B6A3251F3E2FA400B315B6 /* PasswordConfigController.m in Sources */,
+				E2B9725E1FE07AD800D4CC18 /* SigningConfigController.m in Sources */,
 				E2FF6A1C1F47988E00544B0B /* SliderKeyboardView.m in Sources */,
 				E2FA04131E428DDC0013E5A7 /* AppDelegate.m in Sources */,
 				E2FA04521E428E0E0013E5A7 /* SharedDefaults.m in Sources */,
