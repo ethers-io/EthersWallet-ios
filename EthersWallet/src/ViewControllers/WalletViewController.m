@@ -628,7 +628,6 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 
 - (void)tapManage {
     [_wallet manageAccountAtIndex:_wallet.activeAccountIndex callback:^() {
-        NSLog(@"FOO");
     }];
 }
 

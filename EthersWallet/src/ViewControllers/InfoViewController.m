@@ -1322,7 +1322,6 @@ typedef enum InfoTextFieldStatus {
         }
         
         NSString *password = textField.text;
-        NSLog(@"PS: %@", password);
         
         if ([password isEqualToString:@""]) {
             textField.status = InfoTextFieldStatusNone;
@@ -1502,7 +1501,6 @@ static UILabel *EtherPriceLabel = nil;
     // Value changed...
     __weak InfoTextField *weakSelf = infoTextField;
     infoTextField.blockTextField.didChangeText = ^(BlockTextField *textField) {
-        NSLog(@"Changed: %@", textField.text);
         
         NSString *text = textField.text;
         if ([[[NSLocale currentLocale] decimalSeparator] isEqualToString:@","]) {

@@ -88,7 +88,6 @@ static const NSString* const EthersVersion = @"v\x01\n";
 }
 
 - (void)dealloc {
-    NSLog(@"ScriptHandler Dealloc: %@", self);
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
@@ -263,7 +262,7 @@ static const NSString* const EthersVersion = @"v\x01\n";
          */
         
     } else if ([action isEqualToString:@"signMessage"]) {
-        NSLog(@"Params: %@", params);
+
         if (!_wallet.activeAccountAddress) {
             [self sendError:@"cancelled" messageId:messageId];
             

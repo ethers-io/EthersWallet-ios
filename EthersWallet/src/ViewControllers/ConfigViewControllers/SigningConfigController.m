@@ -96,6 +96,7 @@
         ascii = NO;
         break;
     }
+    
     NSLog(@"Message: %@", _message);
     
     if (ascii) {
