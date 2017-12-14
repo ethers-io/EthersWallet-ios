@@ -1,0 +1,21 @@
+{
+  "name": "javascriptbridge",
+  "version": "0.0.1",
+  "description": "JavaScript Bridge for Ethers Wallet",
+  "main": "index.js",
+  "dependencies": {
+    "ethers-contracts": "^2.1.0",
+    "ethers-providers": "^2.1.0",
+    "ethers-utils": "^2.1.0"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^5.0.0",
+    "grunt-contrib-uglify": "^1.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Richard Moore <me@ricmoo.com>",
+  "license": "MIT"
+}
