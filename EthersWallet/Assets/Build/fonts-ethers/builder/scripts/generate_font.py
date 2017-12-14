@@ -17,8 +17,10 @@ f = fontforge.font()
 f.encoding = 'UnicodeFull'
 f.design_size = 16
 f.em = 512
-f.ascent = 448
-f.descent = 64
+#f.ascent = 448
+#f.descent = 64
+f.ascent = 512
+f.descent = 0
 
 font_name = 'ethers'
 
