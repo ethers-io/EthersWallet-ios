@@ -93,8 +93,9 @@
 - (void)dealloc {
     // Make sure we allow the webview, et al to be cleaned up
     [_webView.configuration.userContentController removeAllUserScripts];
-    [_webView.configuration.userContentController removeScriptMessageHandlerForName:@"ethers"];
-    
+    [_webView.configuration.userContentController removeScriptMessageHandlerForName:_etherScriptHandler.name];
+    [_webView.configuration.userContentController removeScriptMessageHandlerForName:_web3ScriptHandler.name];
+
     // Stop listening for events
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -104,16 +105,9 @@
     
     CGSize size = self.view.frame.size;
     
-    NSLog(@"Updating: %f %f", topMargin, bottomMargin);
-    
-//    CGFloat dTop = _webView.scrollView.contentInset.top - topMargin - 44.0f;
-    //CGFloat dTop = -(topMargin + 44.0f);
-    //_loadingContentOffset = CGPointMake(0.0f, -(topMargin + 44.0f));
-
     _webView.frame = CGRectMake(0.0f, topMargin + 44.0f, size.width, size.height - topMargin - 44.0f);
     _webView.scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0, bottomMargin + 44.0f, 0);
     _webView.scrollView.scrollIndicatorInsets = UIEdgeInsetsMake(0.0f, 0.0f, bottomMargin + 44.0f, 0.0f);
-    //_webView.scrollView.contentOffset = CGPointMake(0.0f, _webView.scrollView.contentOffset.y + dTop);
     
     _toolbarContainer.frame = CGRectMake(0.0f, size.height - 44.0f - bottomMargin, size.width, 44.0f + bottomMargin);
 }
@@ -200,7 +194,6 @@
     __weak ApplicationViewController *weakSelf = self;
     void (^checkButtons)(NSTimer*) = ^(NSTimer *timer) {
         if (!weakSelf) {
-            NSLog(@"Killing refresh timer");
             [timer invalidate];
             return;
         }
@@ -246,9 +239,7 @@
 }
 
 - (void)buttonRefresh: (UIBarButtonItem*)sender {
-    NSLog(@"BB: %@", NSStringFromCGPoint(_webView.scrollView.contentOffset));
     _loading = [_webView reloadFromOrigin];
-    
 }
 
 #pragma mark - EthersScriptHandler
