@@ -149,9 +149,14 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 }
 
 - (UIView*)addSeparator {
-    UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0, 320.0f, 0.5f)];
+    // Some devices are 3 pixels per point, some 2 per point, so target 1 pixel tall
+    // with a slightly brighter line when thinner.
+    
+    CGFloat scale = [UIScreen mainScreen].scale;
+    
+    UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0, 320.0f, 1.0f / scale)];
     separator.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    separator.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.7f];
+    separator.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.6f + scale * 0.05f];
     [_views addSubview:separator];
     return separator;
 }
