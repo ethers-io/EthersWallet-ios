@@ -28,6 +28,16 @@
 #import "PanelController.h"
 #import "Wallet.h"
 
+@class ApplicationViewController;
+
+
+@protocol ApplicationViewControllerDelegate
+
+- (void)applicationViewControllerDidLoad:(ApplicationViewController*)applicationViewController;
+
+@end
+
+
 @interface ApplicationViewController : PanelController
 
 - (instancetype)initWithApplicationTitle: (NSString*)applicationTitle
@@ -38,5 +48,7 @@
 @property (nonatomic, readonly) NSURL *url;
 
 @property (nonatomic, readonly) Wallet *wallet;
+
+@property (nonatomic, weak) NSObject<ApplicationViewControllerDelegate> *delegate;
 
 @end

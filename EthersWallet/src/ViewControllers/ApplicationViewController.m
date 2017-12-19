@@ -40,6 +40,7 @@
     
     UIButton *_backButton, *_forwardButton;
     
+    UIActivityIndicatorView *_spinner;
     WKNavigation *_loading;
 }
 
@@ -58,6 +59,11 @@
         _url = url;
         
         _wallet = wallet;
+        
+        _spinner = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 100.0f, 100.0f)];
+        _spinner.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin;
+        _spinner.color = [UIColor colorWithHex:ColorHexToolbarIcon];
+        _spinner.transform = CGAffineTransformMakeScale(2.0f, 2.0f);
         
         _etherScriptHandler = [[EthersScriptHandler alloc] initWithName:@"Ethers" wallet:wallet];
         _etherScriptHandler.delegate = self;
@@ -191,6 +197,10 @@
     toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleBottomMargin;
     [_toolbarContainer addSubview:toolbar];
     
+    _spinner.center = CGPointMake(size.width / 2.0f, size.height / 2.0f);
+    [self.view addSubview:_spinner];
+    [_spinner startAnimating];
+
     __weak ApplicationViewController *weakSelf = self;
     void (^checkButtons)(NSTimer*) = ^(NSTimer *timer) {
         if (!weakSelf) {
@@ -363,6 +373,17 @@
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
     if (navigation == _loading) {
         // Loaded content
+        __weak UIActivityIndicatorView *spinner = _spinner;
+        [UIView animateWithDuration:0.5f animations:^() {
+            spinner.alpha = 0.0f;
+        } completion:^(BOOL finished) {
+            [_spinner stopAnimating];
+            [_spinner removeFromSuperview];
+        }];
+        
+        if ([_delegate respondsToSelector:@selector(applicationViewControllerDidLoad:)]) {
+            [_delegate applicationViewControllerDidLoad:self];
+        }
     }
 }
 
