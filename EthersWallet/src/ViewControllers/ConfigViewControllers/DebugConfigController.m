@@ -75,6 +75,18 @@
     [self addSeparator];
     [self addNoteText:@"Allow new (created and imported) accounts to be optionally attached to a testnet."];
 
+    [self addGap:30.0f];
+    
+    [self addSeparator];
+    ConfigToggle *allowApps = [self addToggle:@"Enable Apps"];
+    allowApps.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"TEMP_ALLOW_APPS"];
+    allowApps.didChange = ^(ConfigToggle *toggle) {
+        [[NSUserDefaults standardUserDefaults] setBool:toggle.on forKey:@"TEMP_ALLOW_APPS"];
+    };
+    [self addSeparator];
+    [self addNoteText:@"Only developers should use this. Applications added won't persist in the bookmarks."];
+    
+
     [self addFlexibleGap];
 
     [self addFlexibleGap];

@@ -15,7 +15,7 @@
 #import "Utilities.h"
 
 
-#define STALE_AGE       (60.0f * 60.0f)
+#define STALE_AGE       (5.0f * 60.0f)
 #define TIMEOUT         3.0f
 
 
@@ -120,6 +120,7 @@ const NSString *DataStoreKeyHexPrefix = @"HEX_";
             } else {
                 NSString *hexString = [[NSString alloc] initWithData:dataPromise.value encoding:NSUTF8StringEncoding];
                 hexString = [hexString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    
                 if ([weakSelf saveData:hexString]) {
                     [promise resolve:weakSelf.currentData];
                     
@@ -137,10 +138,11 @@ const NSString *DataStoreKeyHexPrefix = @"HEX_";
     __weak SignedRemoteDictionary *weakSelf = self;
     return [DictionaryPromise promiseWithSetup:^(Promise *promise) {
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-        
+
         // Stale data is allowed
         if (now - weakSelf.updatedDate <= weakSelf.preferredMaximumStaleAge) {
             [promise resolve:weakSelf.currentData];
+            
         } else {
             
             // Set a timer

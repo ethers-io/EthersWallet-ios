@@ -51,20 +51,30 @@
 // The Canary is a signed payload living on the ethers.io web server, which allows the
 // authors to notify users of critical issues with either the app or the Ethereum network
 // The scripts/tools directory contains the code that generates a signed payload.
-#define CANARY_ADDRESS    @"0x70C14080922f091fD7d0E891eB483C9f8464a527"
-
-static NSString *CanaryUrl = @"https://ethers.io/canary.raw";
+static NSString *CanaryAddress              = @"0x70C14080922f091fD7d0E891eB483C9f8464a527";
+static NSString *CanaryUrl                  = @"https://ethers.io/canary.raw";
 
 // Test URL - This URL triggers the canaray for testing purposes
-//static NSString *CanaryUrl = @"https://ethers.io/canary-test.raw";
+//static NSString *CanaryUrl                  = @"https://ethers.io/canary-test.raw";
 
-static Address *CanaryAddress = nil;
+
+// The list of current applications come from a signed dictionary on the ethers.io web
+// server. This will change in the future, but is used currently incase a problem
+// occurs with the burned-in apps
+static NSString *ApplicationsDataAddress    = @"0xbe1bB78F53f4FD218fb46FA0a565A1eC6a65666e";
+static NSString *ApplicationsDataUrl        = @"https://ethers.io/applications-v2.raw";
+
+
 static NSString *CanaryVersion = nil;
 
+static NSDictionary *DefaultApplications = nil;
+
 @interface AppDelegate () <AccountsViewControllerDelegate, PanelViewControllerDataSource, SearchTitleViewDelegate> {
+    NSMutableArray<NSString*> *_applicationTitles;
+    NSMutableArray<NSString*> *_applicationUrls;
     
-    NSArray<NSString*> *_applicationTitles;
-    NSArray<NSString*> *_applicationUrls;
+    NSMutableArray<NSString*> *_customApplicationsTitles;
+    NSMutableArray<NSString*> *_customApplicationsUrls;
 }
 
 @property (nonatomic, readonly) PanelViewController *panelViewController;
@@ -85,13 +95,33 @@ static NSString *CanaryVersion = nil;
 + (void)initialize {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        CanaryAddress = [Address addressWithString:CANARY_ADDRESS];
         
         NSDictionary *info = [[NSBundle mainBundle] infoDictionary];
         CanaryVersion = [NSString stringWithFormat:@"%@/%@", [info objectForKey:@"CFBundleIdentifier"],
                          [info objectForKey:@"CFBundleShortVersionString"]];
         
         NSLog(@"Canary Version: %@", CanaryVersion);
+        
+        DefaultApplications = @{
+                                @"titles": @[
+                                        @"Welcome", @"CryptoKitties", @"Block Explorer",
+                                        ],
+                                @"urls": @[
+                                        @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
+                                        @"https://www.cryptokitties.co/",
+                                        @"https://c3fbbba629d27a348a2f3ccd3e8bdcdca9b1019e.ethers.space/",
+                                        ],
+                                @"testnetTitles": @[
+                                        @"Welcome", @"Testnet Faucet", @"Block Explorer", @"Test Token"
+                                        ],
+                                @"testnetUrls": @[
+                                        @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
+                                        @"https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/",
+                                        @"https://0xc3fbbba629d27a348a2f3ccd3e8bdcdca9b1019e.ethers.space/",
+                                        @"https://0x84db171b84950185431e76d6cd2aa5ce1cf853cf.ethers.space"
+                                        ],
+                                };
+
     });
 }
 
@@ -100,6 +130,9 @@ static NSString *CanaryVersion = nil;
     // Schedule us for background fetching
     [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
     
+    _customApplicationsTitles = [NSMutableArray array];
+    _customApplicationsUrls = [NSMutableArray array];
+
     _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
 
     _wallet = [Wallet walletWithKeychainKey:@"io.ethers.sharedWallet"];
@@ -139,8 +172,8 @@ static NSString *CanaryVersion = nil;
     UIColor *navigationBarColor = [UIColor colorWithHex:ColorHexNavigationBar];
     [Utilities setupNavigationBar:rootController.navigationBar backgroundColor:navigationBarColor];
 
-    //[_panelViewController focusPanel:YES animated:NO];
-    [_panelViewController focusPanel:NO animated:NO];
+    [_panelViewController focusPanel:YES animated:NO];
+    //[_panelViewController focusPanel:NO animated:NO];
 
     _window.rootViewController = rootController;
     
@@ -151,7 +184,6 @@ static NSString *CanaryVersion = nil;
                                              selector:@selector(notifyActiveAccountDidChange:)
                                                  name:WalletActiveAccountDidChangeNotification
                                                object:_wallet];
-
     
     // If an account was added, we may now have a different primary account
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -249,14 +281,11 @@ static NSString *CanaryVersion = nil;
 - (BOOL)launchApplication: (NSString*)url {
     NSURL *check = [NSURL URLWithString:url];
     if (check && check.host.length > 0) {
-        NSMutableArray *urls = [_applicationUrls mutableCopy];
-        [urls insertObject:url atIndex:0];
-        _applicationUrls = urls;
+        [_customApplicationsTitles addObject:check.host];
+        [_customApplicationsUrls addObject:url];
         
-        NSMutableArray *titles = [_applicationTitles mutableCopy];
-        [titles insertObject:check.host atIndex:0];
-        _applicationTitles = titles;
-        
+        [self setupApplications];
+
         [_panelViewController reloadData];
         _panelViewController.viewControllerIndex = 1;
         
@@ -297,28 +326,70 @@ static NSString *CanaryVersion = nil;
     [self setupApplications];
 }
 
-- (void)setupApplications {
-    if (_wallet.activeAccountProvider.chainId == ChainIdRopsten) {
-        _applicationTitles = @[@"Welcome", @"Testnet Faucet", @"Block Explorer", @"Test Token", @"Web3 Test"];
-        _applicationUrls = @[
-                             @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
-                             @"https://0xa5681b1fbda76e0d4ab646e13460a94fdcd3c1c1.ethers.space/",
-                             @"https://0xc3fbbba629d27a348a2f3ccd3e8bdcdca9b1019e.ethers.space/",
-                             @"https://0x84db171b84950185431e76d6cd2aa5ce1cf853cf.ethers.space",
-                             @"https://0x0975cc18dc1ae5e744d117e59adf34697719be3a.ethers.space/"
-                             ];
+
+
++ (SignedRemoteDictionary*)signedApplicationsDictionary {
     
-    } else {
-        _applicationTitles = @[@"Welcome", @"CryptoKitties", @"DevCon2 PoA", @"Block Explorer", @"Web3 Test"];
-        _applicationUrls = @[
-                             @"https://0x017355b3c9ad3345fc64555676f6c538c0f0454d.ethers.space/",
-                             @"https://www.cryptokitties.co/",
-                             @"https://0x2f2ab85f856ec137699cbe5d8038110dd7ce9cbe.ethers.space/",
-                             @"https://c3fbbba629d27a348a2f3ccd3e8bdcdca9b1019e.ethers.space/",
-                             @"https://0x0975cc18dc1ae5e744d117e59adf34697719be3a.ethers.space/"
-                             ];
+    return [SignedRemoteDictionary dictionaryWithUrl:ApplicationsDataUrl
+                                             address:[Address addressWithString:ApplicationsDataAddress]
+                                         defaultData:DefaultApplications];
+}
+
++ (NSDictionary*)checkApplications {
+    NSDictionary<NSString*, NSArray<NSString*>*> *data = [AppDelegate signedApplicationsDictionary].currentData;
+    for (NSString *key in @[@"titles", @"urls", @"testnetTitles", @"testnetUrls"]) {
+        if (![[data objectForKey:key] isKindOfClass:[NSArray class]]) {
+            NSLog(@"AppDelegate - invalid application array: %@", key);
+            return DefaultApplications;
+        }
+        
+        if ([data objectForKey:key].count == 0) {
+            NSLog(@"AppDelegate - zero items: %@", key);
+            return DefaultApplications;
+        }
+        
+        for (NSString *value in [data objectForKey:key]) {
+            if (![value isKindOfClass:[NSString class]]) {
+                NSLog(@"AppDelegate - invalid applcation value: %@", value);
+                return DefaultApplications;
+            }
+        }
+    }
+
+    if ([data objectForKey:@"titles"].count != [data objectForKey:@"urls"].count) {
+        NSLog(@"AppDelegate - titles/urls mismatch");
+        return DefaultApplications;
     }
     
+    if ([data objectForKey:@"testnetTitles"].count != [data objectForKey:@"testnetUrls"].count) {
+        NSLog(@"AppDelegate - testnet titles/urls mismatch");
+        return DefaultApplications;
+    }
+
+    return data;
+}
+
+- (void)setupApplications {
+    NSDictionary *data = [AppDelegate checkApplications];
+    if (_wallet.activeAccountProvider.chainId == ChainIdRopsten) {
+        _applicationTitles = [[data objectForKey:@"testnetTitles"] mutableCopy];
+        _applicationUrls = [[data objectForKey:@"testnetUrls"] mutableCopy];
+    } else {
+        _applicationTitles = [[data objectForKey:@"titles"] mutableCopy];
+        _applicationUrls = [[data objectForKey:@"urls"] mutableCopy];
+    }
+    
+    for (NSInteger i = _customApplicationsTitles.count - 1; i >= 0; i--) {
+        [_applicationUrls insertObject:[_customApplicationsUrls objectAtIndex:i] atIndex:0];
+        [_applicationTitles insertObject:[_customApplicationsTitles objectAtIndex:i] atIndex:0];
+    }
+
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"TEMP_ALLOW_APPS"]) {
+        _panelViewController.navigationItem.rightBarButtonItem = _addApplicationBarButton;
+    } else {
+        _panelViewController.navigationItem.rightBarButtonItem = nil;
+    }
+
     [_panelViewController reloadData];
 }
 
@@ -334,9 +405,16 @@ static NSString *CanaryVersion = nil;
     // Might as well check and possibly update the gas prices
     [GasPriceKeyboardView checkForUpdatedGasPrices];
     
+    // Also lets check for updted Application list
+    [[[AppDelegate signedApplicationsDictionary] data] onCompletion:^(DictionaryPromise *promise) {
+        NSLog(@"Finished checking for applications: %@", promise.value);
+    }];
+    
     // Check for canary data. This is an emergency broadcast system, in case there is
     // either an Ethers Wallet or Ethereum-wide notification we need to send out
-    SignedRemoteDictionary *canary = [SignedRemoteDictionary dictionaryWithUrl:CanaryUrl address:CanaryAddress defaultData:@{}];
+    SignedRemoteDictionary *canary = [SignedRemoteDictionary dictionaryWithUrl:CanaryUrl
+                                                                       address:[Address addressWithString:CanaryAddress]
+                                                                   defaultData:@{}];
     [canary.data onCompletion:^(DictionaryPromise *promise) {
         
         if (![[promise.value objectForKey:@"version"] isEqual:@"0.2"]) { return; }
@@ -439,7 +517,7 @@ static NSString *CanaryVersion = nil;
     [ModalViewController dismissAllCompletionCallback:^() {
         if (_wallet.activeAccountAddress) {
             [_wallet scan:^(Transaction *transaction, NSError *error) {
-                NSLog(@"Scan compelte: %@ %@", transaction, error);
+                NSLog(@"Scan complete: %@ %@", transaction, error);
             }];
 
         } else {
@@ -488,6 +566,7 @@ typedef enum ExternalAction {
         } else if (action == ExternalActionConfig) {
             [weakSelf.wallet showDebuggingOptionsCallback:^() {
                 NSLog(@"AppDelegate: Done config");
+                [self setupApplications];
             }];
         }
     }];
