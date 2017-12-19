@@ -1,74 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2555" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
-    <device id="retina3_5" orientation="portrait">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="t7z-rj-7bC">
+    <device id="retina5_9" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11524"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--View Controller-->
-        <scene sceneID="EHf-IW-A2E">
+        <!--Navigation Controller-->
+        <scene sceneID="ajU-cc-Eyf">
             <objects>
-                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
-                    <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="Llm-lL-Icb"/>
-                        <viewControllerLayoutGuide type="bottom" id="xb3-aO-Qok"/>
-                    </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="uln-Hr-dEL">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="64"/>
-                                <subviews>
-                                    <navigationBar opaque="NO" contentMode="scaleToFill" translucent="NO" translatesAutoresizingMaskIntoConstraints="NO" id="qNv-1i-aHY">
-                                        <rect key="frame" x="0.0" y="20" width="320" height="44"/>
-                                        <constraints>
-                                            <constraint firstAttribute="height" constant="44" id="4fK-UG-s62"/>
-                                        </constraints>
-                                        <color key="barTintColor" red="0.50196078430000002" green="0.66666666669999997" blue="0.92156862750000001" alpha="1" colorSpace="calibratedRGB"/>
-                                        <textAttributes key="titleTextAttributes">
-                                            <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                        </textAttributes>
-                                    </navigationBar>
-                                </subviews>
-                                <color key="backgroundColor" red="0.50196078430000002" green="0.66666666669999997" blue="0.92156862750000001" alpha="1" colorSpace="calibratedRGB"/>
-                                <constraints>
-                                    <constraint firstAttribute="bottom" secondItem="qNv-1i-aHY" secondAttribute="bottom" id="Rwl-2g-Pky"/>
-                                    <constraint firstItem="qNv-1i-aHY" firstAttribute="top" secondItem="uln-Hr-dEL" secondAttribute="bottom" constant="-44" id="Xlt-uR-iaR"/>
-                                    <constraint firstAttribute="trailing" secondItem="qNv-1i-aHY" secondAttribute="trailing" id="fD6-ss-f39"/>
-                                    <constraint firstItem="qNv-1i-aHY" firstAttribute="leading" secondItem="uln-Hr-dEL" secondAttribute="leading" id="xcO-Qa-w2T"/>
-                                    <constraint firstAttribute="height" constant="64" id="ynF-O1-8AI"/>
-                                </constraints>
-                            </view>
-                            <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="gmn-MH-4Jb">
-                                <rect key="frame" x="0.0" y="436" width="320" height="44"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="44" id="mqR-jt-E8Y"/>
-                                </constraints>
-                                <items/>
-                            </toolbar>
-                        </subviews>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                        <constraints>
-                            <constraint firstItem="gmn-MH-4Jb" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="CVd-4f-qJB"/>
-                            <constraint firstItem="uln-Hr-dEL" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="Pbg-4W-fXu"/>
-                            <constraint firstAttribute="trailing" secondItem="uln-Hr-dEL" secondAttribute="trailing" id="WaD-Mt-Iq6"/>
-                            <constraint firstItem="xb3-aO-Qok" firstAttribute="top" secondItem="gmn-MH-4Jb" secondAttribute="bottom" id="XbE-xf-Qt7"/>
-                            <constraint firstItem="uln-Hr-dEL" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="rAj-29-PAE"/>
-                            <constraint firstAttribute="trailing" secondItem="gmn-MH-4Jb" secondAttribute="trailing" id="wue-Vg-f7A"/>
-                        </constraints>
-                    </view>
-                    <toolbarItems/>
-                    <nil key="simulatedTopBarMetrics"/>
-                    <nil key="simulatedBottomBarMetrics"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <navigationController toolbarHidden="NO" id="t7z-rj-7bC" sceneMemberID="viewController">
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics" translucent="NO"/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translucent="NO" id="lUS-69-ZWm">
+                        <rect key="frame" x="0.0" y="44" width="375" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <color key="barTintColor" red="0.24705882352941178" green="0.51372549019607838" blue="0.89411764705882346" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </navigationBar>
+                    <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translucent="NO" id="dXq-XS-nM2">
+                        <rect key="frame" x="0.0" y="729" width="375" height="49"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </toolbar>
+                    <connections>
+                        <segue destination="8VZ-55-cKb" kind="relationship" relationship="rootViewController" id="RaF-OJ-VVf"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="y9L-Cr-FUW" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="48.799999999999997" y="372.86356821589209"/>
+            <point key="canvasLocation" x="-1290" y="383"/>
+        </scene>
+        <!--View Controller-->
+        <scene sceneID="boX-tU-ejA">
+            <objects>
+                <viewController id="8VZ-55-cKb" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="pWH-xq-znb"/>
+                        <viewControllerLayoutGuide type="bottom" id="sRU-ES-yAr"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="tRm-N8-eZF">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="641"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="2kH-aF-SJo"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Qab-MQ-5gA" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-309.60000000000002" y="377.58620689655174"/>
         </scene>
     </scenes>
+    <color key="tintColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
 </document>
