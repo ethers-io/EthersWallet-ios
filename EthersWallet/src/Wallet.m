@@ -52,6 +52,7 @@
 #import "ConfigNavigationController.h"
 #import "DebugConfigController.h"
 #import "DoneConfigController.h"
+#import "GasPriceKeyboardView.h"
 #import "MnemonicWarningConfigController.h"
 #import "MnemonicConfigController.h"
 #import "OptionsConfigController.h"
@@ -1244,6 +1245,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 }
 
 - (void)sendTransaction: (Transaction*)transaction firm: (BOOL)firm callback:(void (^)(Transaction*, NSError*))callback {
+
     // No signer is an automatic cancel
     if (_activeAccountIndex == AccountNotFound) {
         dispatch_async(dispatch_get_main_queue(), ^() {
@@ -1270,6 +1272,74 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
         }
     };
 
+    [ModalViewController presentViewController:navigationController animated:YES completion:nil];
+}
+
+- (void)overrideTransaction:(TransactionInfo *)oldTransaction
+                     action:(WalletTransactionAction)action
+                   callback:(void (^)(Transaction *, NSError *))callback {
+    
+    // No signer is an automatic cancel
+    if (_activeAccountIndex == AccountNotFound) {
+        dispatch_async(dispatch_get_main_queue(), ^() {
+            callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
+        });
+        return;
+    }
+
+    Signer *signer = [_accounts objectAtIndex:_activeAccountIndex];
+
+    if (![oldTransaction.fromAddress isEqualToAddress:signer.address]) {
+        dispatch_async(dispatch_get_main_queue(), ^() {
+            callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorNoAccount userInfo:@{}]);
+        });
+        return;
+    }
+    
+    Transaction *transaction = [Transaction transaction];
+    
+    if (action == WalletTransactionActionCancel) {
+        // New Gas Price is (ceil(150% oldGasPrice) + 1 wei)
+        BigNumber *halfCeil = [[oldTransaction.gasPrice add:[BigNumber constantOne]] div:[BigNumber constantTwo]];
+        BigNumber *gasPrice = [[oldTransaction.gasPrice add:halfCeil] add:[BigNumber constantOne]];
+        
+        // If it is less than a medium priced transaction, use the medium gas price instead
+        BigNumber *safeGasPrice = [GasPriceKeyboardView safeReplacementGasPrice];
+        if ([gasPrice lessThan:safeGasPrice]) { gasPrice = safeGasPrice; }
+
+        transaction.toAddress = signer.address;
+        transaction.nonce = oldTransaction.nonce;
+        transaction.gasPrice = gasPrice;
+        
+        transaction.gasLimit = [BigNumber bigNumberWithInteger:21000];
+        transaction.value = [BigNumber constantZero];
+    
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^() {
+            callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorNotImplemented userInfo:@{}]);
+        });
+        return;
+    }
+
+    
+    TransactionConfigController *config = [TransactionConfigController configWithSigner:signer
+                                                                            transaction:transaction
+                                                                                 action:action];
+    config.etherPrice = [self etherPrice];
+    
+    config.onSign = ^(TransactionConfigController *configController, Transaction *transaction) {
+        [(ConfigNavigationController*)(configController.navigationController) dismissWithResult:transaction];
+    };
+    
+    ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:config];
+    navigationController.onDismiss = ^(NSObject *result) {
+        if (![result isKindOfClass:[Transaction class]]) {
+            callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
+        } else {
+            callback((Transaction*)result, nil);
+        }
+    };
+    
     [ModalViewController presentViewController:navigationController animated:YES completion:nil];
 }
 

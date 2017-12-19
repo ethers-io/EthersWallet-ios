@@ -60,14 +60,34 @@
     
     CrossfadeLabel *_nicknameLabel, *_updatedLabel;
     
-    NSArray<NSArray*> *_sections;
-
-    SectionHeaderView *_headerConfirmed, *_headerInProgress, *_headerPending;
+    //NSArray<NSArray*> *_sections;
+    
+    // The history items; IndexPath => TransactionInfo
+    NSDictionary <NSIndexPath*, TransactionInfo*> *_history;
+    NSArray<NSNumber*> *_historyCounts;
+    NSUInteger _historyBlockNumber;
+    
+    // The transactions used to compute the current history list
+//    NSArray<TransactionInfo*> *_historyTransactions;
+    
+    // The block number for which the *position* is correct
+//    NSMutableDictionary<Hash*, NSNumber*> *_historyBlockNumbers;
     
     UIView *_toolbarBackground;
     
     CrossfadeLabel *_networkLabel;
+    
+    BOOL _needsUpdateHeaders;
 }
+
+//@property (nonatomic, assign) NSUInteger updateNonce;
+//@property (nonatomic, assign) BOOL updating;
+
+//@property (nonatomic, strong)
+
+@property (nonatomic, strong) SectionHeaderView *headerConfirmed;
+@property (nonatomic, strong) SectionHeaderView *headerInProgress;
+@property (nonatomic, strong) SectionHeaderView *headerPending;
 
 @end
 
@@ -104,26 +124,22 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
                                                       color:BalanceLabelColorLight
                                                   alignment:BalanceLabelAlignmentCenter];
         
+        //_historyBlockNumbers = [NSMutableDictionary dictionaryWithCapacity:32];
+        
         self.navigationItem.titleView = _balanceLabel;
         
-//        {
-//            UIButton *sendButton = [Utilities ethersButton:ICON_NAME_AIRPLANE fontSize:30.0f color:0xffffff];
-//            [sendButton addTarget:sendButton action:@selector(tapCamera) forControlEvents:UIControlEventTouchUpInside];
-//            self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:sendButton];
-//        }
-
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(updateBalance)
                                                      name:WalletAccountBalanceDidChangeNotification
                                                    object:_wallet];
         
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(noticeUpdateTransactions)
+                                                 selector:@selector(noticeUpdateTransactions:)
                                                      name:WalletAccountHistoryUpdatedNotification
                                                    object:_wallet];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(noticeUpdateTransactions)
+                                                 selector:@selector(noticeUpdateTransactions:)
                                                      name:WalletTransactionDidChangeNotification
                                                    object:_wallet];
 
@@ -214,7 +230,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     }
 }
 
-- (void)noticeUpdateTransactions {
+- (void)noticeUpdateTransactions: (NSNotification*)note {
     [NSTimer scheduledTimerWithTimeInterval:0.5f repeats:NO block:^(NSTimer *timer) {
         [self reloadTableAnimated:YES];
     }];
@@ -383,18 +399,11 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     _nicknameLabel.textColor = [UIColor colorWithWhite:0.4f alpha:1.0f];
     [status addSubview:_nicknameLabel];
 
-//    _shareButton = [Utilities ethersButton:ICON_NAME_ fontSize:27.0f color:ColorHexToolbarIcon];
-//    [_shareButton addTarget:self action:@selector(tapManage) forControlEvents:UIControlEventTouchUpInside];
-//    UIBarButtonItem *share = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction
-//                                                                           target:nil
-//                                                                           action:nil];
-    
     _sendButton = [Utilities ethersButton:ICON_NAME_AIRPLANE fontSize:36.0f color:ColorHexToolbarIcon];
     [_sendButton addTarget:self action:@selector(tapCamera) forControlEvents:UIControlEventTouchUpInside];
     UIBarButtonItem *send = [[UIBarButtonItem alloc] initWithCustomView:_sendButton];
     
     [toolbar setItems:@[
-//                        share,
                         [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
                                                                       target:nil
                                                                       action:nil],
@@ -406,9 +415,6 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
                                                                       target:nil
                                                                       action:nil],
                         send,
-//                        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
-//                                                                      target:nil
-//                                                                      action:nil],
                         ]];
     
     [self updatedActiveAccountAnimated:NO];
@@ -428,120 +434,360 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 
 #pragma mark - UITableViewDataSoruce and UITableViewDelegate
 
-- (void)reloadTableAnimated: (BOOL)animated {
-    NSArray <TransactionInfo*> *transactions = nil;
-    
-    // @TODO: Animate by fading
-    if (_wallet.activeAccountIndex != AccountNotFound) {
-        transactions = [_wallet transactionHistoryForIndex:_wallet.activeAccountIndex];
-        _noTransactionsView.hidden = (transactions.count > 0);
-    } else {
-        _noTransactionsView.hidden = NO;
-    }
-    
-    NSMutableArray *pending = [NSMutableArray array];
-    NSMutableArray *inProgress = [NSMutableArray array];
-    NSMutableArray *confirmed = [NSMutableArray array];
-    
-    int minInProgressConfirmations = CONFIRMED_COUNT;
-    int maxInProgressConfirmations = 0;
-    
-    //NSUInteger transactionCount = [transactions];
+/**
+ *   Idea
+ *    - check for additions; if any, insert all of them at the begginning of their section, defer another animation for 1s from now
+ *    - check for deletions; if any, remove all of them and defer another animation for 1s from now
+ *    - if no additions, check expected order vs actual order, re-arrange one at a tiem and defer for 1s
+ */
+
++ (NSMutableDictionary<Hash*, NSIndexPath*>*)computeHistory: (NSArray<TransactionInfo*>*)transactions
+                                                blockNumber: (NSUInteger)blockNumber {
+    NSMutableArray<TransactionInfo*> *pending = [NSMutableArray array];
+    NSMutableArray<TransactionInfo*> *inProgress = [NSMutableArray array];
+    NSMutableArray<TransactionInfo*> *confirmed = [NSMutableArray array];
+
     for (TransactionInfo *transaction in transactions) {
-        if (transaction.blockNumber == -1) {
+        if (transaction.blockNumber < 0) {
             [pending addObject:transaction];
-            
         } else {
-            int confirmations = (int)(_wallet.activeAccountBlockNumber - transaction.blockNumber + 1);
+            int confirmations = (int)(blockNumber - transaction.blockNumber + 1);
             if (confirmations < CONFIRMED_COUNT) {
                 [inProgress addObject:transaction];
-                if (confirmations < minInProgressConfirmations) {
-                    minInProgressConfirmations = confirmations;
-                }
-                if (confirmations > maxInProgressConfirmations) {
-                    maxInProgressConfirmations = confirmations;
-                }
             } else {
                 [confirmed addObject:transaction];
             }
         }
     }
     
-    // Stop-gap; We dont' currently support animating the deletion of transactions
-    // from the list, and after changing networks (i.e. from mainnet to testnet or
-    //  vice versa) transactions may have been deleted
-    // @TODO: Support animated deletion of transactions
-    if (transactions.count == 0) { animated = NO; }
-    
-    NSArray<NSArray*> *oldSections = _sections;
-    _sections = @[ pending, inProgress, confirmed ];
+    NSMutableDictionary<Hash*, NSIndexPath*> *history = [NSMutableDictionary dictionaryWithCapacity:transactions.count];
 
-    void (^animate)() = ^() {
-        _headerPending.alpha = ([_sections objectAtIndex:0].count ? 1.0: 0.0f);
-        _headerInProgress.alpha = ([_sections objectAtIndex:1].count ? 1.0: 0.0f);
-        _headerConfirmed.alpha = ([_sections objectAtIndex:2].count ? 1.0: 0.0f);
+    NSComparisonResult (^sorter)(TransactionInfo*, TransactionInfo*) = ^NSComparisonResult(TransactionInfo *a, TransactionInfo *b) {
+        NSInteger delta = b.blockNumber - a.blockNumber;
+        if (delta > 0) {
+            return NSOrderedDescending;
+        } else if (delta < 0) {
+            return NSOrderedAscending;
+        }
+        
+        return [[a.transactionHash hexString] compare:[b.transactionHash hexString]];
     };
     
-    NSString *details = nil;
-    if (minInProgressConfirmations == maxInProgressConfirmations) {
-        NSString *plural = (minInProgressConfirmations == 1) ? @"": @"s";
-        details = [NSString stringWithFormat:@"%d confirmation%@", minInProgressConfirmations, plural];
-    } else {
-        details = [NSString stringWithFormat:@"%d \u2013 %d confirmations", minInProgressConfirmations, maxInProgressConfirmations];
-    }
-    [_headerInProgress setDetails:details animated:animated];
+    void (^insert)(NSUInteger, NSMutableArray*) = ^(NSUInteger section, NSMutableArray *transactions) {
+        [transactions sortUsingComparator:sorter];
+        for (NSUInteger row = 0; row < transactions.count; row++) {
+            TransactionInfo *transaction = [transactions objectAtIndex:row];
+            [history setObject:[NSIndexPath indexPathForRow:row inSection:section] forKey:transaction.transactionHash];
+        }
+    };
     
-    if (animated) {
+    insert(1, pending);
+    insert(2, inProgress);
+    insert(3, confirmed);
 
-        [_tableView beginUpdates];
+    return history;
+}
 
-        IndexPathArray *oldTransactions = [[IndexPathArray alloc] init];
-        [oldTransactions insert:[NSNull null] atIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
-        
-        // Old transactions
-        for (NSInteger section = 0; section < oldSections.count; section++) {
-            NSArray<TransactionInfo*> *rows = [oldSections objectAtIndex:section];
-            for (NSInteger row = 0; row < rows.count; row++) {
-                TransactionInfo *transactionInfo = [rows objectAtIndex:row];
-                [oldTransactions insert:transactionInfo atIndexPath:[NSIndexPath indexPathForRow:row inSection:section + 1]];
-            }
-        }
-
-        NSMutableArray<NSIndexPath*> *insertIndices = [NSMutableArray array];
-
-        // New transactions
-        for (NSInteger section = 0; section < _sections.count; section++) {
-            NSArray<TransactionInfo*> *rows = [_sections objectAtIndex:section];
-            for (NSInteger row = 0; row < rows.count; row++) {
-                TransactionInfo *transactionInfo = [rows objectAtIndex:row];
-                
-                NSIndexPath *oldIndexPath = [oldTransactions indexPathOfObject:transactionInfo];
-                NSIndexPath *newIndexPath = [NSIndexPath indexPathForRow:row inSection:section + 1];
-                if (oldIndexPath) {
-//                    if (!newIndexPath) {
-//                        [_tableView deleteRowsAtIndexPaths:@[oldIndexPath] withRowAnimation:UITableViewRowAnimationFade];
-//                    } else
-                    if (![oldIndexPath isEqual:newIndexPath]) {
-                        [_tableView moveRowAtIndexPath:oldIndexPath toIndexPath:newIndexPath];
-                    }
-                } else {
-                    [insertIndices addObject:newIndexPath];
-                }
-            }
-        }
-        
-        if (insertIndices.count > 0) {
-            [_tableView insertRowsAtIndexPaths:insertIndices withRowAnimation:UITableViewRowAnimationRight];
-        }
-        
-        [_tableView endUpdates];
-        
-        [UIView animateWithDuration:0.5f animations:animate];
-        
-    } else {
-        [_tableView reloadData];
-        animate();
+- (void)fixHistoryCountsAnimated: (BOOL)animated {
+    NSUInteger counts[] = { 0, 0, 0 };
+    for (NSIndexPath *indexPath in _history) {
+        counts[indexPath.section - 1]++;
     }
+    
+    _historyCounts = @[ @(counts[0]), @(counts[1]), @(counts[2]) ];
+    
+    if (counts[1] > 0 && _wallet.activeAccountAddress) {
+        
+        // Iterate over all pending transactions
+        NSUInteger row = 0;
+        NSInteger minInProgressConfirmations = 42, maxInProgressConfirmations = -1;
+        while (true) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row++ inSection:2];
+            TransactionInfo *transaction = [_history objectForKey:indexPath];
+            if (!transaction) { break; }
+            
+            NSInteger confirmations = _wallet.activeAccountBlockNumber - transaction.blockNumber + 1;
+
+            // Find the lowest and highest number of confirmations
+            if (confirmations < minInProgressConfirmations) {
+                minInProgressConfirmations = confirmations;
+            }
+            if (confirmations > maxInProgressConfirmations) {
+                maxInProgressConfirmations = confirmations;
+            }
+        }
+        
+        if (minInProgressConfirmations == maxInProgressConfirmations) {
+            [_headerInProgress setDetails:[NSString stringWithFormat:@"%d confirmations", (int)minInProgressConfirmations]
+                                 animated:animated];
+        } else {
+            [_headerInProgress setDetails:[NSString stringWithFormat:@"%d \u2013 %d confirmations",
+                                           (int)minInProgressConfirmations, (int)maxInProgressConfirmations]
+                                 animated:animated];
+        }
+    }
+}
+
+
+- (void)updateHeadersAnimated: (BOOL)animated {
+    if (animated) {
+        [_tableView beginUpdates];
+    }
+
+    [_headerPending setShowing:([[_historyCounts objectAtIndex:0] integerValue] > 0) animated:animated];
+    [_headerInProgress setShowing:([[_historyCounts objectAtIndex:1] integerValue] > 0) animated:animated];
+    [_headerConfirmed setShowing:([[_historyCounts objectAtIndex:2] integerValue] > 0) animated:animated];
+
+    if (animated) {
+        [_tableView endUpdates];
+    }
+    
+    _needsUpdateHeaders = NO;
+}
+
++ (Hash*)findFirstDifference: (NSDictionary<Hash*,NSIndexPath*>*)historyFrom
+              againstHistory: (NSDictionary<Hash*,NSIndexPath*>*)historyTo {
+    
+    NSIndexPath *lowestPath = nil;
+    Hash *lowestHash = nil;
+    
+    for (Hash *hash in historyFrom) {
+        NSIndexPath *fromIndexPath = [historyFrom objectForKey:hash];
+        NSIndexPath *toIndexPath = [historyTo objectForKey:hash];
+        if ([fromIndexPath isEqual:toIndexPath]) { continue; }
+        if (lowestPath == nil || toIndexPath.section < lowestPath.section || (toIndexPath.section == lowestPath.section && toIndexPath.row < lowestPath.row)) {
+            lowestPath = toIndexPath;
+            lowestHash = hash;
+        }
+    }
+    
+    return lowestHash;
+    
+}
+
++ (void)moveHistory: (NSMutableDictionary*)history hash: (Hash*)hash toIndexPath: (NSIndexPath*)toIndexPath {
+    NSIndexPath *fromIndexPath = [history objectForKey:hash];
+    [history removeObjectForKey:hash];
+    
+    NSArray *keys = [history allKeys];
+    
+    // Bump all elements in the same source section above this item down by one
+    for (Hash *hash in keys) {
+        NSIndexPath *indexPath = [history objectForKey:hash];
+        if (indexPath.section != fromIndexPath.section) { continue; }
+        if (indexPath.row < fromIndexPath.row) { continue; }
+        [history setObject:[NSIndexPath indexPathForRow:indexPath.row - 1 inSection:indexPath.section] forKey:hash];
+    }
+
+    // Bump all elements in the same target section above this item up one
+    for (Hash *hash in keys) {
+        NSIndexPath *indexPath = [history objectForKey:hash];
+        if (indexPath.section != toIndexPath.section) { continue; }
+        if (indexPath.row < toIndexPath.row) { continue; }
+        [history setObject:[NSIndexPath indexPathForRow:indexPath.row + 1 inSection:indexPath.section] forKey:hash];
+    }
+
+    [history setObject:toIndexPath forKey:hash];
+}
+
++ (void)removeHistory: (NSMutableDictionary*)history hash: (Hash*)hash {
+    NSIndexPath *fromIndexPath = [history objectForKey:hash];
+    [history removeObjectForKey:hash];
+
+    for (Hash *hash in [history allKeys]) {
+        NSIndexPath *indexPath = [history objectForKey:hash];
+        if (indexPath.section != fromIndexPath.section) { continue; }
+        if (indexPath.row < fromIndexPath.row) { continue; }
+        [history setObject:[NSIndexPath indexPathForRow:indexPath.row - 1 inSection:indexPath.section] forKey:hash];
+    }
+}
+
++ (void)insertHistory: (NSMutableDictionary*)history hash: (Hash*)hash atIndexPath: (NSIndexPath*)toIndexPath {
+    // Bump all elements in the same target section above this item up one
+    for (Hash *hash in [history allKeys]) {
+        NSIndexPath *indexPath = [history objectForKey:hash];
+        if (indexPath.section != toIndexPath.section) { continue; }
+        if (indexPath.row < toIndexPath.row) { continue; }
+        [history setObject:[NSIndexPath indexPathForRow:indexPath.row + 1 inSection:indexPath.section] forKey:hash];
+    }
+    
+    [history setObject:toIndexPath forKey:hash];
+}
+
+- (void)dumpHistory: (NSDictionary<Hash*,NSIndexPath*>*)history title: (NSString*)title {
+    NSMutableArray *list = [[history allKeys] mutableCopy];
+    [list sortUsingComparator:^NSComparisonResult(Hash *a, Hash *b) {
+        NSIndexPath *ai = [history objectForKey:a];
+        NSIndexPath *bi = [history objectForKey:b];
+        if (ai.section < bi.section) { return NSOrderedAscending; }
+        if (ai.section > bi.section) { return NSOrderedDescending; }
+        if (ai.row < bi.row) { return NSOrderedAscending; }
+        if (ai.row > bi.row) { return NSOrderedDescending; }
+        return NSOrderedSame;
+    }];
+    
+    NSLog(@"History - %@", title);
+    for (Hash *hash in list) {
+        NSIndexPath *indexPath = [history objectForKey:hash];
+        NSLog(@"  %d - %d : %@", (int)indexPath.section, (int)indexPath.row, hash);
+    }
+}
+
+// After hours of messing around with this, finally found a great article that explains everything:
+// https://stackoverflow.com/questions/28724500/uitableview-delete-insert-move-ordering-in-batch-updates#42316297
+
+- (void)reloadTableAnimated: (BOOL)animated {
+    
+    // Map Hash => NewTransactionInfo
+    NSMutableDictionary<Hash*, TransactionInfo*> *hashToNewTransactions = [NSMutableDictionary dictionary];
+    {
+        // Get the current transaction history (if any)
+        if (_wallet.activeAccountIndex != AccountNotFound) {
+            for (TransactionInfo *transaction in [_wallet transactionHistoryForIndex:_wallet.activeAccountIndex]) {
+                [hashToNewTransactions setObject:transaction forKey:transaction.transactionHash];
+            }
+            
+            // @TODO: Animate by fading
+            _noTransactionsView.hidden = (hashToNewTransactions.count > 0);
+        } else {
+            // @TODO: Animate by fading
+            _noTransactionsView.hidden = NO;
+        }
+    }
+
+    NSUInteger blockNumber = _wallet.activeAccountBlockNumber;
+    
+    // Compute the new desired history assuming latest block number
+    NSDictionary<Hash*, NSIndexPath*> *newHistory = [WalletViewController computeHistory:[hashToNewTransactions allValues]
+                                                                             blockNumber:blockNumber];
+
+    //[self dumpHistory:newHistory title:@"NEW"];
+    
+    // Not animated, so just update the table
+    if (!animated) {
+        
+        NSMutableDictionary<NSIndexPath*, TransactionInfo*> *history = [NSMutableDictionary dictionaryWithCapacity:newHistory.count];
+        for (Hash *hash in newHistory) {
+            [history setObject:[hashToNewTransactions objectForKey:hash] forKey:[newHistory objectForKey:hash]];
+        }
+        
+        _history = history;
+        _historyBlockNumber = blockNumber;
+        [self fixHistoryCountsAnimated:animated];
+        
+        [self updateHeadersAnimated:animated];
+        
+        [_tableView reloadData];
+        
+        return;
+    }
+    
+    // Map Hash => OldIndexPath
+    NSMutableDictionary<Hash*, NSIndexPath*> *oldHistory = [NSMutableDictionary dictionaryWithCapacity:_history.count];
+    
+    // Map Hash => OldTransactionInfo
+    NSMutableDictionary<Hash*, TransactionInfo*> *hashToOldTransaction = [NSMutableDictionary dictionaryWithCapacity:_history.count];
+    
+    for (NSIndexPath *path in _history) {
+        TransactionInfo *transaction = [_history objectForKey:path];
+        [oldHistory setObject:path forKey:transaction.transactionHash];
+        [hashToOldTransaction setObject:transaction forKey:transaction.transactionHash];
+    }
+    
+    //[self dumpHistory:oldHistory title:@"Old"];
+
+    NSMutableArray<NSIndexPath*> *rowsDeleted = [NSMutableArray array];
+    NSMutableArray<NSIndexPath*> *rowsInserted = [NSMutableArray array];
+    NSMutableArray<NSIndexPath*> *rowsMovedFrom = [NSMutableArray array];
+    NSMutableArray<NSIndexPath*> *rowsMovedTo = [NSMutableArray array];
+    
+    NSDictionary<Hash*, NSIndexPath*> *oldHistoryOriginal = [oldHistory copy];
+
+    // Highest source removals will trigger no change
+    NSMutableArray<Hash*> *sortedOldHashes = [[hashToOldTransaction allKeys] mutableCopy];
+    [sortedOldHashes sortUsingComparator:^NSComparisonResult(Hash *a, Hash *b) {
+        NSIndexPath *ai = [oldHistory objectForKey:a];
+        NSIndexPath *bi = [oldHistory objectForKey:b];
+        if (ai.section > bi.section) { return NSOrderedAscending; }
+        if (ai.section < bi.section) { return NSOrderedDescending; }
+        if (ai.row > bi.row) { return NSOrderedAscending; }
+        if (ai.row < bi.row) { return NSOrderedDescending; }
+        return NSOrderedSame;
+    }];
+    
+    // Delete records that no longer exist
+    for (Hash *hash in sortedOldHashes) {
+        NSIndexPath *newIndexPath = [newHistory objectForKey:hash];
+        if (!newIndexPath) {
+            [rowsDeleted addObject:[oldHistory objectForKey:hash]];
+            [hashToOldTransaction removeObjectForKey:hash];
+            [WalletViewController removeHistory:oldHistory hash:hash];
+        }
+    }
+    
+    // Lowest target movements will trigger teh most change
+    NSMutableArray<Hash*> *sortedNewHashes = [[hashToNewTransactions allKeys] mutableCopy];
+    [sortedNewHashes sortUsingComparator:^NSComparisonResult(Hash *a, Hash *b) {
+        NSIndexPath *ai = [newHistory objectForKey:a];
+        NSIndexPath *bi = [newHistory objectForKey:b];
+        if (ai.section < bi.section) { return NSOrderedAscending; }
+        if (ai.section > bi.section) { return NSOrderedDescending; }
+        if (ai.row < bi.row) { return NSOrderedAscending; }
+        if (ai.row > bi.row) { return NSOrderedDescending; }
+        return NSOrderedSame;
+    }];
+    
+    for (Hash *hash in sortedNewHashes) {
+        NSIndexPath *oldIndexPath = [oldHistory objectForKey:hash];
+        NSIndexPath *newIndexPath = [newHistory objectForKey:hash];
+        
+        if (!oldIndexPath) {
+            [rowsInserted addObject:newIndexPath];
+        } else if (![oldIndexPath isEqual:newIndexPath]) {
+            [WalletViewController moveHistory:oldHistory hash:hash toIndexPath:newIndexPath];
+            [rowsMovedFrom addObject:[oldHistoryOriginal objectForKey:hash]];
+            [rowsMovedTo addObject:newIndexPath];
+        }
+    }
+    
+    //[self dumpHistory:oldHistory title:@"Updated old"];
+
+    if (rowsInserted.count == 0 && rowsDeleted.count == 0 && rowsMovedFrom.count == 0) {
+        [self fixHistoryCountsAnimated:animated];
+        return;
+    }
+    
+    NSMutableDictionary<NSIndexPath*,TransactionInfo*> *history = [NSMutableDictionary dictionaryWithCapacity:newHistory.count];
+    for (Hash *hash in newHistory) {
+        [history setObject:[hashToNewTransactions objectForKey:hash] forKey:[newHistory objectForKey:hash]];
+    }
+    
+    _history = history;
+    _historyBlockNumber = blockNumber;
+    [self fixHistoryCountsAnimated:animated];
+
+    /*
+    NSLog(@"Counts: %@", _historyCounts);
+    NSLog(@"Deleted: %@", rowsDeleted);
+    NSLog(@"Inserted: %@", rowsInserted);
+    NSLog(@"Moved: %@ => %@", rowsMovedFrom, rowsMovedTo);
+     */
+    
+    
+    [_tableView performBatchUpdates:^() {
+        [self updateHeadersAnimated:NO];
+        if (rowsDeleted.count) {
+            [_tableView deleteRowsAtIndexPaths:rowsDeleted withRowAnimation:UITableViewRowAnimationFade];
+        }
+        if (rowsInserted.count) {
+            [_tableView insertRowsAtIndexPaths:rowsInserted withRowAnimation:UITableViewRowAnimationRight];
+        }
+        for (NSUInteger i = 0; i < rowsMovedFrom.count; i++) {
+            [_tableView moveRowAtIndexPath:[rowsMovedFrom objectAtIndex:i] toIndexPath:[rowsMovedTo objectAtIndex:i]];
+        }
+    } completion:^(BOOL finished) {
+        NSLog(@"Complete");
+    }];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -551,7 +797,8 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return _sections.count + 1;
+    return 4;
+    //return _sections.count + 1;
 }
 
 - (UIView*)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
@@ -567,16 +814,41 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
     return nil;
 }
 
+- (UISwipeActionsConfiguration*)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
+    
+    if (indexPath.section != 1) { return [UISwipeActionsConfiguration configurationWithActions:@[]]; }
+    
+    void (^handler)(UIContextualAction*, UIView*, void(^)(BOOL)) = ^(UIContextualAction *action, UIView *source, void(^handler)(BOOL)) {
+        TransactionInfo *transactionInfo = [_history objectForKey:indexPath];
+        void (^sent)(Transaction*, NSError*) = ^(Transaction *transation, NSError *error) {
+            NSLog(@"Cancelled: %@ %@ %@", transactionInfo, transation, error);
+        };
+        [_wallet overrideTransaction:transactionInfo action:WalletTransactionActionCancel callback:sent];
+        handler(NO);
+    };
+    
+    UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive
+                                                                         title:@"Cancel"
+                                                                       handler:handler];
+    
+    UISwipeActionsConfiguration *swipeConfig = [UISwipeActionsConfiguration configurationWithActions:@[action]];
+    swipeConfig.performsFirstActionWithFullSwipe = NO;
+    return swipeConfig;
+}
+
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    if (section == 0) { return 0.0f; }
-    if ([_sections objectAtIndex:section - 1].count == 0) { return FLT_EPSILON; }
+    switch (section) {
+        case 0: return 0.0;
+        case 1: return (_headerPending.showing ? 30.0f: FLT_EPSILON);
+        case 2: return (_headerInProgress.showing ? 30.0f: FLT_EPSILON);
+        case 3: return (_headerConfirmed.showing ? 30.0f: FLT_EPSILON);
+    }
     return 30.0f;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) { return 1; }
-    if (section > _sections.count) { return 0; }
-    return [_sections objectAtIndex:section - 1].count;
+    return [[_historyCounts objectAtIndex:section - 1] integerValue];
 }
 
 - (UITableViewCell*)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -596,9 +868,7 @@ static NSRegularExpression *RegExOnlyNumbers = nil;
             cell = [[TransactionTableViewCell alloc] init];
         }
 
-        
-        TransactionInfo *transactionInfo = [[_sections objectAtIndex:indexPath.section - 1] objectAtIndex:indexPath.row];
-        
+        TransactionInfo *transactionInfo = [_history objectForKey:indexPath];
         [((TransactionTableViewCell*)cell) setAddress:_wallet.activeAccountAddress transactionInfo:transactionInfo];
     }
     

@@ -35,6 +35,8 @@
 
 + (Promise*)checkForUpdatedGasPrices;
 
++ (BigNumber*)safeReplacementGasPrice;
+
 @property (nonatomic, readonly) BigNumber *gasPrice;
 
 @property (nonatomic, copy) void (^didChangeGasPrice)(GasPriceKeyboardView*);

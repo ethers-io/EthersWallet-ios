@@ -50,6 +50,7 @@ static NSString *DataStoreKeyGenericPrefix                        = @"GENERIC_";
 static NSString *DataStoreKeyNicknamePrefix                       = @"NICKNAME_";
 static NSString *DataStoreKeyNoncePrefix                          = @"NONCE_";
 static NSString *DataStoreKeyPendingTransactionHistoryPrefix      = @"PENDING_TRANSACTION_HISTORY_";
+static NSString *DataStoreKeyReplacedTransactionHistoryPrefix     = @"REPLACED_TRANSACTION_HISTORY_";
 static NSString *DataStoreKeySyncDate                             = @"SYNC_DATE_";
 static NSString *DataStoreKeyTransactionHistoryPrefix             = @"TRANSACTION_HISTORY_";
 static NSString *DataStoreKeyTransactionHistoryTruncatedPrefix    = @"TRANSACTION_HISTORY_TRUNCATED_";
@@ -408,6 +409,8 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
 
     Hash *newTransactionHash = transaction.transactionHash;
     
+    NSInteger maxNonce = -2;
+    
     // Get a set of all transaction hashes in our history
     NSMutableSet *hashes = [NSMutableSet setWithCapacity:64];
     {
@@ -419,10 +422,16 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
                 NSLog(@"Signer: Transaction already exists");
                 return;
             }
+            
+            // My transaction with a higher nonce
+            if ([txInfo.fromAddress isEqualToAddress:self.address] && txInfo.nonce > maxNonce) {
+                maxNonce = txInfo.nonce;
+            }
+            
             [hashes addObject:txInfo.transactionHash];
         }
     }
-
+    
     // Track all still-pending transactions (including the new one)
     NSMutableArray<NSDictionary*> *pending = [NSMutableArray array];
 
@@ -431,20 +440,31 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
         TransactionInfo *txIfno = [TransactionInfo transactionInfoWithPendingTransaction:transaction hash:transaction.transactionHash];
         [pending addObject:[txIfno dictionaryRepresentation]];
     }
-    
-    NSString *key = [DataStoreKeyPendingTransactionHistoryPrefix stringByAppendingString:self.address.checksumAddress];
-    for (NSDictionary *info in [_dataStore arrayForKey:key]) {
+
+    NSString *replacedKey = [DataStoreKeyReplacedTransactionHistoryPrefix stringByAppendingString:self.address.checksumAddress];
+    NSMutableArray *replaced = [[_dataStore arrayForKey:replacedKey] mutableCopy];
+    if (!replaced) { replaced = [NSMutableArray arrayWithCapacity:1]; }
+
+    // Trim still-pending transactions that have been confirmed or expired
+    NSString *pendingKey = [DataStoreKeyPendingTransactionHistoryPrefix stringByAppendingString:self.address.checksumAddress];
+    for (NSDictionary *info in [_dataStore arrayForKey:pendingKey]) {
         TransactionInfo *transaction = [TransactionInfo transactionInfoFromDictionary:info];
         if (!transaction) {
             NSLog(@"Invalid Transaction info: %@", transaction);
             continue;
         } else if ([hashes containsObject:transaction.transactionHash]) {
+            // Mined!
+            continue;
+        } else if (transaction.nonce <= maxNonce) {
+            // Another transaction with a matching nonce has already been mined (replacement)
+            [replaced addObject:[transaction dictionaryRepresentation]];
             continue;
         }
         [pending addObject:info];
     }
     
-    [_dataStore setArray:pending forKey:key];
+    [_dataStore setArray:pending forKey:pendingKey];
+    [_dataStore setArray:replaced forKey:replacedKey];
 
     if (transaction) {
         [self notifyTransactionChanged:@[]];

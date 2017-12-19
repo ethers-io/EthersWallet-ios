@@ -31,7 +31,7 @@
 #import "Utilities.h"
 
 
-static NSString *GasPriceDataUrl        = @"https://ethers.io/gas-prices.raw";
+static NSString *GasPriceDataUrl        = @"https://ethers.io/gas-prices-v2.raw";
 static NSString *GasPriceDataAddress    = @"0xcf49182a885E87fD55f4215def0f56EC71bB7511";
 
 
@@ -89,31 +89,56 @@ NSArray<NSString*> *GasPrices = nil;
         NSInteger count = -1;
         for (NSString *key in promise.value) {
             NSArray *values = [promise.value objectForKey:key];
-            if (![values isKindOfClass:[NSArray class]]) { return; }
-            for (NSString *key in values) {
-                if (![key isKindOfClass:[NSString class]]) { return; }
+            if (![values isKindOfClass:[NSArray class]]) {
+                NSLog(@"GasPriceKeyboardView - invalid array: %@", values);
+                return;
+            }
+            for (NSString *value in values) {
+                if (![value isKindOfClass:[NSString class]]) {
+                    NSLog(@"GasPriceKeyboardView -  invalid key/value: %@ = %@", key, value);
+                    return;
+                }
             }
             
             if (count == -1) {
                 count = values.count;
             } else if (count != values.count) {
+                NSLog(@"GasPriceKeyboardView - invalid length %@ %@.count != %d", key, values, (int)count);
                 return;
             }
         }
         
         // Makes sure each field is specified
-        if (![promise.value objectForKey:@"titles"]) { return; }
-        if (![promise.value objectForKey:@"subtitles"]) { return; }
-        if (![promise.value objectForKey:@"details"]) { return; }
-        if (![promise.value objectForKey:@"prices"]) { return; }
+        if (![promise.value objectForKey:@"titles"]) {
+            NSLog(@"GasPriceKeyboardView - missing titles");
+            return;
+        }
+        if (![promise.value objectForKey:@"subtitles"]) {
+            NSLog(@"GasPriceKeyboardView - missing subtitles");
+            return;
+        }
+        if (![promise.value objectForKey:@"details"]) {
+            NSLog(@"GasPriceKeyboardView - missing details");
+            return;
+        }
+        if (![promise.value objectForKey:@"prices"]) {
+            NSLog(@"GasPriceKeyboardView - missing prices");
+            return;
+        }
         
         BigNumber *tooExpensive = [BigNumber bigNumberWithDecimalString:@"200000000000"];
 
         // Make sure each price is a valid decimal number
         for (NSString *gasPriceString in [promise.value objectForKey:@"prices"]) {
             BigNumber *gasPrice = [BigNumber bigNumberWithDecimalString:gasPriceString];
-            if (!gasPrice) { return; }
-            if ([gasPrice compare:tooExpensive] == NSOrderedDescending) { return; }
+            if (!gasPrice) {
+                NSLog(@"GasPriceKeyboardView - invalid number: %@", gasPriceString);
+                return;
+            }
+            if ([gasPrice greaterThanEqualTo:tooExpensive]) {
+                NSLog(@"GasPriceKeyboardView - too expensive: %@", gasPriceString);
+                return;
+            }
         }
         
         // All good! Store the
@@ -139,6 +164,11 @@ NSArray<NSString*> *GasPrices = nil;
     return [SignedRemoteDictionary dictionaryWithUrl:GasPriceDataUrl
                                              address:[Address addressWithString:GasPriceDataAddress]
                                          defaultData:defaults];
+}
+
++ (BigNumber*)safeReplacementGasPrice {
+    if ([GasPrices count] == 0) { return [BigNumber constantZero]; }
+    return [BigNumber bigNumberWithDecimalString:[GasPrices objectAtIndex:([GasPrices count] - 1) / 2]];
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -174,6 +204,7 @@ NSArray<NSString*> *GasPrices = nil;
 }
 
 - (BigNumber*)gasPrice {
+    //if (self.selectedStopIndex == 0) { return [BigNumber bigNumberWithDecimalString:@"100000000"]; }
     return [_gasPrices objectAtIndex:self.selectedStopIndex];
 }
 

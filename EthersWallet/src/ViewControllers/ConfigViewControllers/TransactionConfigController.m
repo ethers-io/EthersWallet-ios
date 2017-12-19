@@ -104,13 +104,28 @@
     UIView *_feeKeyboard;
     KeyboardView *_feeKeyboardPrice, *_feeKeyboardLimit;
     
+//    BigNumber *_minGasPrice;
 }
 
 + (instancetype)configWithSigner: (Signer*)signer transaction: (Transaction*)transaction nameHint: (NSString*)nameHint {
-    return [[TransactionConfigController alloc] initWithSigner:signer transaction:transaction nameHint:nameHint];
+    return [[TransactionConfigController alloc] initWithSigner:signer
+                                                   transaction:transaction
+                                                      nameHint:nameHint
+                                                        action:WalletTransactionActionNormal];
 }
 
-- (instancetype)initWithSigner: (Signer*)signer transaction: (Transaction*)transaction nameHint: (NSString*)nameHint {
++ (instancetype)configWithSigner:(Signer *)signer transaction:(Transaction *)transaction action:(WalletTransactionAction)action {
+    return [[TransactionConfigController alloc] initWithSigner:signer
+                                                   transaction:transaction
+                                                      nameHint:nil
+                                                        action:action];
+}
+
+- (instancetype)initWithSigner: (Signer*)signer
+                   transaction: (Transaction*)transaction
+                      nameHint: (NSString*)nameHint
+                        action: (WalletTransactionAction) action {
+    
     self = [super init];
     if (self) {
         self.navigationItem.titleView = [Utilities navigationBarLogoTitle];
@@ -121,9 +136,16 @@
         _signer = signer;
         _nameHint = nameHint;
         _transaction = [transaction copy];
+        _action = action;
         
         _transaction.chainId = _signer.provider.chainId;
-        _transaction.nonce = _signer.transactionCount;
+        
+        if (_action == WalletTransactionActionNormal) {
+            _transaction.nonce = _signer.transactionCount;
+//            _minGasPrice = [BigNumber constantZero];
+        } else {
+//            _minGasPrice = transaction.gasPrice;
+        }
         
         NSArray *promises = @[
                               [_signer.provider getCode:_transaction.toAddress],
@@ -255,7 +277,6 @@
     }
     
     if (transfer) {
-//        _gasLimitIndex = 0;
         _transaction.gasLimit = [GasLimitKeyboardView transferGasLimit];
 
         // Enable MAX spendable
@@ -311,7 +332,18 @@
         _feeWarningTextView.text = @"estimating fee...";
         _feeWarningTextView.textColor = [UIColor whiteColor];
     
-    } else if ([[self totalValue] compare:_signer.balance] != NSOrderedDescending) {
+    } else if ([_signer.balance lessThan:[self totalValue]]) {
+        _feeWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
+        _feeWarningTextView.text = @"Your balance is too low.";
+        _feeWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];
+
+//    } else if (_action == WalletTransactionActionCancel) {
+//        _feeWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
+//        _feeWarningTextView.text = @"Cancelling a payment cannot be guaranteed.";
+//        _feeWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];
+
+    } else {
+        
         if ([_feeKeyboardLimit isKindOfClass:[GasLimitKeyboardView class]] && !((GasLimitKeyboardView*)_feeKeyboardLimit).safeGasLimit) {
             _feeWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
             _feeWarningTextView.text = @"Gas Limit is too low and may burn fee.";
@@ -319,11 +351,6 @@
         } else {
             _feeWarningTextView.text = @"";
         }
-        
-    } else {
-        _feeWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
-        _feeWarningTextView.text = @"Your balance is too low.";
-        _feeWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];
     }
 }
 
@@ -344,7 +371,12 @@
         _valueTextField.textField.enabled = YES;
         _feeLabel.alpha = _feeReady ? 1.0f: 0.5f;
         _feeLabel.userInteractionEnabled = _feeReady;
-        _sendButton.enabled = ([_signer.balance compare:totalValue] != NSOrderedAscending && _signer.unlocked && _feeReady);
+        
+        BOOL sufficientBalance = ([_signer.balance greaterThanEqualTo:totalValue]);
+        
+//        BOOL validGasPrice = ([_transaction.gasPrice compare:_minGasPrice] != NSOrderedAscending);
+        
+        _sendButton.enabled = (sufficientBalance && _signer.unlocked && _feeReady);
 
         self.navigationItem.leftBarButtonItem.enabled = YES;
     }
@@ -376,91 +408,15 @@
     [self updateButton];
 }
 
-- (void)loadView {
-    [super loadView];
-    
+- (void)loadViewTo {
     __weak TransactionConfigController *weakSelf = self;
 
-    _feeKeyboard = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 258.0f)];
-    {
-        _feeKeyboard.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        _feeKeyboard.backgroundColor = [UIColor whiteColor];
-        
-        
-        UIView *toolbar = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 50.0f)];
-        toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    
-        [self addDoneButton:toolbar];
-    
-        [_feeKeyboard addSubview:toolbar];
-        
-        UISegmentedControl *tabs = [[UISegmentedControl alloc] initWithItems:@[@"Gas Price", @"Gas Limit"]];
-        tabs.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-        tabs.frame = CGRectMake(0.0f, 0.0f, 160.0f, 30.0f);
-        tabs.selectedSegmentIndex = 0;
-        tabs.tintColor = [UIColor colorWithWhite:0.35f alpha:1.0f];
-    
-        tabs.center = CGPointMake(160.0f, 25.0f);
-        [toolbar addSubview:tabs];
-
-        [tabs addTarget:self action:@selector(segmentDidChange:) forControlEvents:UIControlEventValueChanged];
-    }
-    
-    
-    UIView *valueAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 50.0f)];
-    {
-        valueAccessoryView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        
-        [self addDoneButton:valueAccessoryView];
-        
-        _etherPriceLabel = [[UILabel alloc] initWithFrame:CGRectMake(16.0f, 4.0f, 100.0f, 44.0f)];
-        _etherPriceLabel.adjustsFontSizeToFitWidth = YES;
-        _etherPriceLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
-        _etherPriceLabel.minimumScaleFactor = 0.1f;
-        _etherPriceLabel.textColor = [UIColor colorWithWhite:0.5f alpha:1.0f];
-        _etherPriceLabel.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
-        
-        _etherPriceLabel.text = [NSString stringWithFormat:@"$%.02f\u2009/\u2009ether", _etherPrice];
-        
-        if (_etherPrice == 0.0f) { _etherPriceLabel.alpha = 0.0f; }
-        
-        [valueAccessoryView addSubview:_etherPriceLabel];
-    }
-    
-    // Flare for testnet
-    NSString *networkName = chainName(_signer.provider.chainId);
-    if (![networkName isEqualToString:chainName(ChainIdHomestead)]) {
-        UILabel *networkLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 85.0f, 7.0f, 70.0f, 30.0f)];
-        networkLabel.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-        networkLabel.font = [UIFont fontWithName:FONT_BOLD size:12];
-        networkLabel.text = [networkName uppercaseString];
-        networkLabel.textAlignment = NSTextAlignmentRight;
-        networkLabel.textColor = [UIColor colorWithHex:ColorHexRed];
-        [self.scrollView addSubview:networkLabel];
-    }
-    
-    _fingerprintButton = [Utilities ethersButton:ICON_NAME_FINGERPRINT fontSize:30.0f color:ColorHexToolbarIcon];
-    [_fingerprintButton addTarget:self action:@selector(tapFingerprint:) forControlEvents:UIControlEventTouchUpInside];
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:_fingerprintButton];
-
-    // This must be set after assiging to the rightBarButtonItem (which automatically enables it)
-    _fingerprintButton.enabled = [_signer supportsBiometricUnlock];
-
-    [self addGap:44.0f];
-    
-    [self addHeadingText:@"Send Payment"];
-    [self addText:_signer.nickname font:[UIFont fontWithName:FONT_ITALIC size:17.0f]];
-    
-    [self addFlexibleGap];
-    
-    [self addSeparator];
-    
     ConfigLabel *toLabel = [self addLabelTitle:@"To"];
     toLabel.label.text = _transaction.toAddress.checksumAddress;
     toLabel.label.font = [UIFont fontWithName:FONT_MONOSPACE_SMALL size:14.0f];
     toLabel.label.lineBreakMode = NSLineBreakByTruncatingMiddle;
     //toLabel.holdIncludesContentView = YES;
-
+    
     if (_nameHint) {
         [[_signer.provider lookupName:_nameHint] onCompletion:^(AddressPromise *promise) {
             if (promise.error) { return; }
@@ -485,13 +441,39 @@
     }
     
     [self addSeparator];
-    
+}
+
+- (void)loadViewData {
     if (_transaction.data.length) {
         ConfigLabel *dataLabel = [self addLabelTitle:@"Data"];
         dataLabel.label.font = [UIFont fontWithName:FONT_MONOSPACE size:14.0f];
         dataLabel.label.text = [NSString stringWithFormat:@"%d bytes", (int)_transaction.data.length];
-
+        
         [self addSeparator];
+    }
+}
+
+- (void)loadViewValue {
+    __weak TransactionConfigController *weakSelf = self;
+
+    UIView *valueAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 50.0f)];
+    {
+        valueAccessoryView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        
+        [self addDoneButton:valueAccessoryView];
+        
+        _etherPriceLabel = [[UILabel alloc] initWithFrame:CGRectMake(16.0f, 4.0f, 100.0f, 44.0f)];
+        _etherPriceLabel.adjustsFontSizeToFitWidth = YES;
+        _etherPriceLabel.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
+        _etherPriceLabel.minimumScaleFactor = 0.1f;
+        _etherPriceLabel.textColor = [UIColor colorWithWhite:0.5f alpha:1.0f];
+        _etherPriceLabel.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
+        
+        _etherPriceLabel.text = [NSString stringWithFormat:@"$%.02f\u2009/\u2009ether", _etherPrice];
+        
+        if (_etherPrice == 0.0f) { _etherPriceLabel.alpha = 0.0f; }
+        
+        [valueAccessoryView addSubview:_etherPriceLabel];
     }
 
     _valueTextField = [self addTextFieldTitle:@"Amount"];
@@ -525,24 +507,117 @@
     
     [self addSeparator];
     
+}
+
+- (void)loadViewFee {
+    __weak TransactionConfigController *weakSelf = self;
+
     _feeLabel = [self addLabelTitle:@"Fee"];
     _feeLabel.bottomMargin = 40.0f;
     _feeLabel.inputView = _feeKeyboard;
-    _feeLabel.didTap = ^(ConfigView *configView) {
-        [configView becomeFirstResponder];
-    };
-    
-    _feeLabel.onHold = ^(ConfigView *configLabel, ConfigViewHold holding) {
-        if (holding == ConfigViewHoldNone) {
-            [weakSelf updateFee:NO];
-        } else if (holding == ConfigViewHoldTitle || [configLabel isFirstResponder]) {
-            [weakSelf updateFee:YES];
-        }
-    };
+    if (_action == WalletTransactionActionCancel) {
+        _feeLabel.onHold = ^(ConfigView *configLabel, ConfigViewHold holding) {
+            if (holding == ConfigViewHoldNone) {
+                [weakSelf updateFee:NO];
+            } else {
+                [weakSelf updateFee:YES];
+            }
+        };
+        
+    } else {
+        _feeLabel.didTap = ^(ConfigView *configView) {
+            [configView becomeFirstResponder];
+        };
+        
+        _feeLabel.onHold = ^(ConfigView *configLabel, ConfigViewHold holding) {
+            if (holding == ConfigViewHoldNone) {
+                [weakSelf updateFee:NO];
+            } else if (holding == ConfigViewHoldTitle || [configLabel isFirstResponder]) {
+                [weakSelf updateFee:YES];
+            }
+        };
+    }
     
     [self addSeparator];
     
     _feeWarningTextView = [self addText:@"estimating fee..." font:[UIFont fontWithName:FONT_ITALIC size:14.0f]];
+}
+
+- (void)loadView {
+    [super loadView];
+    
+    __weak TransactionConfigController *weakSelf = self;
+
+    _feeKeyboard = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 258.0f)];
+    {
+        _feeKeyboard.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        _feeKeyboard.backgroundColor = [UIColor whiteColor];
+        
+        UIView *toolbar = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 50.0f)];
+        toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    
+        [self addDoneButton:toolbar];
+    
+        [_feeKeyboard addSubview:toolbar];
+        
+        UISegmentedControl *tabs = [[UISegmentedControl alloc] initWithItems:@[@"Gas Price", @"Gas Limit"]];
+        tabs.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
+        tabs.frame = CGRectMake(0.0f, 0.0f, 160.0f, 30.0f);
+        tabs.selectedSegmentIndex = 0;
+        tabs.tintColor = [UIColor colorWithWhite:0.35f alpha:1.0f];
+    
+        tabs.center = CGPointMake(160.0f, 25.0f);
+        [toolbar addSubview:tabs];
+
+        [tabs addTarget:self action:@selector(segmentDidChange:) forControlEvents:UIControlEventValueChanged];
+    }
+    
+    // Flare for testnet
+    NSString *networkName = chainName(_signer.provider.chainId);
+    if (![networkName isEqualToString:chainName(ChainIdHomestead)]) {
+        UILabel *networkLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 85.0f, 7.0f, 70.0f, 30.0f)];
+        networkLabel.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+        networkLabel.font = [UIFont fontWithName:FONT_BOLD size:12];
+        networkLabel.text = [networkName uppercaseString];
+        networkLabel.textAlignment = NSTextAlignmentRight;
+        networkLabel.textColor = [UIColor colorWithHex:ColorHexRed];
+        [self.scrollView addSubview:networkLabel];
+    }
+    
+    _fingerprintButton = [Utilities ethersButton:ICON_NAME_FINGERPRINT fontSize:30.0f color:ColorHexToolbarIcon];
+    [_fingerprintButton addTarget:self action:@selector(tapFingerprint:) forControlEvents:UIControlEventTouchUpInside];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:_fingerprintButton];
+
+    // This must be set after assiging to the rightBarButtonItem (which automatically enables it)
+    _fingerprintButton.enabled = [_signer supportsBiometricUnlock];
+
+    [self addGap:44.0f];
+    
+    if (_action == WalletTransactionActionNormal) {
+        [self addHeadingText:@"Send Payment"];
+    } else if (_action == WalletTransactionActionCancel) {
+        [self addHeadingText:@"Cancel Payment"];
+    }
+    
+    [self addText:_signer.nickname font:[UIFont fontWithName:FONT_ITALIC size:17.0f]];
+    
+    if (_action == WalletTransactionActionCancel) {
+        [self addFlexibleGap];
+        [self addText:@"Cancelling a payment attempts to replace the original transaction with an empty transaction.\nIt cannot be guaranteed." fontSize:14.0f];
+        [self addFlexibleGap];
+    }
+    
+    [self addFlexibleGap];
+    
+    [self addSeparator];
+
+    if (_action == WalletTransactionActionNormal) {
+        [self loadViewTo];
+        [self loadViewData];
+        [self loadViewValue];
+    }
+    
+    [self loadViewFee];
     
     [self addFlexibleGap];
     
@@ -595,20 +670,32 @@
     };
     
     [self addSeparator];
+    
     _passwordWarningTextView = [self addText:@"" font:[UIFont fontWithName:FONT_BOLD size:14.0f]];
     _passwordWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
     _passwordWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];
 
     [self addFlexibleGap];
     
-    _sendButton = [self addButton:@"Send Payment" action:^(UIButton *button) {
+    NSString *buttonText = @"Send Payment";
+    if (_action == WalletTransactionActionCancel) {
+        buttonText = @"Attempt Cancel";
+    }
+    
+    _sendButton = [self addButton:buttonText action:^(UIButton *button) {
         weakSelf.sending = YES;
         weakSelf.feeWarningTextView.text = @"";
         [weakSelf updateButton];
         [weakSelf.signer send:weakSelf.transaction callback:^(Transaction *transaction, NSError *error) {
             if (error) {
+                NSString *description = [error localizedDescription];
+                if (weakSelf.action == WalletTransactionActionCancel) {
+                    if ([[error debugDescription] rangeOfString:@"nonce is too low"].location != NSNotFound) {
+                        description = @"Already confirming and cannot be cancelled.";
+                    }
+                }
                 weakSelf.sending = NO;
-                weakSelf.feeWarningTextView.text = [error localizedDescription];
+                weakSelf.feeWarningTextView.text = description;
                 [weakSelf updateButton];
             
             } else {
@@ -625,23 +712,39 @@
         }];
     }];
     
-    [_addressInspectionPromise onCompletion:^(ArrayPromise *promise) {
-        if (promise.error) {
-            weakSelf.feeWarningTextView.text = [promise.error localizedDescription];
-            return;
-        }
-        
-        NSData *code = [promise.value objectAtIndex:0];
-        BigNumber *gasEstimate = [promise.value objectAtIndex:1];
-        
-        [weakSelf setupFeeKeyboardTransfer:(code.length == 0 && weakSelf.transaction.data.length == 0) gasEstimate:gasEstimate];
-    }];
-    
     [self addFlexibleGap];
 
     [self updateValue:NO];
     [self updateFee:NO];
+
+    // Cancelling always sends to myself; so 21000
+    if (_action == WalletTransactionActionCancel) {
+        _valueTextField.userInteractionEnabled = NO;
+        _valueTextField.buttonTitle = @"";
+
+        _feeReady = YES;
+        _gasEstimate = [BigNumber bigNumberWithInteger:21000];
+        
+        [self checkFunds];
+        
+        [self updateButton];
     
+    } else {
+
+        [_addressInspectionPromise onCompletion:^(ArrayPromise *promise) {
+            if (promise.error) {
+                weakSelf.feeWarningTextView.text = [promise.error localizedDescription];
+                return;
+            }
+            
+            NSData *code = [promise.value objectAtIndex:0];
+            BigNumber *gasEstimate = [promise.value objectAtIndex:1];
+            
+            [weakSelf setupFeeKeyboardTransfer:(code.length == 0 && weakSelf.transaction.data.length == 0) gasEstimate:gasEstimate];
+        }];
+    }
+    
+
     /*
     if (firm) {
         amountTextField.userInteractionEnabled = NO;

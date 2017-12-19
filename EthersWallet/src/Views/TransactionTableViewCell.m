@@ -168,8 +168,13 @@ NSAttributedString *getTimestamp(NSTimeInterval timestamp) {
     
     if ([transactionInfo.toAddress isEqualToAddress:_address]) {
         if ([_transactionInfo.fromAddress isEqualToAddress:_address]) {
-            _typeLabel.text = @"";
-            _addressLabel.text = @"self";
+            if (_transactionInfo.data.length == 0 && [_transactionInfo.value isZero]) {
+                _typeLabel.text = @"Cancel";
+                _addressLabel.text = @"";
+            } else {
+                _typeLabel.text = @"";
+                _addressLabel.text = @"myself";
+            }
         } else {
             _typeLabel.text = @"Received";
             _addressLabel.text = _transactionInfo.fromAddress.checksumAddress;

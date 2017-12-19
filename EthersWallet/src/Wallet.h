@@ -97,8 +97,16 @@ typedef enum WalletError {
     WalletErrorSendCancelled             = -11,
     WalletErrorSendInsufficientFunds     = -12,
     WalletErrorNoAccount                 = -40,
+    WalletErrorNotImplemented            = -50,
 } WalletError;
 
+#pragma mark - Constants
+
+typedef enum WalletTransactionAction {
+    WalletTransactionActionNormal = 0,
+    WalletTransactionActionRush,
+    WalletTransactionActionCancel
+} WalletTransactionAction ;
 
 #pragma mark - Wallet
 
@@ -149,6 +157,10 @@ typedef enum WalletError {
 
 - (void)sendPayment: (Payment*)payment callback: (void (^)(Transaction*, NSError*))callback;
 - (void)sendTransaction: (Transaction*)transaction callback:(void (^)(Transaction*, NSError*))callback;
+
+- (void)overrideTransaction: (TransactionInfo*)oldTransaction
+                     action: (WalletTransactionAction)action
+                   callback:(void (^)(Transaction*, NSError*))callback;
 
 - (void)signMessage: (NSData*)message callback:(void (^)(Signature*, NSError*))callback;
 

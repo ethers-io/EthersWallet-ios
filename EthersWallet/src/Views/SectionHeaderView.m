@@ -40,7 +40,8 @@
 - (instancetype)init {
     self = [super initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 30.0f)];
     if (self) {
-
+        _showing = YES;
+        
         UIView *background = [[UIView alloc] initWithFrame:self.bounds];
         background.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         background.backgroundColor = [UIColor colorWithHex:0xf5f9ff];
@@ -90,6 +91,29 @@
 
 - (void)setDetails:(NSString *)details animated: (BOOL)animated {
     [_detailsLabel setText:details animated:animated];
+}
+
+- (void)setShowing:(BOOL)showing {
+    [self setShowing:showing animated:NO];
+}
+
+- (void)setShowing: (BOOL)showing animated: (BOOL)animated {
+    _showing = showing;
+    
+    __weak SectionHeaderView *weakSelf = self;
+    void (^animate)() = ^() {
+        weakSelf.alpha = (showing ? 1.0f: 0.0f);
+    };
+    
+    if (animated) {
+        if (showing) {
+            [UIView animateWithDuration:0.5f animations:animate];
+        } else {
+            [UIView animateWithDuration:0.5f delay:1.0f options:0 animations:animate completion:nil];
+        }
+    } else {
+        animate();
+    }
 }
 
 - (NSString*)details {

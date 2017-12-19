@@ -26,15 +26,19 @@
 #import "ConfigController.h"
 
 #import "Signer.h"
+#import "Wallet.h"
 
 @class Transaction;
 
 @interface TransactionConfigController : ConfigController
 
 + (instancetype)configWithSigner: (Signer*)signer transaction: (Transaction*)transaction nameHint: (NSString*)nameHint;
++ (instancetype)configWithSigner: (Signer*)signer transaction: (Transaction*)transaction action: (WalletTransactionAction)action;
 
 @property (nonatomic, readonly) Signer *signer;
 @property (nonatomic, readonly) NSString *nameHint;
+
+@property (nonatomic, readonly) WalletTransactionAction action;
 
 @property (nonatomic, copy) void (^onSign)(TransactionConfigController*, Transaction*);
 
