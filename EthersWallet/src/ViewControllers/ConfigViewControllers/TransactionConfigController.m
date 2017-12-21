@@ -103,8 +103,6 @@
     
     UIView *_feeKeyboard;
     KeyboardView *_feeKeyboardPrice, *_feeKeyboardLimit;
-    
-//    BigNumber *_minGasPrice;
 }
 
 + (instancetype)configWithSigner: (Signer*)signer transaction: (Transaction*)transaction nameHint: (NSString*)nameHint {
@@ -142,9 +140,6 @@
         
         if (_action == WalletTransactionActionNormal) {
             _transaction.nonce = _signer.transactionCount;
-//            _minGasPrice = [BigNumber constantZero];
-        } else {
-//            _minGasPrice = transaction.gasPrice;
         }
         
         NSArray *promises = @[
@@ -733,6 +728,7 @@
 
         [_addressInspectionPromise onCompletion:^(ArrayPromise *promise) {
             if (promise.error) {
+                NSLog(@"TransactionConfigController - %@", promise.error);
                 weakSelf.feeWarningTextView.text = [promise.error localizedDescription];
                 return;
             }
