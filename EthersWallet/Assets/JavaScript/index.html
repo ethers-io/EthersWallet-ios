@@ -26,6 +26,18 @@
             (function(_this) {
                 var ethers = window.webkit.messageHandlers.ethers;
 
+                function BridgeProvder(ethers) {
+                    this.ethers = ethers;
+                }
+
+             BridgeProvder.prototype.sendAsync = function(payload) {
+                console.log(arguments);
+             }
+             
+                window.web3 = {
+                    currentProvider: new BridgeProvider()
+                }
+
                 function serialize(object, path, done) {
                     if (path == null) { path = ''; }
                     if (!done) { done = {}; }
