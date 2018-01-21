@@ -56,6 +56,8 @@
 #define ICON_NAME_X                  @"X"
 #define ICON_NAME_AIRPLANE           @"Y"
 
+#define ICON_LOGO_FIREFLY            @"Z"
+
 //#define ICON_NAME_DEVCON_2           @"1"
 //#define ICON_NAME_ORIGAMI            @"2"
 #define ICON_NAME_CLIPBOARD          @"3"
