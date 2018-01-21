@@ -496,18 +496,36 @@ static NSString *DataStoreKeyTransactionsSentPrefix            = @"TRANSACTION_S
     });
 }
 
-- (void)send:(Transaction *)transaction callback:(void (^)(Transaction *, NSError *))callback {
+- (ConfigController*)send:(Transaction *)transaction callback:(void (^)(Transaction *, NSError *))callback {
     dispatch_async(dispatch_get_main_queue(), ^() {
         callback(nil, [NSError errorWithDomain:SignerErrorDomain code:SignerErrorNotImplemented userInfo:@{}]);
     });
+    
+    return nil;
 }
 
-- (void)signMessage: (NSData*)message callback: (void (^)(Signature*, NSError*))callback {
+- (ConfigController*)signMessage: (NSData*)message callback: (void (^)(Signature*, NSError*))callback {
     dispatch_async(dispatch_get_main_queue(), ^() {
         callback(nil, [NSError errorWithDomain:SignerErrorDomain code:SignerErrorNotImplemented userInfo:@{}]);
     });
+    
+    return nil;
 }
 
+- (void)cancel {
+}
+
+- (NSString*)textMessageFor: (SignerTextMessage)textMessageType {
+    switch (textMessageType) {
+        case SignerTextMessageSendButton:
+            return @"Send Payment";
+        case SignerTextMessageCancelButton:
+            return @"Attempt Cancel";
+        case SignerTextMessageSignButton:
+            return @"Sign Message";
+    }
+    return @"OK";
+}
 
 - (BOOL)supportsMnemonicPhrase {
     return NO;

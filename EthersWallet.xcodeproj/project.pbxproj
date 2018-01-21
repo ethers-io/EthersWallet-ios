@@ -15,6 +15,12 @@
 		E21481CE1E431CAE00B87132 /* SharedDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA04481E428E0E0013E5A7 /* SharedDefaults.m */; };
 		E21481CF1E431CC600B87132 /* ethers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2FA046E1E4293750013E5A7 /* ethers.framework */; };
 		E22A59E71EBA9D8500AEE894 /* Signer.m in Sources */ = {isa = PBXBuildFile; fileRef = E22A59E61EBA9D8500AEE894 /* Signer.m */; };
+		E24007432000281400BB01E8 /* FireflySigner.m in Sources */ = {isa = PBXBuildFile; fileRef = E24007422000281400BB01E8 /* FireflySigner.m */; };
+		E240074720018B9A00BB01E8 /* FireflyConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E240074620018B9A00BB01E8 /* FireflyConfigController.m */; };
+		E240074A20018FB600BB01E8 /* FireflyScannerConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E240074920018FB600BB01E8 /* FireflyScannerConfigController.m */; };
+		E240074B2001927A00BB01E8 /* BLECast.m in Sources */ = {isa = PBXBuildFile; fileRef = E28B15321EAC3D6C00D79C52 /* BLECast.m */; };
+		E240074E20082C5900BB01E8 /* ScannerView.m in Sources */ = {isa = PBXBuildFile; fileRef = E240074D20082C5900BB01E8 /* ScannerView.m */; };
+		E240075120101FAC00BB01E8 /* FireflyPairingConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E240075020101FAC00BB01E8 /* FireflyPairingConfigController.m */; };
 		E2491AB61F42642A007DB5A4 /* ConfigLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2491AB51F42642A007DB5A4 /* ConfigLabel.m */; };
 		E29620591FBE2B2F00BFA868 /* PanelController.m in Sources */ = {isa = PBXBuildFile; fileRef = E29620581FBE2B2F00BFA868 /* PanelController.m */; };
 		E29AB1091F4E199C0009FEF0 /* SignedRemoteDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = E29AB1081F4E199C0009FEF0 /* SignedRemoteDictionary.m */; };
@@ -41,6 +47,8 @@
 		E2BF0F941FCA20F900DD1B86 /* SearchTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = E2BF0F931FCA20F900DD1B86 /* SearchTitleView.m */; };
 		E2C1671E1F4AB48F001B4A31 /* DebugConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2C1671D1F4AB48F001B4A31 /* DebugConfigController.m */; };
 		E2C167221F4AB5A2001B4A31 /* ConfigToggle.m in Sources */ = {isa = PBXBuildFile; fileRef = E2C167211F4AB5A2001B4A31 /* ConfigToggle.m */; };
+		E2DEB749201272C3000B7611 /* FireflyDoneConfigController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2DEB748201272C3000B7611 /* FireflyDoneConfigController.m */; };
+		E2DEB74D20127768000B7611 /* OutlineLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2DEB74C20127768000B7611 /* OutlineLabel.m */; };
 		E2FA03E61E428AC10013E5A7 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA03E51E428AC10013E5A7 /* main.m */; };
 		E2FA03F11E428AC10013E5A7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2FA03F01E428AC10013E5A7 /* Assets.xcassets */; };
 		E2FA03FF1E428AC20013E5A7 /* EthersWalletTests.m in Sources */ = {isa = PBXBuildFile; fileRef = E2FA03FE1E428AC20013E5A7 /* EthersWalletTests.m */; };
@@ -143,6 +151,16 @@
 		E21481D01E43218A00B87132 /* TodayExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = TodayExtension.entitlements; path = TodayExtension/TodayExtension.entitlements; sourceTree = "<group>"; };
 		E22A59E51EBA9D8500AEE894 /* Signer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Signer.h; path = src/Utilities/Signers/Signer.h; sourceTree = "<group>"; };
 		E22A59E61EBA9D8500AEE894 /* Signer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Signer.m; path = src/Utilities/Signers/Signer.m; sourceTree = "<group>"; };
+		E24007412000281400BB01E8 /* FireflySigner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FireflySigner.h; path = src/Utilities/Signers/FireflySigner.h; sourceTree = "<group>"; };
+		E24007422000281400BB01E8 /* FireflySigner.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = FireflySigner.m; path = src/Utilities/Signers/FireflySigner.m; sourceTree = "<group>"; };
+		E240074520018B9A00BB01E8 /* FireflyConfigController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FireflyConfigController.h; path = src/ViewControllers/ConfigViewControllers/FireflyConfigController.h; sourceTree = "<group>"; };
+		E240074620018B9A00BB01E8 /* FireflyConfigController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = FireflyConfigController.m; path = src/ViewControllers/ConfigViewControllers/FireflyConfigController.m; sourceTree = "<group>"; };
+		E240074820018FB600BB01E8 /* FireflyScannerConfigController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FireflyScannerConfigController.h; path = src/ViewControllers/ConfigViewControllers/FireflyScannerConfigController.h; sourceTree = "<group>"; };
+		E240074920018FB600BB01E8 /* FireflyScannerConfigController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = FireflyScannerConfigController.m; path = src/ViewControllers/ConfigViewControllers/FireflyScannerConfigController.m; sourceTree = "<group>"; };
+		E240074C20082C5900BB01E8 /* ScannerView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScannerView.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ScannerView.h; sourceTree = "<group>"; };
+		E240074D20082C5900BB01E8 /* ScannerView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = ScannerView.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ScannerView.m; sourceTree = "<group>"; };
+		E240074F20101FAC00BB01E8 /* FireflyPairingConfigController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FireflyPairingConfigController.h; path = src/ViewControllers/ConfigViewControllers/FireflyPairingConfigController.h; sourceTree = "<group>"; };
+		E240075020101FAC00BB01E8 /* FireflyPairingConfigController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = FireflyPairingConfigController.m; path = src/ViewControllers/ConfigViewControllers/FireflyPairingConfigController.m; sourceTree = "<group>"; };
 		E2491AB41F42642A007DB5A4 /* ConfigLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigLabel.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigLabel.h; sourceTree = "<group>"; };
 		E2491AB51F42642A007DB5A4 /* ConfigLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ConfigLabel.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigLabel.m; sourceTree = "<group>"; };
 		E28B15311EAC3D6C00D79C52 /* BLECast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BLECast.h; path = src/Utilities/BLECast.h; sourceTree = "<group>"; };
@@ -195,6 +213,10 @@
 		E2C1671D1F4AB48F001B4A31 /* DebugConfigController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DebugConfigController.m; path = src/ViewControllers/ConfigViewControllers/DebugConfigController.m; sourceTree = "<group>"; };
 		E2C167201F4AB5A2001B4A31 /* ConfigToggle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigToggle.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigToggle.h; sourceTree = "<group>"; };
 		E2C167211F4AB5A2001B4A31 /* ConfigToggle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ConfigToggle.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/ConfigToggle.m; sourceTree = "<group>"; };
+		E2DEB747201272C3000B7611 /* FireflyDoneConfigController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FireflyDoneConfigController.h; path = src/ViewControllers/ConfigViewControllers/FireflyDoneConfigController.h; sourceTree = "<group>"; };
+		E2DEB748201272C3000B7611 /* FireflyDoneConfigController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = FireflyDoneConfigController.m; path = src/ViewControllers/ConfigViewControllers/FireflyDoneConfigController.m; sourceTree = "<group>"; };
+		E2DEB74B20127768000B7611 /* OutlineLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OutlineLabel.h; path = src/ViewControllers/ConfigViewControllers/ConfigViews/OutlineLabel.h; sourceTree = "<group>"; };
+		E2DEB74C20127768000B7611 /* OutlineLabel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = OutlineLabel.m; path = src/ViewControllers/ConfigViewControllers/ConfigViews/OutlineLabel.m; sourceTree = "<group>"; };
 		E2FA03E11E428AC10013E5A7 /* EthersWallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EthersWallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2FA03E51E428AC10013E5A7 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		E2FA03F01E428AC10013E5A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -311,6 +333,8 @@
 				E22A59E61EBA9D8500AEE894 /* Signer.m */,
 				E2B6A3301F3EEF0500B315B6 /* CloudKeychainSigner.h */,
 				E2B6A3311F3EEF0500B315B6 /* CloudKeychainSigner.m */,
+				E24007412000281400BB01E8 /* FireflySigner.h */,
+				E24007422000281400BB01E8 /* FireflySigner.m */,
 			);
 			name = Signers;
 			sourceTree = "<group>";
@@ -327,6 +351,14 @@
 				E2C1671D1F4AB48F001B4A31 /* DebugConfigController.m */,
 				E2B6A32D1F3E534300B315B6 /* DoneConfigController.h */,
 				E2B6A32E1F3E534300B315B6 /* DoneConfigController.m */,
+				E240074520018B9A00BB01E8 /* FireflyConfigController.h */,
+				E240074620018B9A00BB01E8 /* FireflyConfigController.m */,
+				E2DEB747201272C3000B7611 /* FireflyDoneConfigController.h */,
+				E2DEB748201272C3000B7611 /* FireflyDoneConfigController.m */,
+				E240074F20101FAC00BB01E8 /* FireflyPairingConfigController.h */,
+				E240075020101FAC00BB01E8 /* FireflyPairingConfigController.m */,
+				E240074820018FB600BB01E8 /* FireflyScannerConfigController.h */,
+				E240074920018FB600BB01E8 /* FireflyScannerConfigController.m */,
 				E2B6A3201F3D250000B315B6 /* MnemonicConfigController.h */,
 				E2B6A3211F3D250000B315B6 /* MnemonicConfigController.m */,
 				E2B6A31A1F3D12B200B315B6 /* MnemonicWarningConfigController.h */,
@@ -362,6 +394,10 @@
 				E2FF6A121F467F1700544B0B /* GasPriceKeyboardView.m */,
 				E2FF6A171F4773A800544B0B /* KeyboardView.h */,
 				E2FF6A181F4773A800544B0B /* KeyboardView.m */,
+				E2DEB74B20127768000B7611 /* OutlineLabel.h */,
+				E2DEB74C20127768000B7611 /* OutlineLabel.m */,
+				E240074C20082C5900BB01E8 /* ScannerView.h */,
+				E240074D20082C5900BB01E8 /* ScannerView.m */,
 				E2FF6A1A1F47988E00544B0B /* SliderKeyboardView.h */,
 				E2FF6A1B1F47988E00544B0B /* SliderKeyboardView.m */,
 			);
@@ -789,6 +825,7 @@
 				E2B972541FDEF74B00D4CC18 /* EthersScriptHandler.m in Sources */,
 				E2B6A3321F3EEF0500B315B6 /* CloudKeychainSigner.m in Sources */,
 				E2C1671E1F4AB48F001B4A31 /* DebugConfigController.m in Sources */,
+				E24007432000281400BB01E8 /* FireflySigner.m in Sources */,
 				E2FA042A1E428DF50013E5A7 /* QRCodeView.m in Sources */,
 				E2FA04541E428E0E0013E5A7 /* UIImage+resize.m in Sources */,
 				E29AB1091F4E199C0009FEF0 /* SignedRemoteDictionary.m in Sources */,
@@ -809,6 +846,7 @@
 				E2C167221F4AB5A2001B4A31 /* ConfigToggle.m in Sources */,
 				E2FA04121E428DDC0013E5A7 /* Wallet.m in Sources */,
 				E2B6A31F1F3D18FD00B315B6 /* IconView.m in Sources */,
+				E240074A20018FB600BB01E8 /* FireflyScannerConfigController.m in Sources */,
 				E2BF0F941FCA20F900DD1B86 /* SearchTitleView.m in Sources */,
 				E2B6A3191F3D113000B315B6 /* BlockButton.m in Sources */,
 				E2FA04291E428DF50013E5A7 /* MnemonicPhraseView.m in Sources */,
@@ -817,9 +855,12 @@
 				E2FF6A131F467F1700544B0B /* GasPriceKeyboardView.m in Sources */,
 				E2FF6A0F1F4673F300544B0B /* GasLimitKeyboardView.m in Sources */,
 				E2FA03E61E428AC10013E5A7 /* main.m in Sources */,
+				E240074720018B9A00BB01E8 /* FireflyConfigController.m in Sources */,
 				E29620591FBE2B2F00BFA868 /* PanelController.m in Sources */,
 				E2B6A3121F3CFB1B00B315B6 /* OptionsConfigController.m in Sources */,
 				E2FA049F1E43186D0013E5A7 /* TodayViewController.m in Sources */,
+				E2DEB749201272C3000B7611 /* FireflyDoneConfigController.m in Sources */,
+				E240074E20082C5900BB01E8 /* ScannerView.m in Sources */,
 				E2FA04551E428E0E0013E5A7 /* Utilities.m in Sources */,
 				E2FA044F1E428E0E0013E5A7 /* AsyncOperation.m in Sources */,
 				E2B6A3251F3E2FA400B315B6 /* PasswordConfigController.m in Sources */,
@@ -837,9 +878,12 @@
 				E2B6A32F1F3E534300B315B6 /* DoneConfigController.m in Sources */,
 				E2FA043A1E428E030013E5A7 /* AccountsViewController.m in Sources */,
 				E2FA043C1E428E030013E5A7 /* InfoViewController.m in Sources */,
+				E2DEB74D20127768000B7611 /* OutlineLabel.m in Sources */,
 				E2FF6A161F46AFC100544B0B /* CrossfadeLabel.m in Sources */,
 				E2B6A31C1F3D12B200B315B6 /* MnemonicWarningConfigController.m in Sources */,
 				E2FA04271E428DF50013E5A7 /* BalanceLabel.m in Sources */,
+				E240074B2001927A00BB01E8 /* BLECast.m in Sources */,
+				E240075120101FAC00BB01E8 /* FireflyPairingConfigController.m in Sources */,
 				E2FA043E1E428E030013E5A7 /* PanelViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

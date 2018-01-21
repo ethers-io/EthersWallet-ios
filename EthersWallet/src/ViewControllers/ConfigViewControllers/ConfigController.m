@@ -224,6 +224,7 @@ static NSRange rangeForMarkdown(NSString *text, NSString *pattern) {
 }
 
 - (UITextView*)addText: (NSString*)text font: (UIFont*)font {
+    if (!text) { text = @""; }
     NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithString:text];
     [attributedText setAttributes:@{NSFontAttributeName: font}
                             range:NSMakeRange(0, text.length)];

@@ -173,7 +173,6 @@ static NSDictionary *DefaultApplications = nil;
     [Utilities setupNavigationBar:rootController.navigationBar backgroundColor:navigationBarColor];
 
     [_panelViewController focusPanel:YES animated:NO];
-    //[_panelViewController focusPanel:NO animated:NO];
 
     _window.rootViewController = rootController;
     
@@ -541,6 +540,7 @@ typedef enum ExternalAction {
     ExternalActionWallet,
     ExternalActionSend,
     ExternalActionConfig,
+    ExternalActionFireflyConfig,
 } ExternalAction;
 
 - (BOOL)handleAction: (ExternalAction)action payment: (Payment*)payment {
@@ -564,10 +564,17 @@ typedef enum ExternalAction {
             }];
         
         } else if (action == ExternalActionConfig) {
-            [weakSelf.wallet showDebuggingOptionsCallback:^() {
+            [weakSelf.wallet showDebuggingOptions:WalletOptionsTypeDebug callback:^() {
                 NSLog(@"AppDelegate: Done config");
                 [self setupApplications];
             }];
+        
+        } else if (action == ExternalActionFireflyConfig) {
+            [weakSelf.wallet showDebuggingOptions:WalletOptionsTypeFirefly callback:^() {
+                NSLog(@"AppDelegate: Done Firefly config");
+                [self setupApplications];
+            }];
+
         }
     }];
     
@@ -587,6 +594,9 @@ typedef enum ExternalAction {
 
     } else if ([url.host isEqualToString:@"config"]) {
         action = ExternalActionConfig;
+
+    } else if ([url.host isEqualToString:@"firefly"]) {
+        action = ExternalActionFireflyConfig;
 
     } else {
         payment = [Payment paymentWithURI:[url absoluteString]];
@@ -624,6 +634,9 @@ typedef enum ExternalAction {
         if ([userActivity.webpageURL.path hasPrefix:@"/app-link"]) {
             if ([userActivity.webpageURL.fragment hasPrefix:@"!debug"] || [userActivity.webpageURL.fragment hasPrefix:@"!config"]) {
                 handled = [self handleAction:ExternalActionConfig payment:nil];
+
+            } else if ([userActivity.webpageURL.fragment hasPrefix:@"!firefly"]) {
+                handled = [self handleAction:ExternalActionFireflyConfig payment:nil];
 
             } else if ([userActivity.webpageURL.fragment hasPrefix:@"!scan"]) {
                 handled = [self handleAction:ExternalActionScan payment:nil];

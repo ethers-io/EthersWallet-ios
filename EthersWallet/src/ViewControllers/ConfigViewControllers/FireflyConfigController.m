@@ -23,15 +23,16 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-#import "DebugConfigController.h"
+#import "FireflyConfigController.h"
 
 #import "ConfigNavigationController.h"
 #import "Utilities.h"
 
-@implementation DebugConfigController
+
+@implementation FireflyConfigController
 
 + (instancetype)configWithWallet:(Wallet *)wallet {
-    return [[DebugConfigController  alloc] initWithWallet:wallet];
+    return [[FireflyConfigController  alloc] initWithWallet:wallet];
 }
 
 - (instancetype)initWithWallet:(Wallet*)wallet {
@@ -46,9 +47,9 @@
     [super loadView];
     
     self.navigationItem.leftBarButtonItem = nil;
-    self.navigationItem.titleView = [Utilities navigationBarLogoTitle];
-
-    __weak DebugConfigController *weakSelf = self;
+    self.navigationItem.title = @"Firefly";
+    
+    __weak FireflyConfigController *weakSelf = self;
     
     self.nextTitle = @"Done";
     self.nextEnabled = YES;
@@ -56,54 +57,33 @@
         [(ConfigNavigationController*)(config.navigationController) dismissWithNil];
     };
     
-    [self addGap:44.0f];
+    [self addFlexibleGap];
     
-    [self addHeadingText:@"Debug Options"];
+    [self addText:ICON_LOGO_FIREFLY font:[UIFont fontWithName:FONT_ETHERS size:100.0f]];
     
     [self addGap:10.0f];
     
-    [self addMarkdown:@"This page is for developers working on //Ethereum// projects. If you are here by accident, tap Done." fontSize:15.0f];
+    [self addMarkdown:@"The Firefly Hardware Wallet is still an **experimental** product and is in a very early stage of development."
+             fontSize:15.0f];
     
-    [self addFlexibleGap];
+    [self addMarkdown:@"Please do **NOT** use it for large amounts of ether and consider using a testnet instead of mainnet." fontSize:15.0f];
+    
+    [self addMarkdown:@"The v0 protocol stores the private key **unencrypted** on the Firefly which could be recovered using standard developer tools." fontSize:15.0f];
 
+    [self addFlexibleGap];
+    
     [self addSeparator];
-    ConfigToggle *allowTestnets = [self addToggle:@"Enable Testnets"];
-    allowTestnets.on = _wallet.testnetEnabled;
-    allowTestnets.didChange = ^(ConfigToggle *toggle) {
-        weakSelf.wallet.testnetEnabled = toggle.on;
+    ConfigToggle *allowFirefly = [self addToggle:@"Enable Firefly"];
+    allowFirefly.on = _wallet.fireflyEnabled;
+    allowFirefly.didChange = ^(ConfigToggle *toggle) {
+        weakSelf.wallet.fireflyEnabled = toggle.on;
     };
     [self addSeparator];
-    [self addNoteText:@"Allow new (created and imported) accounts to be optionally attached to a testnet."];
-
-    [self addGap:30.0f];
+    [self addNoteText:@"Allow new Firefly Hardware Wallets (v0) to be paired and added as accounts."];
     
-    [self addSeparator];
-    ConfigToggle *allowApps = [self addToggle:@"Enable Apps"];
-    allowApps.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"TEMP_ALLOW_APPS"];
-    allowApps.didChange = ^(ConfigToggle *toggle) {
-        [[NSUserDefaults standardUserDefaults] setBool:toggle.on forKey:@"TEMP_ALLOW_APPS"];
-    };
-    [self addSeparator];
-    [self addNoteText:@"Only developers should use this. Applications added won't persist in the bookmarks."];
-    
-
     [self addFlexibleGap];
-
-    [self addFlexibleGap];
-    
-    [self addButton:@"Purge Cached Data" action:^(UIButton *button) {
-        [weakSelf.wallet purgeCacheData];
-        [weakSelf.wallet refresh:nil];
-    }];
     
     [self addGap:44.0f];
-
-    /**
-     *  Other things to add here one day:
-     *  - Custom nodes (Add name, chain ID and custom node)
-     *  - Light Client toggle (light client is still not at all feasible; consumes large amounts of bandwidth, CPU and storage)
-     *  - Debuggin console to assist CS contacts (without revealing data)
-     */
-    
 }
+
 @end

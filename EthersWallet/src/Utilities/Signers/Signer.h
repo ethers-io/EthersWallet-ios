@@ -30,6 +30,7 @@
 #import <ethers/Provider.h>
 #import <ethers/Transaction.h>
 
+#include "ConfigController.h"
 
 #pragma mark - Notifications
 
@@ -66,10 +67,17 @@ typedef enum SignerError {
     SignerErrorCancelled                      = -10,
     
     SignerErrorAccountLocked                  = -40,
+    SignerErrorTransactionTooBig              = -41,
 
     SignerErrorFailed                         = -50,
     
 } SignerError;
+
+typedef enum SignerTextMessage {
+    SignerTextMessageSendButton,
+    SignerTextMessageSignButton,
+    SignerTextMessageCancelButton,
+} SignerTextMessage;
 
 #pragma mark - Signer
 
@@ -125,20 +133,24 @@ typedef enum SignerError {
 //  - Secret Storage JSON wallets support signing with unlocked signers
 //@property (nonatomic, readonly) BOOL supportsSign;
 
-- (void)send: (Transaction*)transaction callback: (void (^)(Transaction*, NSError*))callback;
+- (ConfigController*)send: (Transaction*)transaction callback: (void (^)(Transaction*, NSError*))callback;
 
+- (ConfigController*)signMessage: (NSData*)message callback: (void (^)(Signature*, NSError*))callback;
 
-- (void)signMessage: (NSData*)message callback: (void (^)(Signature*, NSError*))callback;
+// Cancel any pending transactions or signing
+- (void)cancel;
+
 
 // Mnemonic Phrase
 //   - Watch-only wallets (just an address) do not have (known) mnemonic phrases
 //   - Secret storage JSON wallets created by ethers do
+//   - Firefly (version 0) wallets do not
 @property (nonatomic, readonly) BOOL supportsMnemonicPhrase;
 
 // This is only available if the signer is unlocked and supports mnemonic phrases
 @property (nonatomic, readonly) NSString *mnemonicPhrase;
 
-
+// If unlocked, may call send:callback: or signMessage:callback:
 @property (nonatomic, readonly) BOOL unlocked;
 
 // Lock and cancel any in-flight unlock
@@ -147,12 +159,14 @@ typedef enum SignerError {
 // Cancel any unlock in progress
 - (void)cancelUnlock;
 
+- (NSString*)textMessageFor: (SignerTextMessage)textMessageType;
 
 #pragma mark - Subclass support functions
 
 // Sub-classes can use these to update the cached state
 - (void)addTransaction: (Transaction*)transaction;
 
+// Stores values, unencrypted in a local-only data store
 - (NSString*)dataStoreValueForKey: (NSString*)key;
 - (void)setDataStoreValue: (NSString*)value forKey: (NSString*)key;
 

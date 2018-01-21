@@ -1099,7 +1099,7 @@ NSString *flipYAndScale(CGPoint point, UIImage *baseImage, UIImage *targetImage)
     return NO;
 }
 
-NSString *getPointString(NSArray *points, NSInteger index) {
+static NSString *getPointString(NSArray *points, NSInteger index) {
     CGPoint point;
     CGPointMakeWithDictionaryRepresentation((CFDictionaryRef)[points objectAtIndex:index], &point);
     return NSStringFromCGPoint(point);

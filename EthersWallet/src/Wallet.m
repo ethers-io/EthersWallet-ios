@@ -29,7 +29,7 @@
 
 // This is useful for testing. It prevents us from having to re-type a mnemonic
 // phrase to add or delete an account. This is BAD for production.
-#define DEBUG_SKIP_VERIFY_MNEMONIC    NO
+//#define DEBUG_SKIP_VERIFY_MNEMONIC
 
 // Minimum length for a valid password
 #define MIN_PASSWORD_LENGTH       6
@@ -52,6 +52,9 @@
 #import "ConfigNavigationController.h"
 #import "DebugConfigController.h"
 #import "DoneConfigController.h"
+#import "FireflyConfigController.h"
+#import "FireflyDoneConfigController.h"
+#import "FireflyPairingConfigController.h"
 #import "GasPriceKeyboardView.h"
 #import "MnemonicWarningConfigController.h"
 #import "MnemonicConfigController.h"
@@ -63,6 +66,7 @@
 
 #import "CachedDataStore.h"
 #import "CloudKeychainSigner.h"
+#import "FireflySigner.h"
 #import "ModalViewController.h"
 #import "UIColor+hex.h"
 #import "Utilities.h"
@@ -112,6 +116,7 @@ const NSString* WalletNotificationSyncDateKey                            = @"Wal
 
 static NSString *DataStoreKeyEtherPrice                   = @"ETHER_PRICE";
 
+static NSString *DataStoreKeyEnableFirefly                = @"DEBUG_ENABLE_FIREFLY";
 static NSString *DataStoreKeyEnableTestnet                = @"DEBUG_ENABLE_TESTNET";
 
 static NSString *DataStoreKeyActiveAccountAddress         = @"ACTIVE_ACCOUNT_ADDRESS";
@@ -148,7 +153,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 + (void)initialize {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        if ((DEBUG_SKIP_VERIFY_MNEMONIC)) {
+#ifdef DEBUG_SKIP_VERIFY_MNEMONIC
 #warning DEBUGGING ENABLED - SKIP VERIFIY MNEMONIC - DO NOT RELASE
             NSLog(@"");
             NSLog(@"**********************************************************");
@@ -163,7 +168,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
             NSLog(@"**********************************************************");
             NSLog(@"**********************************************************");
             NSLog(@"");
-        }
+#endif
     });
 }
 
@@ -285,37 +290,48 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     });
 }
 
-- (void)addSigners: (NSString*)keychainKey chainId: (ChainId)chainId {
+- (void)addSignerNotifications: (Signer*)signer {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(notifySignerBalanceDidChange:)
+                                                 name:SignerBalanceDidChangeNotification
+                                               object:signer];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(notifySignerNicknameDidChange:)
+                                                 name:SignerNicknameDidChangeNotification
+                                               object:signer];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(notifySignerDidSync:)
+                                                 name:SignerSyncDateDidChangeNotification
+                                               object:signer];
+    
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(notifySignerHistoryUpdated:)
+                                                 name:SignerHistoryUpdatedNotification
+                                               object:signer];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(notifySignerRemovedNotification:)
+                                                 name:SignerRemovedNotification
+                                               object:signer];
+    
+}
+
+- (void)addCloudKeychainSigners: (NSString*)keychainKey chainId: (ChainId)chainId {
     for (Address *address in [CloudKeychainSigner addressesForKeychainKey:keychainKey]) {
         Signer *signer = [CloudKeychainSigner signerWithKeychainKey:keychainKey address:address provider:[self getProvider:chainId]];
         [_accounts addObject:signer];
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(notifySignerBalanceDidChange:)
-                                                     name:SignerBalanceDidChangeNotification
-                                                   object:signer];
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(notifySignerNicknameDidChange:)
-                                                     name:SignerNicknameDidChangeNotification
-                                                   object:signer];
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(notifySignerDidSync:)
-                                                     name:SignerSyncDateDidChangeNotification
-                                                   object:signer];
+        [self addSignerNotifications:signer];
+    }
+}
 
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(notifySignerHistoryUpdated:)
-                                                     name:SignerHistoryUpdatedNotification
-                                                   object:signer];
-
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(notifySignerRemovedNotification:)
-                                                     name:SignerRemovedNotification
-                                                   object:signer];
-
+- (void)addFireflySigners: (NSString*)keychainKey chainId: (ChainId)chainId {
+    for (Address *address in [FireflySigner addressesForKeychainKey:keychainKey]) {
+        Signer *signer = [FireflySigner signerWithKeychainKey:keychainKey address:address provider:[self getProvider:chainId]];
+        [_accounts addObject:signer];
+        [self addSignerNotifications:signer];
     }
 }
 
@@ -388,11 +404,16 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     // Remove all existing signers (the provider is no longer valid)
     _accounts = [NSMutableArray array];
     
-    [self addSigners:_keychainKey chainId:ChainIdHomestead];
-    [self addSigners:[_keychainKey stringByAppendingString:@"/ropsten"] chainId:ChainIdRopsten];
-    [self addSigners:[_keychainKey stringByAppendingString:@"/rinkeby"] chainId:ChainIdRinkeby];
-    [self addSigners:[_keychainKey stringByAppendingString:@"/kovan"] chainId:ChainIdKovan];
-    
+    [self addCloudKeychainSigners:_keychainKey chainId:ChainIdHomestead];
+    [self addCloudKeychainSigners:[_keychainKey stringByAppendingString:@"/ropsten"] chainId:ChainIdRopsten];
+    [self addCloudKeychainSigners:[_keychainKey stringByAppendingString:@"/rinkeby"] chainId:ChainIdRinkeby];
+    [self addCloudKeychainSigners:[_keychainKey stringByAppendingString:@"/kovan"] chainId:ChainIdKovan];
+
+    [self addFireflySigners:[_keychainKey stringByAppendingString:@"/firefly/homestead"] chainId:ChainIdHomestead];
+    [self addFireflySigners:[_keychainKey stringByAppendingString:@"/firefly/ropsten"] chainId:ChainIdRopsten];
+    [self addFireflySigners:[_keychainKey stringByAppendingString:@"/firefly/rinkeby"] chainId:ChainIdRinkeby];
+    [self addFireflySigners:[_keychainKey stringByAppendingString:@"/firefly/kovan"] chainId:ChainIdKovan];
+
     // Sort the accounts
     [_accounts sortUsingComparator:^NSComparisonResult(Signer *a, Signer *b) {
         if (a.accountIndex < b.accountIndex) {
@@ -605,10 +626,23 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     NSArray<NSString*> *messages = @[
                            @"How would you like to add an account?"
                            ];
-    NSArray<NSString*> *options = @[
-                                    @"Create New Account",
-                                    @"Import Existing Account"
-                                    ];
+    
+    NSArray<NSString*> *options = nil;
+    if (self.fireflyEnabled) {
+        options = @[
+                    @"Create New Account",
+                    @"Import Existing Account",
+                    @"Pair Firefly Hardware Wallet",
+                    ];
+
+    } else {
+        options = @[
+                    @"Create New Account",
+                    @"Import Existing Account",
+                    ];
+    }
+    
+    
     OptionsConfigController *config = [OptionsConfigController configWithHeading:nil subheading:nil messages:messages options:options];
 
     __block Account *account = nil;
@@ -756,11 +790,11 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                 
                 MnemonicConfigController *config = [MnemonicConfigController mnemonicHeading:title message:message note:nil];
                 config.didChange = ^(MnemonicConfigController *config) {
-                    if ((DEBUG_SKIP_VERIFY_MNEMONIC)) {
-                        config.nextEnabled = YES;
-                        return;
-                    }
+#ifdef DEBUG_SKIP_VERIFY_MNEMONIC
+                    config.nextEnabled = YES;
+#else
                     config.nextEnabled = [config.mnemonicPhraseView.mnemonicPhrase isEqualToString:account.mnemonicPhrase];
+#endif
                 };
                 config.nextEnabled = NO;
                 config.nextTitle = @"Next";
@@ -768,12 +802,13 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                     MnemonicPhraseView *mnemonicPhraseView = ((MnemonicConfigController*)config).mnemonicPhraseView;
                     mnemonicPhraseView.userInteractionEnabled = YES;
                     
-                    if ((DEBUG_SKIP_VERIFY_MNEMONIC)) {
-                        mnemonicPhraseView.mnemonicPhrase = account.mnemonicPhrase;
-                        config.nextEnabled = YES;
-                    } else {
-                        [mnemonicPhraseView becomeFirstResponder];
-                    }
+#ifdef DEBUG_SKIP_VERIFY_MNEMONIC
+                    mnemonicPhraseView.mnemonicPhrase = account.mnemonicPhrase;
+                    config.nextEnabled = YES;
+#else
+                    [mnemonicPhraseView becomeFirstResponder];
+#endif
+
                 };
                 config.onNext = getPassword;
                 
@@ -874,6 +909,67 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                 
                 [configController.navigationController pushViewController:config animated:YES];
             };
+        
+        } else if (index == 2) {
+            NSString *nickname = @"ethers.io";
+            NSString *keychainKey = [NSString stringWithFormat:@"%@/firefly/%@", weakSelf.keychainKey, chainName(chainId)];
+            switch (chainId) {
+                case ChainIdHomestead:
+                    nickname = @"Firefly";
+                    break;
+                case ChainIdKovan:
+                    nickname = @"Firefly (Kovan)";
+                    break;
+                case ChainIdRinkeby:
+                    nickname = @"Firefly (Rinkeby)";
+                    break;
+                case ChainIdRopsten:
+                    nickname = @"Firefly (Ropsten)";
+                    break;
+                default:
+                    nickname = @"Firefly (Testnet)";
+                    break;
+            }
+            
+            
+            FireflyPairingConfigController *config = [FireflyPairingConfigController config];
+            config.didCancel = ^(FireflyPairingConfigController *config) {
+                [(ConfigNavigationController*)(config.navigationController) dismissWithResult:nil];
+            };
+            
+            config.didDetectFirefly = ^(FireflyPairingConfigController *config, Address *address, NSData *pairKey) {
+                Signer *signer = [FireflySigner writeToKeychain:keychainKey
+                                                       nickname:nickname
+                                                        address:address
+                                                      secretKey:pairKey
+                                                       provider:[weakSelf getProvider:chainId]];
+                
+                if (signer) {
+                    // Make sure account indices are compact
+                    [weakSelf saveAccountOrder];
+                    
+                    // Set the new account's index to the end
+                    signer.accountIndex = weakSelf.numberOfAccounts;
+                    
+                    // Reload signers
+                    [weakSelf reloadSigners];
+                    
+                    [weakSelf doNotify:WalletAccountAddedNotification signer:signer userInfo:nil transform:nil];
+                    
+                    FireflyDoneConfigController *config = [FireflyDoneConfigController configWithSigner:nil];
+                    
+                    [configController.navigationController pushViewController:config animated:YES];
+                    
+                    config.onNext = ^(ConfigController *config) {
+                        [(ConfigNavigationController*)(config.navigationController) dismissWithResult:signer.address];
+                    };
+                    
+                } else {
+                    NSLog(@"Wallet: Error writing signer to Keychain");
+                }
+            };
+            
+            [configController.navigationController pushViewController:config animated:YES];
         }
         
     };
@@ -940,13 +1036,22 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
         return;
     }
     
+    BOOL firefly = [signer isKindOfClass:[FireflySigner class]];
+    
     NSString *heading = @"Manage Account";
     NSString *subheading = signer.nickname;
     NSArray<NSString*> *options = @[
                                     @"View Backup Phrase",
                                     @"Delete Account"
                                     ];
-    
+
+    if (firefly) {
+        heading = @"Manage Firefly";
+        options = @[
+                    @"Unpair Firefly Wallet"
+                    ];
+    }
+
     void (^onLoad)(ConfigController*) = ^(ConfigController *configController) {
         [((PasswordConfigController*)configController).passwordField.textField becomeFirstResponder];
     };
@@ -999,7 +1104,19 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                                                                          options:options];
 
     config.onOption = ^(OptionsConfigController *configController, NSUInteger index) {
-        if (index == 0) {
+        if (firefly && index == 0) {
+            // @TODO: Maybe show a warning screen?
+            BOOL removed = [(FireflySigner*)signer remove];
+            NSLog(@"Removed Account: address=%@ success=%d", signer.address, removed);
+            
+            [weakSelf reloadSigners];
+            [weakSelf saveAccountOrder];
+            
+            [weakSelf doNotify:WalletAccountRemovedNotification signer:signer userInfo:nil transform:nil];
+            
+            [(ConfigNavigationController*)(configController.navigationController) dismissWithNil];
+            
+        } else if (index == 0) {
             // ***************************
             // STEP 3 - Show the backup phrase
             void (^showBackupPhrase)(ConfigController*) = ^(ConfigController *configController) {
@@ -1117,12 +1234,13 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
                     MnemonicPhraseView *mnemonicPhraseView = ((MnemonicConfigController*)config).mnemonicPhraseView;
                     mnemonicPhraseView.userInteractionEnabled = YES;
                     
-                    if (DEBUG_SKIP_VERIFY_MNEMONIC) {
-                        mnemonicPhraseView.mnemonicPhrase = signer.mnemonicPhrase;
-                        config.nextEnabled = YES;
-                    } else {
-                        [mnemonicPhraseView becomeFirstResponder];
-                    }
+#ifdef DEBUG_SKIP_VERIFY_MNEMONIC
+                    mnemonicPhraseView.mnemonicPhrase = signer.mnemonicPhrase;
+                    config.nextEnabled = YES;
+#else
+                    [mnemonicPhraseView becomeFirstResponder];
+#endif
+                    
                 };
                 
                 config.onNext = confirmDelete;
@@ -1206,7 +1324,6 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
         config.onSign = ^(TransactionConfigController *configController, Transaction *transaction) {
             [(ConfigNavigationController*)(configController.navigationController) dismissWithResult:transaction];
         };
-
         [configController.navigationController pushViewController:config animated:YES];
     };
 
@@ -1219,10 +1336,12 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     
     ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:scanner];
     navigationController.onDismiss = ^(NSObject *result) {
-        if (!callback) { return; }
         if (![result isKindOfClass:[Transaction class]]) {
-            callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
-        } else {
+            [signer cancel];
+            if (callback) {
+                callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
+            }
+        } else if (callback){
             callback((Transaction*)result, nil);
         }
     };
@@ -1266,6 +1385,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:config];
     navigationController.onDismiss = ^(NSObject *result) {
         if (![result isKindOfClass:[Transaction class]]) {
+            [signer cancel];
             callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
         } else {
             callback((Transaction*)result, nil);
@@ -1334,6 +1454,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:config];
     navigationController.onDismiss = ^(NSObject *result) {
         if (![result isKindOfClass:[Transaction class]]) {
+            [signer cancel];
             callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
         } else {
             callback((Transaction*)result, nil);
@@ -1364,6 +1485,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:config];
     navigationController.onDismiss = ^(NSObject *result) {
         if (![result isKindOfClass:[Signature class]]) {
+            [signer cancel];
             callback(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorSendCancelled userInfo:@{}]);
         } else {
             callback((Signature*)result, nil);
@@ -1377,6 +1499,14 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
 
 #pragma mark - Debugging
 
+- (BOOL)fireflyEnabled {
+    return [_dataStore boolForKey:DataStoreKeyEnableFirefly];
+}
+
+- (void)setFireflyEnabled:(BOOL)enabled {
+    [_dataStore setBool:enabled forKey:DataStoreKeyEnableFirefly];
+}
+
 - (BOOL)testnetEnabled {
     return [_dataStore boolForKey:DataStoreKeyEnableTestnet];
 }
@@ -1385,8 +1515,24 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     [_dataStore setBool:enabled forKey:DataStoreKeyEnableTestnet];
 }
 
-- (void)showDebuggingOptionsCallback: (void (^)())callback {
-    DebugConfigController *config = [DebugConfigController configWithWallet:self];
+- (void)showDebuggingOptions:(WalletOptionsType)walletOptionsType callback:(void (^)())callback {
+    ConfigController *config = nil;
+    
+    switch (walletOptionsType) {
+        case WalletOptionsTypeDebug:
+            config = [DebugConfigController configWithWallet:self];
+            break;
+        case WalletOptionsTypeFirefly:
+            config = [FireflyConfigController configWithWallet:self];
+            break;
+        default:
+            if (callback) {
+                dispatch_async(dispatch_get_main_queue(), ^() {
+                    callback();
+                });
+            }
+            return;
+    }
     
     ConfigNavigationController *navigationController = [ConfigNavigationController configNavigationController:config];
     navigationController.onDismiss = ^(NSObject *result) {

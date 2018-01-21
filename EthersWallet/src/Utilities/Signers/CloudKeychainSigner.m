@@ -102,7 +102,7 @@ static NSString *getNickname(NSString *label) {
 #pragma mark - Keychain helpers
 
 /**
- *  kSecAttrGeenric is not part of teh key (as the documentation and example code allude to).
+ *  kSecAttrGeneric is not part of the key (as the documentation and example code allude to).
  *  As a result, to support the same address with multiple providers, we now use the service
  *  to specify the per-account provider.
  *
@@ -118,8 +118,16 @@ static NSString *getServiceName(NSString *keychainKey) {
         return @"ethers.io/kovan";
     } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet/rinkeby"]) {
         return @"ethers.io/rinkeby";
+    } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet/firefly/homestead"]) {
+        return @"ethers.io/firefly/homestead";
+    } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet/firefly/ropsten"]) {
+        return @"ethers.io/firefly/ropsten";
+    } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet/firefly/kovan"]) {
+        return @"ethers.io/firefly/kovan";
+    } else if ([keychainKey isEqualToString:@"io.ethers.sharedWallet/firefly/rinkeby"]) {
+        return @"ethers.io/firefly/rinkeby";
     }
-    
+
     // @TODO: return keychainKey
     return nil;
 }
@@ -326,7 +334,7 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     
     addKeychainVaue(keychainKey, address, nickname, json, NO);
     
-    CloudKeychainSigner *signer = [CloudKeychainSigner signerWithKeychainKey:keychainKey address:address provider:provider];
+    CloudKeychainSigner *signer = [self signerWithKeychainKey:keychainKey address:address provider:provider];
     [signer _setNickname:nickname];
     return signer;
 }
@@ -405,9 +413,7 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     return maybeAlive;
 }
 
-- (BOOL)remove {
-    if (!_account) { return NO; }
-    
+- (BOOL)_remove {
     BOOL success = removeKeychainValue(_keychainKey, self.address);
     if (success) {
         [self purgeCachedData];
@@ -423,6 +429,10 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     }
     
     return success;
+}
+- (BOOL)remove {
+    if (!_account) { return NO; }
+    return [self _remove];
 }
 
 #pragma mark - UI State
@@ -879,27 +889,12 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     sendError(nil);
 }
 
-
-- (void)send:(Transaction *)transaction callback:(void (^)(Transaction *, NSError *))callback {
-    transaction = [transaction copy];
-    NSLog(@"CloudKeychainSigner: Sending - address=%@ transaction=%@", _account.address, transaction);
-
-    if (!_account) {
-        dispatch_async(dispatch_get_main_queue(), ^() {
-            callback(nil, [NSError errorWithDomain:SignerErrorDomain code:SignerErrorAccountLocked userInfo:@{}]);
-        });
-        return;
-    }
-    
-    [_account sign:transaction];
-    
-    [self setBiometricSupport];
-
+- (void)_send:(Transaction *)transaction callback:(void (^)(Transaction *, NSError *))callback {
     __weak CloudKeychainSigner *weakSelf = self;
     
     NSData *signedTransaction = [transaction serialize];
     [[self.provider sendTransaction:signedTransaction] onCompletion:^(HashPromise *promise) {
-        NSLog(@"CloudKeychainSigner: Sent - signed=%@ hash=%@ error=%@", signedTransaction, promise.value, promise.error);
+        NSLog(@"%@: Sent - signed=%@ hash=%@ error=%@", NSStringFromClass([self class]), signedTransaction, promise.value, promise.error);
         
         if (promise.error) {
             callback(nil, promise.error);
@@ -910,12 +905,32 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     }];
 }
 
-- (void)signMessage: (NSData*)message callback: (void (^)(Signature*, NSError*))callback {
+- (ConfigController*)send:(Transaction *)transaction callback:(void (^)(Transaction *, NSError *))callback {
+    transaction = [transaction copy];
+    NSLog(@"CloudKeychainSigner: Sending - address=%@ transaction=%@", _account.address, transaction);
+
     if (!_account) {
         dispatch_async(dispatch_get_main_queue(), ^() {
             callback(nil, [NSError errorWithDomain:SignerErrorDomain code:SignerErrorAccountLocked userInfo:@{}]);
         });
-        return;
+        return nil;
+    }
+    
+    [_account sign:transaction];
+    
+    [self setBiometricSupport];
+
+    [self _send:transaction callback:callback];
+    
+    return nil;
+}
+
+- (ConfigController*)signMessage: (NSData*)message callback: (void (^)(Signature*, NSError*))callback {
+    if (!_account) {
+        dispatch_async(dispatch_get_main_queue(), ^() {
+            callback(nil, [NSError errorWithDomain:SignerErrorDomain code:SignerErrorAccountLocked userInfo:@{}]);
+        });
+        return nil;
     }
     
     Signature *signature = [_account signMessage:message];
@@ -926,6 +941,7 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
         callback(signature, nil);
     });
 
+    return nil;
 }
 
 #pragma mark - Password-Based Unlock
@@ -983,7 +999,10 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
 }
 
 - (void)cancelUnlock {
-    if (_unlocking) { [_unlocking cancel]; }
+    if (_unlocking) {
+        [_unlocking cancel];
+        _unlocking = nil;
+    }
 }
 
 

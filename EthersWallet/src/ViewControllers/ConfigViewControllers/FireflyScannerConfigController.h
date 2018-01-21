@@ -23,27 +23,23 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
+#import "ConfigController.h"
 
-#import <ethers/Provider.h>
-#import "Signer.h"
+#import <ethers/Transaction.h>
 
-@interface CloudKeychainSigner : Signer
+#import "FireflySigner.h"
 
-+ (NSArray<Address*>*)addressesForKeychainKey: (NSString*)keychainKey;
+@interface FireflyScannerConfigController : ConfigController
 
-+ (instancetype)writeToKeychain: (NSString*)keychainKey
-                       nickname: (NSString*)nickname
-                           json: (NSString*)json
-                       provider: (Provider*)provider;
++ (instancetype)configWithSigner: (FireflySigner*)signer transaction: (Transaction*)transaction;
++ (instancetype)configWithSigner: (FireflySigner*)signer message: (NSData*)message;
 
-+ (instancetype)signerWithKeychainKey: (NSString*)keychainKey
-                              address: (Address*)address
-                             provider: (Provider*)provider;
+@property (nonatomic, readonly) FireflySigner *signer;
+@property (nonatomic, readonly) Transaction *transaction;
+@property (nonatomic, readonly) NSData *message;
 
-@property (nonatomic, readonly) NSString *keychainKey;
-
-
-// Account must be unlocked to remove it
-- (BOOL)remove;
+@property (nonatomic, copy) void (^didCancel)(FireflyScannerConfigController*);
+@property (nonatomic, copy) void (^didSignTransaction)(FireflyScannerConfigController*, Transaction*);
+@property (nonatomic, copy) void (^didSignMessage)(FireflyScannerConfigController*, Signature*);
 
 @end

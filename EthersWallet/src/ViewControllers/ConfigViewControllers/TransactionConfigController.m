@@ -538,6 +538,60 @@
     _feeWarningTextView = [self addText:@"estimating fee..." font:[UIFont fontWithName:FONT_ITALIC size:14.0f]];
 }
 
+- (void)loadViewPassword {
+    __weak TransactionConfigController *weakSelf = self;
+
+    _passwordTextField = [self addPasswordTitle:@"Password"];
+    _passwordTextField.bottomMargin = 40.0f;
+    _passwordTextField.placeholder = @"Required";
+    
+    _passwordTextField.didChange = ^(ConfigTextField *configTextField) {
+        [weakSelf.signer cancelUnlock];
+        
+        configTextField.status = ConfigTextFieldStatusSpinning;
+        
+        weakSelf.passwordWarningTextView.text = @"";
+        
+        NSString *password = configTextField.textField.text;
+        [weakSelf.signer unlockPassword:configTextField.textField.text callback:^(Signer *signer, NSError *error) {
+            
+            // Expired unlock request
+            if (![configTextField.textField.text isEqualToString:password]) {
+                return;
+            }
+            
+            if (error) {
+                configTextField.status = ConfigTextFieldStatusBad;
+                
+            } else {
+                configTextField.status = ConfigTextFieldStatusGood;
+                
+                [weakSelf updateButton];
+                
+                if ([configTextField.textField isFirstResponder]) {
+                    [configTextField.textField resignFirstResponder];
+                }
+                
+                configTextField.userInteractionEnabled = NO;
+                
+                weakSelf.fingerprintButton.enabled = NO;
+            }
+        }];
+    };
+    
+    _passwordTextField.didReturn = ^(ConfigTextField *configTextField) {
+        if ([configTextField.textField isFirstResponder]) {
+            [configTextField.textField resignFirstResponder];
+        }
+    };
+    
+    _passwordWarningTextView = [self addText:@"" font:[UIFont fontWithName:FONT_BOLD size:14.0f]];
+    _passwordWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
+    _passwordWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];
+    
+    [self addSeparator];
+}
+
 - (void)loadView {
     [super loadView];
     
@@ -614,74 +668,26 @@
     
     [self loadViewFee];
     
+    if (_signer.supportsPasswordUnlock) {
+        [self addFlexibleGap];
+        
+        [self addGap:17.0f];
+        [self addSeparator];
+        [self loadViewPassword];
+    }
+   
     [self addFlexibleGap];
     
-    [self addGap:17.0f];
-    
-    [self addSeparator];
-    
-    _passwordTextField = [self addPasswordTitle:@"Password"];
-    _passwordTextField.bottomMargin = 40.0f;
-    _passwordTextField.placeholder = @"Required";
-    
-    _passwordTextField.didChange = ^(ConfigTextField *configTextField) {
-        [weakSelf.signer cancelUnlock];
-        
-        configTextField.status = ConfigTextFieldStatusSpinning;
-        
-        weakSelf.passwordWarningTextView.text = @"";
-        
-        NSString *password = configTextField.textField.text;
-        [weakSelf.signer unlockPassword:configTextField.textField.text callback:^(Signer *signer, NSError *error) {
-            
-            // Expired unlock request
-            if (![configTextField.textField.text isEqualToString:password]) {
-                return;
-            }
-            
-            if (error) {
-                configTextField.status = ConfigTextFieldStatusBad;
-                
-            } else {
-                configTextField.status = ConfigTextFieldStatusGood;
-                
-                [weakSelf updateButton];
-                
-                if ([configTextField.textField isFirstResponder]) {
-                    [configTextField.textField resignFirstResponder];
-                }
-                
-                configTextField.userInteractionEnabled = NO;
-                
-                weakSelf.fingerprintButton.enabled = NO;
-            }
-        }];
-    };
-    
-    _passwordTextField.didReturn = ^(ConfigTextField *configTextField) {
-        if ([configTextField.textField isFirstResponder]) {
-            [configTextField.textField resignFirstResponder];
-        }
-    };
-    
-    [self addSeparator];
-    
-    _passwordWarningTextView = [self addText:@"" font:[UIFont fontWithName:FONT_BOLD size:14.0f]];
-    _passwordWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
-    _passwordWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];
-
-    [self addFlexibleGap];
-    
-    NSString *buttonText = @"Send Payment";
+    NSString *buttonText = [_signer textMessageFor:SignerTextMessageSendButton];
     if (_action == WalletTransactionActionCancel) {
-        buttonText = @"Attempt Cancel";
+        buttonText = [_signer textMessageFor:SignerTextMessageCancelButton];
     }
     
     _sendButton = [self addButton:buttonText action:^(UIButton *button) {
         weakSelf.sending = YES;
         weakSelf.feeWarningTextView.text = @"";
         [weakSelf updateButton];
-        [weakSelf.signer send:weakSelf.transaction callback:^(Transaction *transaction, NSError *error) {
+        ConfigController *config = [weakSelf.signer send:weakSelf.transaction callback:^(Transaction *transaction, NSError *error) {
             if (error) {
                 NSString *description = [error localizedDescription];
                 if (weakSelf.action == WalletTransactionActionCancel) {
@@ -705,6 +711,10 @@
                 [(ConfigNavigationController*)(weakSelf.navigationController) dismissWithResult:transaction];
             }
         }];
+        
+        if (config) {
+            [(ConfigNavigationController*)(weakSelf.navigationController) pushViewController:config animated:YES];
+        }
     }];
     
     [self addFlexibleGap];

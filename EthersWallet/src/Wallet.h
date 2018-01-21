@@ -108,6 +108,11 @@ typedef enum WalletTransactionAction {
     WalletTransactionActionCancel
 } WalletTransactionAction ;
 
+typedef enum WalletOptionsType {
+    WalletOptionsTypeDebug,
+    WalletOptionsTypeFirefly
+} WalletOptionsType;
+
 #pragma mark - Wallet
 
 @interface Wallet : NSObject
@@ -166,11 +171,12 @@ typedef enum WalletTransactionAction {
 
 #pragma mark - Debug (Modal UI)
 
-- (void)showDebuggingOptionsCallback: (void (^)())callback;
+- (void)showDebuggingOptions: (WalletOptionsType)walletOptionsType callback: (void (^)())callback;
 
 
 #pragma mark - Debugging Options
 
+@property (nonatomic, assign) BOOL fireflyEnabled;
 @property (nonatomic, assign) BOOL testnetEnabled;
 - (void)purgeCacheData;
 

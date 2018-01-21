@@ -124,6 +124,9 @@ int8_t applyShirnkwrap(NSData *key, NSMutableData *block) {
             uint8_t *bytes = [payload mutableBytes];
             bytes[3] = chunkIndex++;
             
+            // Too long, the chunk index has leaked into the partial flag
+            if (bytes[3] & 0x40) { return nil; }
+            
             [payload appendData:[data subdataWithRange:NSMakeRange(offset, payloadLength)]];
             
             if (payloadLength < 12) {
