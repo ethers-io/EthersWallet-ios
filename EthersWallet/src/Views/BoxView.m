@@ -7,6 +7,7 @@
 //
 
 #import "BoxView.h"
+#import "UIColor+hex.h"
 
 @implementation BoxView {
     CGPoint _boxPoints[4];
@@ -33,11 +34,29 @@
     [self setNeedsDisplay];
 }
 
+static CGFloat distance(CGPoint pointA, CGPoint pointB) {
+    CGFloat dx = (pointB.x - pointA.x), dy = (pointB.y - pointA.y);
+    return sqrt((dx * dx) + (dy * dy));
+}
+
+// Computes the point from origin that is length units toward target
+static CGPoint normalize(CGPoint origin, CGPoint target, CGFloat length) {
+    CGFloat ratio = length / distance(origin, target);
+    return CGPointMake(origin.x + ratio * (target.x - origin.x), origin.y + ratio * (target.y - origin.y));
+}
+
 - (CGPoint)pointAt: (NSUInteger)index {
     CGPoint point = CGPointFromString([_points objectAtIndex:index]);
-    CGPoint pointOpposite = CGPointFromString([_points objectAtIndex:(index + 2) % 4]);
-    CGPoint delta = CGPointMake(pointOpposite.x - point.x, pointOpposite.y - point.y);
-    return CGPointMake(point.x - 0.1 * delta.x, point.y - 0.1 * delta.y);
+
+    // Normalize our adjacent points
+    CGPoint adj0 = normalize(point, CGPointFromString([_points objectAtIndex:(index + 3) % 4]), 100);
+    CGPoint adj1 = normalize(point, CGPointFromString([_points objectAtIndex:(index + 1) % 4]), 100);
+    
+    // Compute the midpoint of our normalized adjacent points
+    CGPoint center = CGPointMake((adj0.x + adj1.x) / 2.0f, (adj0.y + adj1.y) / 2.0f);
+
+    // And draw 20% ((4 modules quiet zone) / (29 modules data) + (small fuzz factor)) larger box
+    return normalize(point, center, -0.2 * distance(point, center));
 }
 
 - (void)makePath: (CGContextRef)context {
@@ -63,7 +82,7 @@
     CGContextRef context = UIGraphicsGetCurrentContext();
     
     // Fill the outside of the QR code with a dark black
-    CGContextSetFillColorWithColor(context, [UIColor colorWithRed:0.0f green:0.0 blue:0.0 alpha:0.65f].CGColor);
+    CGContextSetFillColorWithColor(context, [UIColor colorWithRed:0.0f green:0.0 blue:0.0 alpha:0.55f].CGColor);
     [self makePath:context];
     CGContextAddRect(context, self.bounds);
     CGContextEOFillPath(context);
@@ -74,9 +93,9 @@
     CGContextEOClip(context);
 
     // Prepare the outline + shadow
-    CGContextSetStrokeColorWithColor(context, [UIColor blackColor].CGColor);
+    CGContextSetStrokeColorWithColor(context, [UIColor colorWithHex:ColorHexNavigationBar].CGColor);
     CGContextSetShadowWithColor(context, CGSizeMake(0.0f, 0.0f), 15.0f, [UIColor blackColor].CGColor);
-    CGContextSetLineWidth(context, 4.0f);
+    CGContextSetLineWidth(context, 8.0f);
     
     // Draw it twice to get e thicker shadow
     for (NSInteger i = 0; i < 2; i++) {
