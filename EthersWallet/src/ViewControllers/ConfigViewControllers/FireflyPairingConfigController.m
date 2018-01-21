@@ -22,7 +22,7 @@
 
 @implementation FireflyPairingConfigController {
     ScannerView *_scannerView;
-    UIImpactFeedbackGenerator *_hapticGood, *_hapticBad;
+    UIImpactFeedbackGenerator *_hapticGood;
 }
 
 
@@ -39,7 +39,6 @@
             self.navigationItem.titleView = titleLabel;
         }
 
-        _hapticBad = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
         _hapticGood = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
     }
     return self;
@@ -85,6 +84,8 @@
         if (!address || !pairKey || pairKey.length != 16) { continue; }
         
         [scannerView pauseScanningHighlight:@[ message ] animated:YES];
+        
+        [_hapticGood impactOccurred];
         
         if (_didDetectFirefly) {
             _didDetectFirefly(self, address, pairKey);

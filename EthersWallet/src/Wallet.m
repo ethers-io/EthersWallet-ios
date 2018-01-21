@@ -974,7 +974,7 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
         
     };
     
-    if ([_dataStore boolForKey:DataStoreKeyEnableTestnet]) {
+    if (self.testnetEnabled) {
         config.nextTitle = @"Mainnet";
         config.nextEnabled = YES;
         config.onNext = ^(ConfigController *config) {
@@ -1475,7 +1475,6 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     }
     
     Signer *signer = [_accounts objectAtIndex:_activeAccountIndex];
-    NSLog(@"MM: %@", message);
     SigningConfigController *config = [SigningConfigController configWithSigner:signer message:message];
     
     config.onSign = ^(SigningConfigController *configController, Signature *signature) {
@@ -1493,8 +1492,6 @@ static NSString *DataStoreKeyActiveAccountChainId         = @"ACTIVE_ACCOUNT_CHA
     };
     
     [ModalViewController presentViewController:navigationController animated:YES completion:nil];
-//
-//    callback([Signature signatureWithData:[SecureData hexStringToData:@"0x0123456789012345678901234567890123456789012345678901234567890123012345678901234567890123456789012345678901234567890123456789012300"]], nil);
 }
 
 #pragma mark - Debugging

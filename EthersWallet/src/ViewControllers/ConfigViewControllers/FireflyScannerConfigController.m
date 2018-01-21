@@ -35,11 +35,12 @@
 
 @interface FireflyScannerConfigController () <ScannerViewDelegate>
 
+@property (nonatomic, readonly) UIImpactFeedbackGenerator *hapticGood;
+
 @end
 
 @implementation FireflyScannerConfigController {
     ScannerView *_scannerView;
-    UIImpactFeedbackGenerator *_hapticGood, *_hapticBad;
     OutlineLabel *_details;
 }
 
@@ -83,7 +84,6 @@
                                                                                                action:@selector(cancel)];
         self.navigationItem.hidesBackButton = YES;
         
-        _hapticBad = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
         _hapticGood = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
     }
     return self;
@@ -153,6 +153,8 @@
             [scannerView pauseScanningHighlight:messages animated:YES];
             [weakSelf hideDetails];
             
+            [weakSelf.hapticGood impactOccurred];
+
             if (_didSignTransaction) {
                 _didSignTransaction(self, _transaction);
             }
@@ -163,6 +165,8 @@
 
             [scannerView pauseScanningHighlight:messages animated:YES];
             [weakSelf hideDetails];
+
+            [weakSelf.hapticGood impactOccurred];
 
             if (_didSignMessage) {
                 _didSignMessage(self, signature);
