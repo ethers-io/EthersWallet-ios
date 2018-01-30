@@ -950,6 +950,10 @@ static NSString *DataStoreKeyAccounts                 = @"ACCOUNTS";
     return getKeychainValue(self.keychainKey, self.address);
 }
 
+- (BOOL)supportsPasswordUnlock {
+    return YES;
+}
+
 - (void)unlockPassword:(NSString *)password callback:(void (^)(Signer *, NSError *))callback {
     [self cancelUnlock];
 
