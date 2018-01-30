@@ -584,12 +584,12 @@
             [configTextField.textField resignFirstResponder];
         }
     };
-    
+
+    [self addSeparator];
+
     _passwordWarningTextView = [self addText:@"" font:[UIFont fontWithName:FONT_BOLD size:14.0f]];
     _passwordWarningTextView.font = [UIFont fontWithName:FONT_BOLD size:14.0f];
-    _passwordWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];
-    
-    [self addSeparator];
+    _passwordWarningTextView.textColor = [UIColor colorWithHex:0xf9674f];    
 }
 
 - (void)loadView {
