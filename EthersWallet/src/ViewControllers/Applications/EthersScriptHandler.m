@@ -211,6 +211,9 @@ static const NSString* const EthersVersion = @"v\x01\n";
                 networkName = chainName(_wallet.activeAccountProvider.chainId);
                 break;
         }
+        
+        if (!networkName) { networkName = @"mainnet"; }
+        
         [self sendResult:networkName messageId:messageId];
         
     } else if ([action isEqualToString:@"fundAccount"]) {
