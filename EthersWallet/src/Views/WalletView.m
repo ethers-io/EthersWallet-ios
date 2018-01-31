@@ -122,7 +122,7 @@
 - (void)shareAddress: (id)sender {
 
     NSArray *shareItems = @[
-                            [NSURL URLWithString:[NSString stringWithFormat:@"iban:%@", _address.icapAddress]]
+                            [NSURL URLWithString:[NSString stringWithFormat:@"ethereum:%@", _address.checksumAddress]]
                             ];
 
     UIActivityViewController *shareViewController = [[UIActivityViewController alloc] initWithActivityItems:shareItems
