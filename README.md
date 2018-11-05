@@ -3,7 +3,6 @@ Ethers Wallet - iOS
 
 Ethers Wallet makes it simple to send, receive and manage your ether and interact with Ethereum Dapps (distributed applications) from standard Ethereum accounts.
 
-
 **Features:**
 
 - Import and export standard 12 word mnemonic phrases to and from other wallets
@@ -19,6 +18,30 @@ Ethers Wallet makes it simple to send, receive and manage your ether and interac
 - Open Source (MIT licensed)
 - To enable the developer features, after installing, click [https://ethers.io/app-link/#!debug](https://ethers.io/app-link/#!debug)
 
+Build Instructions
+==================
+
+The Ethers Wallet iOS app is broken up into the Ethereum Library and the UI app repositories. You will need to download the code from both repositories to build the wallet. 
+
+
+1. Download the code from both repositories:
+
+   ```
+   mkdir ethersWallet && cd ethersWallet
+   git clone git@github.com:ethers-io/EthersWallet-ios.git
+   git clone git@github.com:ethers-io/ethers.objc.git
+   ```
+
+2. The directory layout:
+
+   ```
+   ethersWallet
+    ├── EthersWallet-ios        # The Wallet UI
+    ├── ethers.objc             # The Ethereum Library
+
+   ``` 
+
+4. Build EthersWallet-ios using Xcode
 
 To Do
 =====
@@ -35,7 +58,6 @@ License
 =======
 
 MIT License.
-
 
 Donations
 =========
