@@ -4817,12 +4817,12 @@ module.exports={
 
     "homestead": {
         "chainId": 1,
-        "ensAddress": "0x314159265dd8dbb310642f98f50c066173c1259b",
+        "ensAddress": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
         "name": "homestead"
     },
     "mainnet": {
         "chainId": 1,
-        "ensAddress": "0x314159265dd8dbb310642f98f50c066173c1259b",
+        "ensAddress": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
         "name": "homestead"
     },
 
@@ -4833,12 +4833,12 @@ module.exports={
 
     "ropsten": {
         "chainId": 3,
-        "ensAddress": "0x112234455c3a32fd11230c42e7bccd4a84e02010",
+        "ensAddress": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
         "name": "ropsten"
     },
     "testnet": {
         "chainId": 3,
-        "ensAddress": "0x112234455c3a32fd11230c42e7bccd4a84e02010",
+        "ensAddress": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
         "name": "ropsten"
     },
 
